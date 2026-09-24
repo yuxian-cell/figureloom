@@ -13,6 +13,7 @@ from typing import Any
 
 from editaplot_core import (
     EditaPlotError,
+    bootstrap_engine,
     build_medical_panel_plan,
     build_origin_smoke_command,
     build_plan,
@@ -167,6 +168,14 @@ def build_parser() -> argparse.ArgumentParser:
     smoke_parser.add_argument("--python", dest="python_executable")
     smoke_parser.add_argument("--keep-origin-open", action="store_true")
     _engine_option(smoke_parser)
+
+    grapher_smoke_parser = subparsers.add_parser(
+        "grapher-smoke",
+        help="Test native Grapher plot, GRF save, export, reopen, and object readback",
+    )
+    grapher_smoke_parser.add_argument("--output-dir")
+    grapher_smoke_parser.add_argument("--hidden", action="store_true")
+    _engine_option(grapher_smoke_parser)
 
     verify_parser = subparsers.add_parser("verify", help="Check required Origin run artifacts")
     verify_parser.add_argument("output_directory")
@@ -526,6 +535,16 @@ def main(argv: list[str] | None = None) -> int:
             return _run_render(args)
         elif args.command == "origin-smoke":
             return _run_origin_smoke(args)
+        elif args.command == "grapher-smoke":
+            bootstrap_engine(args.engine_home)
+            from grapher_sciplot.smoke import run_smoke
+
+            report = run_smoke(
+                Path(args.output_dir) if args.output_dir else None,
+                visible=not args.hidden,
+            )
+            _emit(report)
+            return 0 if report["status"] == "ok" else 2
         elif args.command == "verify":
             _ensure_verify_output_does_not_replace_artifact(args.output_directory, args.output)
             _emit(verify_output(args.output_directory), args.output)

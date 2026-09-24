@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "source_policy": "curated EditaPlot runtime; caches, tests, builds, outputs, binaries, and local paths excluded",
-  "file_count": 423,
+  "file_count": 425,
   "files": [
     {
       "path": "LICENSE",
@@ -27,6 +27,16 @@
       "path": "requirements-runtime.txt",
       "size_bytes": 278,
       "sha256": "b8db9b07d8a7dc430b3b7b0f89dc5c5143965bc5810d64e8232770f33e69b7e3"
+    },
+    {
+      "path": "src/grapher_sciplot/__init__.py",
+      "size_bytes": 68,
+      "sha256": "0313a386f270650ff47bfdbb8bdced289f9c765d9ce99be7a797a2183847ee9c"
+    },
+    {
+      "path": "src/grapher_sciplot/smoke.py",
+      "size_bytes": 10212,
+      "sha256": "33f52fff3bfecf71c0f3ca659ccabe009c06af6f8df58608210da9f863bbc248"
     },
     {
       "path": "src/origin_sciplot/__init__.py",
