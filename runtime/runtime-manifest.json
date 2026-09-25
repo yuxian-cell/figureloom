@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "source_policy": "curated EditaPlot runtime; caches, tests, builds, outputs, binaries, and local paths excluded",
-  "file_count": 431,
+  "file_count": 432,
   "files": [
     {
       "path": "LICENSE",
@@ -32,6 +32,11 @@
       "path": "src/editaplot_engine/__init__.py",
       "size_bytes": 370,
       "sha256": "f21f6a35d2ab66586990b4449e616650567f705854b8e6171619cf0f77cca7d4"
+    },
+    {
+      "path": "src/editaplot_engine/fit_contract.py",
+      "size_bytes": 5789,
+      "sha256": "03ddf1871d35494e8286971f92b7bd00a1650fe92b6193cda3e9d75c370145bb"
     },
     {
       "path": "src/editaplot_engine/models.py",
