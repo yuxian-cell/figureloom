@@ -63,7 +63,9 @@ Omitting `--engine` selects Origin. `origin-smoke` and `grapher-smoke` remain co
 
 ## Phase 2 Grapher support
 
-The formal route supports one confirmed `xy_scatter` with exactly one X and one Y column. It maps
-the graph title, axis titles, symbol color/size and output dimensions. Verification requires nonempty
-native GRF/PNG/PDF signatures, successful GRF reopen, one XY scatter binding to staging columns 1/2,
-and matching X/Y titles. Other Grapher chart routes return `grapher_route_unsupported`.
+The Grapher backend supports confirmed `scatter` → `xy_scatter` (one X, one Y) and `trend` →
+`xy_line` (one X, one or more Y columns). Both routes use the same document, staging CSV, native graph,
+axis, save/export, readback, and verification path. Verification checks nonempty native GRF/PNG/PDF,
+successful GRF reopen, staged data identity, each plot's native worksheet/column binding and visual
+mode, axis and graph titles, colors, and multi-series legend labels. Other routes return
+`grapher_route_unsupported`. See [XY Line acceptance](grapher-xy-line.md).
