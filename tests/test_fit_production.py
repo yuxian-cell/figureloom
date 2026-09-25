@@ -23,6 +23,10 @@ def _plan() -> dict:
 def test_linear_fit_dispatch_and_scope():
     plan = _plan()
     assert production_linear_fit(plan).result_source == "backend_native"
+    plan["render_spec"]["data"]["y_errors"] = {
+        "Y": {"column": "Y_SD", "kind": "sd", "direction": "y", "symmetric": True}
+    }
+    assert production_linear_fit(plan).weight_mode == "none"
     del plan["fit"]
     assert production_linear_fit(plan) is None
 
@@ -40,7 +44,13 @@ def test_linear_fit_dispatch_and_scope():
         (lambda p: p["fit"].update(result_source="core_computed"), "native_fit_not_supported"),
         (lambda p: p["fit"].update(y_column="Z"), "fit_source_binding_failed"),
         (
-            lambda p: p["render_spec"]["data"].update(y_errors={"Y": {"column": "SD"}}),
+            lambda p: p["render_spec"]["data"].update(y_errors={"Y": {"column": "SD", "kind": "ci"}}),
+            "native_fit_not_supported",
+        ),
+        (
+            lambda p: p["render_spec"]["data"].update(y_errors={"Y": {
+                "column": "Y_SD", "kind": "sd", "direction": "y", "symmetric": False,
+            }}),
             "native_fit_not_supported",
         ),
         (

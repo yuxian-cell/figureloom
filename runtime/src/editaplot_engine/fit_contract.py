@@ -178,8 +178,18 @@ def production_linear_fit(plan: dict[str, Any]) -> FitSpec | None:
         raise EngineError("unsupported_multi_series_fit", "Native linear Fit requires one Y series")
     if spec.x_column != data.get("x") or spec.y_column != y_columns[0]:
         raise EngineError("fit_source_binding_failed", "FitSpec columns differ from the scatter plan")
-    if data.get("y_errors"):
-        raise EngineError("native_fit_not_supported", "Scatter + Error + Fit is not supported yet")
+    errors = data.get("y_errors") or {}
+    if errors and (
+        not isinstance(errors, dict)
+        or set(errors) != {spec.y_column}
+        or not isinstance(errors[spec.y_column], dict)
+        or errors[spec.y_column].get("kind") != "sd"
+        or errors[spec.y_column].get("direction") != "y"
+        or errors[spec.y_column].get("symmetric") is not True
+        or not isinstance(errors[spec.y_column].get("column"), str)
+        or errors[spec.y_column]["column"] in {"", spec.x_column, spec.y_column}
+    ):
+        raise EngineError("native_fit_not_supported", "Only one symmetric Y SD error is supported with Fit")
     if spec.fit_range is not None:
         raise EngineError("unsupported_fit_range", "Partial-range Fit is not supported")
     if spec.weight_mode != "none":

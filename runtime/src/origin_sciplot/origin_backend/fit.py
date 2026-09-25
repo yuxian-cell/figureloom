@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import math
 import shutil
+import statistics
 import tempfile
 from pathlib import Path
 from typing import Any
@@ -25,7 +26,18 @@ def _source_sheet(op: Any, spec: FitSpec) -> tuple[Any, int, int]:
     raise EngineError("fit_source_binding_failed", "Origin source columns are missing", engine="origin")
 
 
-def _read_saved_fit(op: Any, report_ref: str, curve_ref: str, spec: FitSpec) -> dict[str, Any]:
+def _dataset_name(source: Any, column_index: int) -> str:
+    index = column_index + 1
+    letters = ""
+    while index:
+        index, remainder = divmod(index - 1, 26)
+        letters = chr(65 + remainder) + letters
+    return f"{source.get_book().name}_{letters}"
+
+
+def _read_saved_fit(
+    op: Any, report_ref: str, curve_ref: str, spec: FitSpec, error_column: str | None = None
+) -> dict[str, Any]:
     report = op.find_sheet("w", report_ref)
     curve = op.find_sheet("w", curve_ref)
     graph = next(op.pages("g"), None)
@@ -36,27 +48,60 @@ def _read_saved_fit(op: Any, report_ref: str, curve_ref: str, spec: FitSpec) -> 
         )
     columns = [report.to_list(i) for i in range(report.shape[1])]
     try:
+        offset = int(error_column is not None)
         model = str(columns[2][3])
         source_x = str(columns[3][0])
         source_y = str(columns[4][0])
         range_text = str(columns[5][0])
-        intercept, slope = float(columns[8][0]), float(columns[8][1])
-        n_points, r_squared = int(columns[12][0]), float(columns[12][4])
+        intercept, slope = float(columns[8 + offset][0]), float(columns[8 + offset][1])
+        n_points, r_squared = int(columns[12 + offset][0]), float(columns[12 + offset][4])
     except (IndexError, TypeError, ValueError) as exc:
         raise EngineError(
             "fit_readback_failed", "Origin native report lacks linear Fit results", engine="origin"
         ) from exc
     if model != "y = a + b*x" or not all(math.isfinite(v) for v in (intercept, slope, r_squared)):
         raise EngineError("fit_result_invalid", "Origin native linear Fit result is invalid", engine="origin")
+    plot_names = [plot.name for plot in graph[0].plot_list()]
+    scatter_present = _dataset_name(source, y_index) in plot_names
+    source_frame = source.to_df()
+    if error_column and error_column not in source_frame:
+        raise EngineError("native_fit_relationship_lost", "Origin error column is missing", engine="origin")
+    error_index = list(source_frame.columns).index(error_column) if error_column else None
+    error_present = error_index is not None and _dataset_name(source, error_index) in plot_names
     if (
         f'"{spec.x_column}"' not in source_x
         or f'"{spec.y_column}"' not in source_y
-        or len(graph[0].plot_list()) < 2
+        or not scatter_present
+        or len(plot_names) < 2 + (error_column is not None)
+        or (error_column is not None and not error_present)
         or not curve.to_list(0)
         or not curve.to_list(1)
         or n_points < 2
     ):
         raise EngineError("native_fit_relationship_lost", "Origin Fit lost source or curve", engine="origin")
+    if error_column is not None:
+        try:
+            pairs = []
+            for x, y in zip(source_frame[spec.x_column], source_frame[spec.y_column], strict=True):
+                try:
+                    x, y = float(x), float(y)
+                except (TypeError, ValueError):
+                    continue
+                if math.isfinite(x) and math.isfinite(y):
+                    pairs.append((x, y))
+            expected = statistics.linear_regression([x for x, _ in pairs], [y for _, y in pairs])
+        except (TypeError, ValueError, statistics.StatisticsError) as exc:
+            raise EngineError(
+                "fit_result_invalid", "Origin Fit source data are invalid", engine="origin"
+            ) from exc
+        if (
+            n_points != len(pairs)
+            or not math.isclose(slope, expected.slope, rel_tol=1e-6, abs_tol=1e-8)
+            or not math.isclose(intercept, expected.intercept, rel_tol=1e-6, abs_tol=1e-8)
+        ):
+            raise EngineError(
+                "fit_result_invalid", "Origin Fit unexpectedly used error weights", engine="origin"
+            )
     result = FitResult(
         model="linear",
         parameters={"intercept": intercept, "slope": slope},
@@ -74,8 +119,17 @@ def _read_saved_fit(op: Any, report_ref: str, curve_ref: str, spec: FitSpec) -> 
         "report_sheet": report_ref,
         "curve_sheet": curve_ref,
         "curve_present": True,
-        "scatter_present": True,
-        "scatter_plot_count": len(graph[0].plot_list()),
+        "scatter_present": scatter_present,
+        "scatter_plot_count": len(plot_names),
+        "scatter_dataset": _dataset_name(source, y_index),
+        "error": {
+            "present": error_present,
+            "column": error_column,
+            "column_index": error_index,
+            "dataset": _dataset_name(source, error_index) if error_index is not None else None,
+            "direction": "y" if error_present else None,
+            "symmetric": error_present,
+        },
         "source_x_column": spec.x_column,
         "source_y_column": spec.y_column,
         "source_x_binding": source_x,
@@ -86,11 +140,12 @@ def _read_saved_fit(op: Any, report_ref: str, curve_ref: str, spec: FitSpec) -> 
         "fit_range_native": range_text,
         "full_range": range_text == f"[1*:{len(source.to_df())}*]",
         "weighting_readback": "unsupported",
+        "unweighted_numeric_check": error_column is not None,
         "result": result.to_dict(),
     }
 
 
-def apply_linear_fit(output_dir: Path, spec: FitSpec) -> dict[str, Any]:
+def apply_linear_fit(output_dir: Path, spec: FitSpec, error_column: str | None = None) -> dict[str, Any]:
     opju = output_dir / "result.opju"
     with OriginSession(keep_open=False) as session:
         op = session.op
@@ -98,13 +153,17 @@ def apply_linear_fit(output_dir: Path, spec: FitSpec) -> dict[str, Any]:
             raise EngineError("fit_create_failed", "Origin could not reopen Scatter OPJU", engine="origin")
         source, x_index, y_index = _source_sheet(op, spec)
         graph = next(op.pages("g"), None)
-        if graph is None or len(graph[0].plot_list()) != 1:
+        if graph is None or len(graph[0].plot_list()) != 1 + (error_column is not None):
             raise EngineError(
-                "fit_source_binding_failed", "Expected one native Scatter plot", engine="origin"
+                "fit_source_binding_failed", "Expected native Scatter and optional error plot",
+                engine="origin",
             )
         try:
             fit = op.LinearFit()
             fit.set_data(source, x_index, y_index)
+            # Origin selects the plotted Y error column and defaults to 1/e²
+            # weighting. FitSpec keeps display error and regression weight separate.
+            fit._set("Fit.ErrBarWeight", 0)
             report_ref, curve_ref = fit.report()
             del fit
             curve = op.find_sheet("w", curve_ref)
@@ -112,6 +171,13 @@ def apply_linear_fit(output_dir: Path, spec: FitSpec) -> dict[str, Any]:
                 raise RuntimeError("Origin Fit curve worksheet is missing")
             graph[0].add_plot(curve, 1, 0, type="l")
             graph[0].rescale()
+            if error_column is not None:
+                legend = graph[0].label("legend")
+                if legend is not None:
+                    # Origin rebuilds the linked legend after Fit.report(),
+                    # adding duplicate fit entries. The fit report labels the
+                    # curve, so remove that misleading automatic legend.
+                    legend.remove()
             if not op.save(str(opju)):
                 raise RuntimeError("Origin could not save fitted OPJU")
             export_graph(
@@ -126,7 +192,7 @@ def apply_linear_fit(output_dir: Path, spec: FitSpec) -> dict[str, Any]:
         op.new(asksave=False)
         if not op.open(str(opju), asksave=False):
             raise EngineError("fit_readback_failed", "Origin fitted OPJU cannot reopen", engine="origin")
-        readback = _read_saved_fit(op, report_ref, curve_ref, spec)
+        readback = _read_saved_fit(op, report_ref, curve_ref, spec, error_column)
         readback["engine_version"] = session.environment.origin_version
     (output_dir / "origin_fit_readback.json").write_text(
         json.dumps(readback, ensure_ascii=False, indent=2), encoding="utf-8"
@@ -134,7 +200,9 @@ def apply_linear_fit(output_dir: Path, spec: FitSpec) -> dict[str, Any]:
     return readback
 
 
-def verify_linear_fit(output_dir: Path, spec: FitSpec, report_ref: str, curve_ref: str) -> dict[str, Any]:
+def verify_linear_fit(
+    output_dir: Path, spec: FitSpec, report_ref: str, curve_ref: str, error_column: str | None = None
+) -> dict[str, Any]:
     with tempfile.NamedTemporaryFile(suffix=".opju", dir=output_dir, delete=False) as temporary:
         copy = Path(temporary.name)
     try:
@@ -143,7 +211,7 @@ def verify_linear_fit(output_dir: Path, spec: FitSpec, report_ref: str, curve_re
             op = session.op
             if not op.open(str(copy), asksave=False):
                 raise EngineError("fit_readback_failed", "Origin fitted OPJU cannot reopen", engine="origin")
-            readback = _read_saved_fit(op, report_ref, curve_ref, spec)
+            readback = _read_saved_fit(op, report_ref, curve_ref, spec, error_column)
             op.new(asksave=False)
             return readback
     finally:

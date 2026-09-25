@@ -161,12 +161,17 @@ class OriginEngine:
         if fit_spec is not None:
             from origin_sciplot.origin_backend.fit import apply_linear_fit
 
-            fit_readback = apply_linear_fit(Path(str(payload["output_dir"])), fit_spec)
+            error_semantic = (plan["render_spec"]["data"].get("y_errors") or {}).get(
+                fit_spec.y_column
+            )
+            error_column = error_semantic["column"] if error_semantic else None
+            fit_readback = apply_linear_fit(Path(str(payload["output_dir"])), fit_spec, error_column)
             fit_manifest = {
                 "engine": "origin",
                 "engine_version": fit_readback["engine_version"],
                 "result_source": "backend_native",
                 "spec": fit_spec.to_dict(),
+                "error_column": error_column,
                 "readback": fit_readback,
             }
             (Path(str(payload["output_dir"])) / "fit-manifest.json").write_text(
@@ -216,9 +221,11 @@ class OriginEngine:
         }
         fit_manifest_path = Path(output_dir) / "fit-manifest.json"
         plan_copy = Path(output_dir) / "render-plan.json"
+        plan: dict[str, Any] = {}
         planned_fit = None
         if plan_copy.is_file():
-            planned_fit = json.loads(plan_copy.read_text(encoding="utf-8")).get("fit")
+            plan = json.loads(plan_copy.read_text(encoding="utf-8"))
+            planned_fit = plan.get("fit")
         if planned_fit is not None and not fit_manifest_path.is_file():
             report["status"] = "failed"
             report["ok"] = report["programmatic_pass"] = False
@@ -236,8 +243,23 @@ class OriginEngine:
                         "fit_verify_failed", "Saved FitSpec differs from RenderPlan", engine=self.name
                     )
                 saved = fit_manifest["readback"]
+                expected_error = (
+                    (plan["render_spec"]["data"].get("y_errors") or {})
+                    .get(spec.y_column, {})
+                    .get("column")
+                )
+                if fit_manifest.get("error_column") != expected_error:
+                    raise EngineError(
+                        "fit_verify_failed", "Error binding differs from RenderPlan", engine=self.name
+                    )
                 native = verify_linear_fit(
-                    Path(output_dir), spec, saved["report_sheet"], saved["curve_sheet"]
+                    Path(output_dir), spec, saved["report_sheet"], saved["curve_sheet"], expected_error
+                )
+                error_ok = expected_error is None or (
+                    native["error"]["present"] is True
+                    and native["error"]["column"] == expected_error
+                    and native["error"]["direction"] == "y"
+                    and native["error"]["symmetric"] is True
                 )
                 fit_ok = all(
                     (
@@ -245,13 +267,23 @@ class OriginEngine:
                         native["full_range"], native["result"]["result_source"] == "backend_native",
                         native["source_x_column"] == spec.x_column,
                         native["source_y_column"] == spec.y_column,
+                        error_ok,
                     )
                 )
-                report["checks"] = {"native_fit": fit_ok, "artifact_reopened": True}
+                report["checks"] = {
+                    "native_fit": fit_ok, "artifact_reopened": True,
+                    **({"native_error": error_ok} if expected_error else {}),
+                }
                 report["readback"] = {"fit": native}
             except (EngineError, KeyError, ValueError, OSError) as exc:
                 fit_ok = False
-                report["checks"] = {"native_fit": False, "artifact_reopened": False}
+                report["checks"] = {
+                    "native_fit": False, "artifact_reopened": False,
+                    **(
+                        {"native_error": False}
+                        if plan.get("render_spec", {}).get("data", {}).get("y_errors") else {}
+                    ),
+                }
                 report["error"] = {
                     "code": getattr(exc, "code", "fit_verify_failed"), "message": str(exc)
                 }
