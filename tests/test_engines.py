@@ -119,11 +119,11 @@ def test_trend_plan_selects_xy_line_and_preserves_series_order(
 
 def test_xy_style_and_readback_modes() -> None:
     assert _visual_mode("xy_scatter", {}) == (1, 0.0)
-    assert _plot_mode(1, 0.0) == "xy_scatter"
+    assert _plot_mode(1, "Invisible") == "xy_scatter"
     symbols, width = _visual_mode("xy_line", {"line_width_pt": 2.0})
     assert symbols == 0
     assert width == pytest.approx(2.0 / 72.0)
-    assert _plot_mode(symbols, width) == "xy_line"
+    assert _plot_mode(symbols, "Solid") == "xy_line"
     assert _visual_mode("xy_line", {"show_symbols": True})[0] == 1
 
 

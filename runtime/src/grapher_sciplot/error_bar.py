@@ -12,7 +12,7 @@ _BOTH = 0
 _NONE = 0
 
 
-def add_y_error(plot: Any, column_index: int) -> None:
+def add_y_error(plot: Any, column_index: int, *, color: int | None = None) -> None:
     try:
         bars = get(plot, "ErrorBars")
         put(bars, "HorzBarType", _NONE)
@@ -20,6 +20,9 @@ def add_y_error(plot: Any, column_index: int) -> None:
         put(bars, "VertBarCol", column_index)
         put(bars, "VertBarDirection", _BOTH)
         put(bars, "VertBarType", _READ_FROM_DATA)
+        if color is not None:
+            put(get(bars, "line"), "foreColor", color)
+            put(get(bars, "VertLine"), "foreColor", color)
     except Exception as exc:
         raise EngineError("grapher_errorbar_create_failed", str(exc), engine="grapher") from exc
 
@@ -44,6 +47,8 @@ def read_y_error(plot: Any) -> dict[str, Any]:
             "column_index": column_index,
             "direction": "y",
             "symmetric": True,
+            "line_color": int(get(get(bars, "line"), "foreColor")),
+            "cap_color": int(get(get(bars, "VertLine"), "foreColor")),
         }
     except Exception as exc:
         raise EngineError("grapher_errorbar_readback_failed", str(exc), engine="grapher") from exc

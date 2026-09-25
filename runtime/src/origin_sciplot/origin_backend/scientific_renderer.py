@@ -1043,6 +1043,26 @@ def _style_legend(
     return legend
 
 
+def _keep_legend_on_page(op: Any, layer: Any, legend: Any | None) -> None:
+    """Correct inherited template legends that export outside the graph page."""
+
+    if legend is None:
+        return
+    page_width = float(op.lt_float("page.width"))
+    page_height = float(op.lt_float("page.height"))
+    left = float(legend.get_float("left"))
+    top = float(legend.get_float("top"))
+    width = float(legend.get_float("width"))
+    height = float(legend.get_float("height"))
+    if 0 <= left and 0 <= top and left + width <= page_width and top + height <= page_height:
+        return
+    geometry = read_layer_geometry_percent(op, layer)
+    legend.set_int("attach", 1)
+    legend.set_float("left", page_width * (float(geometry["left_percent"]) + 2) / 100)
+    legend.set_float("top", page_height * (float(geometry["top_percent"]) + 2) / 100)
+    op.lt_exec("doc -uw;")
+
+
 def _add_bland_altman_labels(
     op: Any,
     layer: Any,
@@ -1642,10 +1662,11 @@ def _build_origin_graph(
 
     bland_labels = _add_bland_altman_labels(op, layer, preparation)
     title_labels.update(bland_labels)
+    _keep_legend_on_page(op, layer, legend)
 
     axis_state = _read_axis_state(op, layer, preparation)
     axis_state["x.label.rotate"] = layer.get_float("x.label.rotate")
-    title_state = _title_geometry(op, title_labels)
+    title_state = _title_geometry(op, {**title_labels, **({"legend": legend} if legend is not None else {})})
     expected_text = {name: style.axis_title_size_pt for name in title_labels}
     for name in bland_labels:
         expected_text[name] = float(round(style.legend_size_pt * 0.88))

@@ -55,13 +55,13 @@
     },
     {
       "path": "src/grapher_sciplot/engine.py",
-      "size_bytes": 30459,
-      "sha256": "06662a05ddd562bc6f0fc4ecace74d1d1e69f47ed30d1c79a75405f2d5d127a8"
+      "size_bytes": 36471,
+      "sha256": "b806b0e57cf6f8bde1e726cbf7cef0aca07c729140ac916f0218836d37ab835f"
     },
     {
       "path": "src/grapher_sciplot/error_bar.py",
-      "size_bytes": 1669,
-      "sha256": "4580f2d4da0db281f7d679f7acced6965f3ff184dda64600512eeb610e85174e"
+      "size_bytes": 1981,
+      "sha256": "0cec3bae782f4be937220b8918b8495448673a12d4017b490352c8a9c57f49d4"
     },
     {
       "path": "src/grapher_sciplot/smoke.py",
@@ -165,8 +165,8 @@
     },
     {
       "path": "src/origin_sciplot/origin_backend/scientific_renderer.py",
-      "size_bytes": 71215,
-      "sha256": "598eeb189898522e7ea474956eecf158333905f3b4ff7f098da510d33bc66f52"
+      "size_bytes": 72187,
+      "sha256": "fffa04c71d588e5d7ddd00fc460f94c6fdae7e5613c07440b9c7a9cbedeb3c01"
     },
     {
       "path": "src/origin_sciplot/origin_backend/session.py",

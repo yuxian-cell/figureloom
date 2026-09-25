@@ -193,3 +193,76 @@ def test_real_symmetric_y_error_round_trip(
     assert Path(result["editable"]).read_bytes().startswith(b"Grapher")
     assert Path(result["exports"]["png"]).read_bytes().startswith(b"\x89PNG")
     assert Path(result["exports"]["pdf"]).read_bytes().startswith(b"%PDF")
+
+
+@pytest.mark.grapher
+@pytest.mark.skipif(os.name != "nt", reason="Grapher COM requires Windows")
+@pytest.mark.parametrize("name", ["simple", "grouped", "simple_error", "grouped_error"])
+def test_real_native_category_bar_round_trip(tmp_path: Path, name: str) -> None:
+    pytest.importorskip("pythoncom")
+    try:
+        discover()
+    except SmokeFailure as exc:
+        pytest.skip(str(exc))
+    source = tmp_path / "实验类别.csv"
+    source.write_bytes((ROOT / "tests/fixtures/grapher_bar" / f"{name}.csv").read_bytes())
+    columns = source.read_text(encoding="utf-8").splitlines()[0].split(",")
+    mapping = {
+        "assignments": {
+            column: "category" if column == "Group" else "error" if column.endswith("_SD") else "series"
+            for column in columns
+        }
+    }
+    proposal = core.understand_data(source, template_id="bar", mapping=mapping, engine_home=ROOT / "runtime")
+    plan = core.build_plan(
+        source,
+        template_id="bar",
+        claim="Response differs across groups.",
+        evidence_role="comparison",
+        mapping=mapping,
+        semantic_confirmation=proposal["confirmation_gate"]["confirmation_payload_template"],
+        engine_home=ROOT / "runtime",
+    )
+    plan_file = tmp_path / "render-plan.json"
+    plan_file.write_text(json.dumps(plan, ensure_ascii=False), encoding="utf-8")
+    output = tmp_path / "bar"
+    cli = ROOT / "skill/editaplot/scripts/editaplot.py"
+    rendered = subprocess.run(
+        [
+            sys.executable,
+            str(cli),
+            "render",
+            str(plan_file),
+            "--engine",
+            "grapher",
+            "--output-dir",
+            str(output),
+        ],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        env={**os.environ, "PYTHONIOENCODING": "utf-8"},
+        check=False,
+    )
+    assert rendered.returncode == 0, rendered.stderr
+    report = json.loads((output / "grapher_verify_report.json").read_text(encoding="utf-8"))
+    assert report["status"] == "ok"
+    assert all(report["checks"].values())
+    assert report["readback"]["category_column"] == "Group"
+    assert report["readback"]["category_labels"]["mode"] == 2
+    expected_y = [column for column in columns if column not in {"Group"} and not column.endswith("_SD")]
+    assert [plot["y_column"] for plot in report["readback"]["plots"]] == expected_y
+    assert [plot["name"] for plot in report["readback"]["plots"]] == expected_y
+    if len(expected_y) > 1:
+        assert report["readback"]["legends"][0]["entries"] == expected_y
+    for plot in report["readback"]["plots"]:
+        error = plot["error"]
+        if name.endswith("error"):
+            assert error.get("column") == f"{plot['name']}_SD"
+        else:
+            assert not error["present"]
+        if error["present"]:
+            assert error["line_color"] == error["cap_color"] == plot["fill_color"]
+    assert (output / "result.grf").read_bytes().startswith(b"Grapher")
+    assert (output / "result.png").read_bytes().startswith(b"\x89PNG")
+    assert (output / "result.pdf").read_bytes().startswith(b"%PDF")

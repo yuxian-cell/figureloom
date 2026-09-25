@@ -134,16 +134,25 @@ def test_invalid_error_columns_and_shapes_have_structured_codes(tmp_path: Path) 
 
 
 def test_native_errorbar_properties_and_failure_codes(monkeypatch: pytest.MonkeyPatch) -> None:
-    plot = {"ErrorBars": {"HorzBarType": 0, "VertBarType": 0}}
+    plot = {
+        "ErrorBars": {
+            "HorzBarType": 0,
+            "VertBarType": 0,
+            "line": {"foreColor": 0},
+            "VertLine": {"foreColor": 0},
+        }
+    }
     monkeypatch.setattr(error_bar, "get", lambda obj, name: obj[name])
     monkeypatch.setattr(error_bar, "put", lambda obj, name, value: obj.__setitem__(name, value))
     assert error_bar.read_y_error(plot) == {"present": False}
-    error_bar.add_y_error(plot, 3)
+    error_bar.add_y_error(plot, 3, color=123)
     assert error_bar.read_y_error(plot) == {
         "present": True,
         "column_index": 3,
         "direction": "y",
         "symmetric": True,
+        "line_color": 123,
+        "cap_color": 123,
     }
     plot["ErrorBars"]["VertBarDirection"] = 1
     with pytest.raises(EngineError) as raised:

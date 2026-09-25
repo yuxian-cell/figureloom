@@ -142,8 +142,8 @@ def _optional_get(obj: Any, name: str) -> Any | None:
         return None
 
 
-def _plot_mode(symbol_frequency: int, line_width: float) -> str:
-    if line_width > 0:
+def _plot_mode(symbol_frequency: int, line_style: str) -> str:
+    if line_style.casefold() != "invisible":
         return "xy_line"
     return "xy_scatter" if symbol_frequency > 0 else "unknown"
 
@@ -218,12 +218,12 @@ class GrapherEngine:
     def _prepare(plan: dict[str, Any]) -> tuple[dict[str, Any], pd.DataFrame]:
         render_spec = plan.get("render_spec")
         route = plan["template"]["id"]
-        if route not in {"scatter", "trend", "line_error"} or not isinstance(render_spec, dict):
+        if route not in {"scatter", "trend", "line_error", "bar"} or not isinstance(render_spec, dict):
             raise EngineError(
                 "grapher_route_unsupported",
-                "Grapher currently supports the confirmed scatter, trend, and line_error routes.",
+                "Grapher supports scatter, trend, line_error, and bar routes.",
                 engine="grapher",
-                supported_templates=["scatter", "trend", "line_error"],
+                supported_templates=["scatter", "trend", "line_error", "bar"],
             )
         if plan.get("reference_adaptation") is not None or plan.get("reference_style") is not None:
             raise EngineError(
@@ -233,17 +233,19 @@ class GrapherEngine:
             )
         data = render_spec.get("data")
         chart_type = render_spec.get("chart_type")
+        is_bar = route == "bar"
         if (
-            chart_type not in {"xy_scatter", "xy_line"}
+            chart_type not in {"xy_scatter", "xy_line", "simple_bar", "grouped_bar"}
             or (route == "scatter") != (chart_type == "xy_scatter")
+            or is_bar != (chart_type in {"simple_bar", "grouped_bar"})
             or not isinstance(data, dict)
         ):
             raise EngineError(
                 "grapher_route_unsupported",
-                "The Grapher route requires scatter/xy_scatter or trend/line_error with xy_line.",
+                "The Grapher chart type does not match its template route.",
                 engine="grapher",
             )
-        x_column = data.get("x")
+        x_column = data.get("category") if is_bar else data.get("x")
         y_columns = data.get("y")
         if (
             not isinstance(x_column, str)
@@ -251,10 +253,12 @@ class GrapherEngine:
             or not y_columns
             or any(not isinstance(column, str) for column in y_columns)
             or (chart_type == "xy_scatter" and len(y_columns) != 1)
+            or (chart_type == "simple_bar" and len(y_columns) != 1)
+            or (chart_type == "grouped_bar" and len(y_columns) < 2)
         ):
             raise EngineError(
                 "grapher_route_unsupported",
-                "Grapher requires one X column and at least one Y series; scatter uses one Y.",
+                "Grapher requires a category/X column and the series count required by this route.",
                 engine="grapher",
             )
         y_errors = data.get("y_errors") or {}
@@ -294,14 +298,32 @@ class GrapherEngine:
                 raise EngineError(
                     "missing_error_column", f"Error column {missing[0]!r} is missing.", engine="grapher"
                 )
+            if x_column not in frame:
+                raise EngineError(
+                    "invalid_category" if is_bar else "grapher_data_staging_failed",
+                    f"Anchor column {x_column!r} is missing.",
+                    engine="grapher",
+                )
+            missing_y = [column for column in y_columns if column not in frame]
+            if missing_y:
+                raise EngineError(
+                    "missing_value_column", f"Value column {missing_y[0]!r} is missing.", engine="grapher"
+                )
             selected = frame[[x_column, *y_columns, *error_columns]].copy()
-            for column in selected.columns:
+            if is_bar and (
+                bool(selected[x_column].isna().any())
+                or bool(selected[x_column].astype(str).str.strip().eq("").any())
+            ):
+                raise EngineError("invalid_category", "Bar categories must be nonempty.", engine="grapher")
+            for column in selected.columns[1:] if is_bar else selected.columns:
                 try:
                     selected[column] = pd.to_numeric(selected[column], errors="raise")
                 except (TypeError, ValueError) as exc:
                     code = (
                         "error_column_not_numeric"
                         if column in error_columns
+                        else "value_column_not_numeric"
+                        if is_bar
                         else "grapher_data_staging_failed"
                     )
                     raise EngineError(code, f"Column {column!r} must be numeric.", engine="grapher") from exc
@@ -334,6 +356,8 @@ class GrapherEngine:
             graph_title = ""
             graph_title_linked = False
             graph_count = 0
+            category_column: str | None = None
+            category_labels: dict[str, Any] = {}
             for shape_index in range(1, int(get(shapes, "Count")) + 1):
                 shape = call(shapes, "Item", shape_index)
                 graph_plots = _optional_get(shape, "Plots")
@@ -345,9 +369,11 @@ class GrapherEngine:
                 graph_title_linked = bool(get(shape, "LinkTitleToObjectName"))
                 for plot_index in range(1, int(get(graph_plots, "Count")) + 1):
                     plot = call(graph_plots, "Item", plot_index)
+                    bar_plot = _optional_get(plot, "Stacked") is not None
                     symbol_frequency = int(_optional_get(plot, "symbolFreq") or 0)
                     line = get(plot, "line")
                     line_width = float(_optional_get(line, "width") or 0.0)
+                    line_style = str(get(line, "style"))
                     worksheet = str(get(plot, "worksheet"))
                     error = read_y_error(plot)
                     if error["present"]:
@@ -361,9 +387,12 @@ class GrapherEngine:
                                 "Could not resolve native error-column assignment.",
                                 engine="grapher",
                             ) from exc
+                    if bar_plot:
+                        with Path(worksheet).open(encoding="utf-8-sig", newline="") as stream:
+                            category_column = next(csv.reader(stream))[0]
                     plots.append(
                         {
-                            "type": _plot_mode(symbol_frequency, line_width),
+                            "type": "bar" if bar_plot else _plot_mode(symbol_frequency, line_style),
                             "name": str(get(plot, "Name")),
                             "x_column_index": int(get(plot, "xCol")),
                             "y_column_index": int(get(plot, "yCol")),
@@ -371,8 +400,12 @@ class GrapherEngine:
                             "error": error,
                             "symbol_frequency": symbol_frequency,
                             "line_width": line_width,
-                            "line_enabled": line_width > 0,
+                            "line_enabled": line_style.casefold() != "invisible",
+                            "line_style": line_style,
                             "line_color": int(get(line, "foreColor")),
+                            "fill_color": int(get(get(plot, "Fill"), "foreColor")) if bar_plot else None,
+                            "stacked": bool(get(plot, "Stacked")) if bar_plot else None,
+                            "orientation": int(get(plot, "Orientation")) if bar_plot else None,
                             "object_type": int(get(plot, "Type")),
                         }
                     )
@@ -396,11 +429,25 @@ class GrapherEngine:
                             "title": str(get(title, "text")),
                             "object_type": int(get(axis, "Type")),
                         }
+                        if key == "x" and any(item["type"] == "bar" for item in plots):
+                            ticks = get(axis, "TickLabels")
+                            category_labels = {
+                                "mode": int(get(ticks, "Mode")),
+                                "data_column_index": int(get(ticks, "WorksheetDataCol")),
+                                "label_column_index": int(get(ticks, "WorksheetLabelCol")),
+                                "first_row": int(get(ticks, "FirstLabelRow")),
+                                "worksheet": str(get(ticks, "worksheet")),
+                            }
             return {
                 "engine": "grapher",
                 "document": {"opened": True, "path": str(artifact)},
                 "graph_count": graph_count,
                 "series_count": len(plots),
+                "chart_type": ("simple_bar" if len(plots) == 1 else "grouped_bar")
+                if category_column
+                else (plots[0]["type"] if plots else "unknown"),
+                "category_column": category_column,
+                "category_labels": category_labels,
                 "graph_title": graph_title,
                 "graph_title_linked_to_name": graph_title_linked,
                 "plots": plots,
@@ -434,9 +481,10 @@ class GrapherEngine:
         editaplot_core.validate_plan(plan)
         render_spec, frame = self._prepare(plan)
         data = render_spec["data"]
-        x_column, y_columns = data["x"], data["y"]
-        y_errors = data.get("y_errors") or {}
         chart_type = render_spec["chart_type"]
+        is_bar = chart_type in {"simple_bar", "grouped_bar"}
+        x_column, y_columns = (data["category"] if is_bar else data["x"]), data["y"]
+        y_errors = data.get("y_errors") or {}
         axes_spec = render_spec["axes"]
         style = render_spec.get("style") or {}
         size = render_spec.get("size_inches") or {}
@@ -455,29 +503,59 @@ class GrapherEngine:
         with _application(visible=True) as (app, application):
             try:
                 document = call(get(app, "Documents"), "Add", 0)
-                graph = call(get(document, "Shapes"), "AddLinePlotGraph", str(staging), 1, 2)
+                graph = call(
+                    get(document, "Shapes"),
+                    "AddBarChartGraph" if is_bar else "AddLinePlotGraph",
+                    str(staging),
+                    0 if is_bar else 1,
+                    2,
+                )
                 put(graph, "width", float(size.get("width", 6.5)))
                 put(graph, "height", float(size.get("height", 4.5)))
                 for index, column in enumerate(y_columns):
                     plot = (
                         call(get(graph, "Plots"), "Item", 1)
                         if index == 0
-                        else call(graph, "AddLinePlot", str(staging), 1, frame.columns.get_loc(column) + 1)
+                        else call(
+                            graph,
+                            "AddBarChart" if is_bar else "AddLinePlot",
+                            str(staging),
+                            0 if is_bar else 1,
+                            frame.columns.get_loc(column) + 1,
+                        )
                     )
                     put(plot, "Name", column)
-                    put(plot, "xCol", 1)
+                    put(plot, "xCol", 0 if is_bar else 1)
                     put(plot, "yCol", frame.columns.get_loc(column) + 1)
-                    symbol_frequency, line_width = _visual_mode(chart_type, style)
-                    put(plot, "symbolFreq", symbol_frequency)
-                    line = get(plot, "line")
-                    put(line, "width", line_width)
                     color = _color_value(series_colors[index])
-                    put(line, "foreColor", color)
-                    symbol = get(plot, "symbol")
-                    put(symbol, "size", max(0.06, float(style.get("marker_size_pt") or 7.0) / 72.0))
-                    put(get(symbol, "Fill"), "foreColor", color)
+                    if is_bar:
+                        call(plot, "SetPlotType", 31)  # Grapher grfVBarChart.
+                        put(plot, "Stacked", False)
+                        put(get(plot, "Fill"), "foreColor", color)
+                        put(get(plot, "line"), "foreColor", color)
+                    else:
+                        symbol_frequency, line_width = _visual_mode(chart_type, style)
+                        put(plot, "symbolFreq", symbol_frequency)
+                        if chart_type == "xy_scatter":
+                            call(plot, "SetPlotType", 28)  # Grapher grfScatterPlot.
+                        line = get(plot, "line")
+                        if chart_type == "xy_line":
+                            put(line, "width", line_width)
+                        put(line, "foreColor", color)
+                        symbol = get(plot, "symbol")
+                        put(symbol, "size", max(0.06, float(style.get("marker_size_pt") or 7.0) / 72.0))
+                        put(get(symbol, "Fill"), "foreColor", color)
                     if column in y_errors:
-                        add_y_error(plot, frame.columns.get_loc(y_errors[column]["column"]) + 1)
+                        add_y_error(plot, frame.columns.get_loc(y_errors[column]["column"]) + 1, color=color)
+                if is_bar:
+                    put(graph, "GroupsAdjacent", True)
+                    labels = get(call(get(graph, "Axes"), "Item", 1), "TickLabels")
+                    put(labels, "worksheet", str(staging))
+                    put(labels, "WorksheetDataCol", 0)
+                    put(labels, "WorksheetLabelCol", 1)
+                    put(labels, "AutoFirstLabelRow", False)
+                    put(labels, "FirstLabelRow", 2)
+                    put(labels, "Mode", 2)  # Grapher grfLabelsWorksheet.
                 if len(y_columns) > 1:
                     call(graph, "AddLegend", True)
                 axes = get(graph, "Axes")
@@ -520,7 +598,7 @@ class GrapherEngine:
             },
             "expected": {
                 "chart_type": chart_type,
-                "x_column": x_column,
+                "category_column" if is_bar else "x_column": x_column,
                 "y_columns": y_columns,
                 "y_errors": y_errors,
                 "colors": series_colors,
@@ -590,37 +668,55 @@ class GrapherEngine:
             expected = manifest["expected"]
             y_columns = expected.get("y_columns") or [expected["y_column"]]
             y_errors = expected.get("y_errors") or {}
+            chart_type = expected["chart_type"]
+            is_bar = chart_type in {"simple_bar", "grouped_bar"}
+            anchor = expected["category_column"] if is_bar else expected["x_column"]
             staging_info = manifest["staging"]
             staging_path = Path(staging_info["path"]).resolve()
             staging_columns: list[str] = []
             if staging_path.is_file():
                 with staging_path.open(encoding="utf-8-sig", newline="") as stream:
                     staging_columns = next(csv.reader(stream), [])
-                staging_ok = (
-                    _sha256(staging_path) == staging_info["sha256"]
-                    and staging_columns
-                    == staging_info.get("columns", [expected["x_column"], *y_columns])
-                )
+                staging_ok = _sha256(staging_path) == staging_info[
+                    "sha256"
+                ] and staging_columns == staging_info.get("columns", [anchor, *y_columns])
             readback = self.readback(expected_files["editable"])
             plots = readback.get("plots", [])
-            chart_type = expected["chart_type"]
             bindings_ok = (
                 readback.get("graph_count") == 1
                 and len(plots) == len(y_columns)
                 and all(
-                    plot.get("x_column_index") == 1
+                    plot.get("x_column_index") == (0 if is_bar else 1)
                     and plot.get("y_column_index") == staging_columns.index(column) + 1
                     and Path(plot.get("worksheet", "")).resolve() == staging_path
                     and ("y_columns" not in expected or plot.get("name") == column)
                     for plot, column in zip(plots, y_columns, strict=True)
                 )
             )
-            mode_ok = all(
-                plot.get("type") == chart_type
-                and bool(plot.get("line_enabled")) == (chart_type == "xy_line")
-                and (chart_type != "xy_scatter" or plot.get("symbol_frequency", 0) > 0)
-                for plot in plots
-            ) and bool(plots)
+            if is_bar:
+                labels = readback.get("category_labels", {})
+                mode_ok = (
+                    readback.get("chart_type") == chart_type
+                    and readback.get("category_column") == anchor
+                    and labels.get("mode") == 2
+                    and labels.get("data_column_index") == 0
+                    and labels.get("label_column_index") == 1
+                    and labels.get("first_row") == 2
+                    and Path(labels.get("worksheet", "")).resolve() == staging_path
+                    and all(
+                        plot.get("type") == "bar"
+                        and plot.get("stacked") is False
+                        and plot.get("orientation") == 0
+                        for plot in plots
+                    )
+                )
+            else:
+                mode_ok = all(
+                    plot.get("type") == chart_type
+                    and bool(plot.get("line_enabled")) == (chart_type == "xy_line")
+                    and (chart_type != "xy_scatter" or plot.get("symbol_frequency", 0) > 0)
+                    for plot in plots
+                ) and bool(plots)
             error_bindings_ok = len(plots) == len(y_columns) and all(
                 (
                     plot.get("error", {}).get("present") is True
@@ -629,6 +725,13 @@ class GrapherEngine:
                     == staging_columns.index(y_errors[column]["column"]) + 1
                     and plot["error"].get("direction") == "y"
                     and plot["error"].get("symmetric") is True
+                    and (
+                        "colors" not in expected
+                        or plot["error"].get("line_color")
+                        == _color_value(expected["colors"][y_columns.index(column)])
+                        and plot["error"].get("cap_color")
+                        == _color_value(expected["colors"][y_columns.index(column)])
+                    )
                 )
                 if column in y_errors
                 else not plot.get("error", {}).get("present", False)
@@ -640,7 +743,7 @@ class GrapherEngine:
             colors_ok = "colors" not in expected or (
                 len(plots) == len(expected["colors"])
                 and all(
-                    plot.get("line_color") == _color_value(color)
+                    plot.get("fill_color" if is_bar else "line_color") == _color_value(color)
                     for plot, color in zip(plots, expected["colors"], strict=True)
                 )
             )
@@ -654,7 +757,7 @@ class GrapherEngine:
             )
             if bindings_ok and staging_ok:
                 for plot, column in zip(plots, y_columns, strict=True):
-                    plot["x_column"] = expected["x_column"]
+                    plot["category_column" if is_bar else "x_column"] = anchor
                     plot["y_column"] = column
         except Exception as exc:
             error = {"code": getattr(exc, "code", "grapher_verify_failed"), "message": str(exc)}

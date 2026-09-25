@@ -2027,6 +2027,9 @@ def _render_spec(plot_spec: Any, palette: dict[str, Any]) -> dict[str, Any] | No
         "x": getattr(plot_spec, "x_column", None),
         "y": [getattr(item, "source_column", None) for item in series],
     }
+    category = getattr(plot_spec, "category_column", None)
+    if category and getattr(plot_spec, "plot_kind", None) == "bar_error":
+        data["category"] = category
     y_errors = {
         item.source_column: {
             "column": item.error_column,
@@ -2044,6 +2047,7 @@ def _render_spec(plot_spec: Any, palette: dict[str, Any]) -> dict[str, Any] | No
             "scatter": "xy_scatter",
             "line": "xy_line",
             "line_error": "xy_line",
+            "bar_error": "simple_bar" if len(series) == 1 else "grouped_bar",
         }.get(getattr(plot_spec, "plot_kind", None), getattr(plot_spec, "plot_kind", None)),
         "data": data,
         "axes": {
