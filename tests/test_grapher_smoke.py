@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
 import sys
 import types
 from pathlib import Path
@@ -85,6 +86,27 @@ def test_activation_error_is_normalized(monkeypatch: pytest.MonkeyPatch, tmp_pat
     assert json.loads(Path(result["report_path"]).read_text(encoding="utf-8")) == result
 
 
+def test_owned_cleanup_forces_only_its_pid_after_com_quit_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    running = {42}
+    killed: list[tuple[int, int]] = []
+    monkeypatch.setattr(smoke, "grapher_pids", lambda: set(running))
+    monkeypatch.setattr(
+        smoke, "call", lambda *_args: (_ for _ in ()).throw(RuntimeError("RPC unavailable"))
+    )
+    monkeypatch.setattr(smoke.time, "sleep", lambda _seconds: None)
+
+    def kill(pid: int, sig: int) -> None:
+        killed.append((pid, sig))
+        running.remove(pid)
+
+    monkeypatch.setattr(smoke.os, "kill", kill)
+
+    assert smoke.quit_owned_application(object(), 42) is None
+    assert killed == [(42, smoke.signal.SIGTERM)]
+
+
 def test_cli_routes_grapher_smoke_without_origin(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
@@ -95,13 +117,29 @@ def test_cli_routes_grapher_smoke_without_origin(
 
 
 @pytest.mark.skipif(os.name != "nt", reason="Grapher COM requires Windows")
+@pytest.mark.grapher
 def test_real_grapher_smoke(tmp_path: Path) -> None:
     pytest.importorskip("pythoncom")
     try:
         smoke.discover()
     except smoke.SmokeFailure as exc:
         pytest.skip(str(exc))
-    result = smoke.run_smoke(tmp_path / "中文")
+    completed = subprocess.run(  # noqa: S603 - fixed local CLI and test-created output
+        [
+            sys.executable,
+            str(ROOT / "skill" / "editaplot" / "scripts" / "editaplot.py"),
+            "grapher-smoke",
+            "--output-dir",
+            str(tmp_path / "中文"),
+        ],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        env={**os.environ, "PYTHONIOENCODING": "utf-8"},
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
+    result = json.loads(completed.stdout)
     assert result["status"] == "ok", result.get("error")
     assert result["readback"]["document_opened"] is True
     assert result["readback"]["graph_count"] >= 1

@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "source_policy": "curated EditaPlot runtime; caches, tests, builds, outputs, binaries, and local paths excluded",
-  "file_count": 425,
+  "file_count": 430,
   "files": [
     {
       "path": "LICENSE",
@@ -15,8 +15,8 @@
     },
     {
       "path": "pyproject.toml",
-      "size_bytes": 1071,
-      "sha256": "c0c9173f0468f6ec3440cec9280a9a069aea09d1ed93dbf40653adb355dd0c78"
+      "size_bytes": 1138,
+      "sha256": "38592e4402e02c2da262927ce66f0c5dfc0259157d06ee3ff6948b3745e62df0"
     },
     {
       "path": "requirements-runtime.lock",
@@ -29,14 +29,39 @@
       "sha256": "b8db9b07d8a7dc430b3b7b0f89dc5c5143965bc5810d64e8232770f33e69b7e3"
     },
     {
+      "path": "src/editaplot_engine/__init__.py",
+      "size_bytes": 370,
+      "sha256": "f21f6a35d2ab66586990b4449e616650567f705854b8e6171619cf0f77cca7d4"
+    },
+    {
+      "path": "src/editaplot_engine/models.py",
+      "size_bytes": 2651,
+      "sha256": "70ef1a13923a52c55313963678f6d9e4e34f1405bc56cb1479ea2c7273917f73"
+    },
+    {
+      "path": "src/editaplot_engine/origin.py",
+      "size_bytes": 6656,
+      "sha256": "2af164d6c36f05b2391b4ac477fef0c4284ff303d38f3addf0663f39040f5d91"
+    },
+    {
+      "path": "src/editaplot_engine/registry.py",
+      "size_bytes": 979,
+      "sha256": "6c4437a58f57074e0567806498384365f786d93cfd8787d5d2e5e0f6be765db5"
+    },
+    {
       "path": "src/grapher_sciplot/__init__.py",
       "size_bytes": 68,
       "sha256": "0313a386f270650ff47bfdbb8bdced289f9c765d9ce99be7a797a2183847ee9c"
     },
     {
+      "path": "src/grapher_sciplot/engine.py",
+      "size_bytes": 19567,
+      "sha256": "93b43d3da3c83f72a6f963e3bffe3487211afabf5dafdaab9c0ddff5e242b35c"
+    },
+    {
       "path": "src/grapher_sciplot/smoke.py",
-      "size_bytes": 10212,
-      "sha256": "33f52fff3bfecf71c0f3ca659ccabe009c06af6f8df58608210da9f863bbc248"
+      "size_bytes": 11310,
+      "sha256": "7ed5ca3e4a07d2f2f57a8cf48356d62d3be1f7a3e4e33224a1d3fcc04d46aeaa"
     },
     {
       "path": "src/origin_sciplot/__init__.py",

@@ -1,11 +1,14 @@
 __pycache__/
 *.py[cod]
 .pytest_cache/
+.pytest-*/
 .ruff_cache/
 .mypy_cache/
 
 .venv/
 .editaplot-venv/
+.test-venv/
+.phase2-e2e/
 .editaplot-venv.build-*/
 .editaplot-venv.stale-*/
 .editaplot-environment.lock
