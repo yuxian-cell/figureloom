@@ -17,7 +17,6 @@ from editaplot_core import (
     build_medical_panel_plan,
     build_origin_smoke_command,
     build_plan,
-    build_worker_command,
     catalog,
     doctor,
     inspect_data,
@@ -29,7 +28,6 @@ from editaplot_core import (
     review_reference_figure,
     start_session,
     understand_data,
-    verify_output,
     write_json,
 )
 
@@ -39,6 +37,10 @@ def _engine_option(parser: argparse.ArgumentParser) -> None:
         "--engine-home",
         help="Source engine root; defaults to EDITAPLOT_ENGINE_HOME or local discovery.",
     )
+
+
+def _backend_option(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--engine", default="origin", help="Rendering engine: origin or grapher.")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -52,6 +54,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Create a project-local environment and install audited Python dependencies only.",
     )
     _engine_option(doctor_parser)
+    _backend_option(doctor_parser)
 
     repair_parser = subparsers.add_parser(
         "repair-environment",
@@ -152,13 +155,24 @@ def build_parser() -> argparse.ArgumentParser:
 
     render_parser = subparsers.add_parser(
         "render",
-        help="Execute an approved render plan through the local Origin application",
+        help="Execute an approved render plan through the selected native application",
     )
     render_parser.add_argument("plan_file")
     render_parser.add_argument("--python", dest="python_executable")
     render_parser.add_argument("--output-dir")
     render_parser.add_argument("--close-origin", action="store_true")
     _engine_option(render_parser)
+    _backend_option(render_parser)
+
+    generic_smoke_parser = subparsers.add_parser(
+        "smoke", help="Run the selected engine's native automation smoke test"
+    )
+    generic_smoke_parser.add_argument("--output-dir", required=True)
+    generic_smoke_parser.add_argument("--python", dest="python_executable")
+    generic_smoke_parser.add_argument("--hidden", action="store_true")
+    generic_smoke_parser.add_argument("--keep-application-open", action="store_true")
+    _engine_option(generic_smoke_parser)
+    _backend_option(generic_smoke_parser)
 
     smoke_parser = subparsers.add_parser(
         "origin-smoke",
@@ -177,9 +191,11 @@ def build_parser() -> argparse.ArgumentParser:
     grapher_smoke_parser.add_argument("--hidden", action="store_true")
     _engine_option(grapher_smoke_parser)
 
-    verify_parser = subparsers.add_parser("verify", help="Check required Origin run artifacts")
+    verify_parser = subparsers.add_parser("verify", help="Check required engine artifacts")
     verify_parser.add_argument("output_directory")
     verify_parser.add_argument("--output")
+    _engine_option(verify_parser)
+    _backend_option(verify_parser)
 
     panel_parser = subparsers.add_parser(
         "panel-plan",
@@ -258,7 +274,9 @@ def _ensure_verify_output_does_not_replace_artifact(
             "result.pdf",
             "result.tif",
             "result.opju",
+            "result.grf",
             "origin_verify_report.json",
+            "grapher_verify_report.json",
             "validation_report.json",
         )
     ]
@@ -311,35 +329,39 @@ def _start_worker_process(
 
 def _run_render(args: argparse.Namespace) -> int:
     plan = load_json(args.plan_file)
-    command, env, engine_root = build_worker_command(
+    engine = _selected_engine(args)
+    result = engine.render(
         plan,
         plan_file=args.plan_file,
         engine_home=args.engine_home,
         python_executable=args.python_executable,
         output_dir=args.output_dir,
-        close_origin=args.close_origin,
+        close_application=args.close_origin,
     )
-    start_event = {
-        "type": "editaplot_render_start",
-        "engine_home": str(engine_root),
-        "template_id": plan["template"]["id"],
-        "source_sha256": plan["source"]["sha256"],
-        "origin_callability_check": "worker_connection",
-    }
-    print(json.dumps(start_event, ensure_ascii=False), flush=True)
-    process = _start_worker_process(
-        command,
-        engine_root=engine_root,
-        environment=env,
-        label="Origin render worker",
+    if engine.name != "origin":
+        _emit(result.to_dict())
+    return 0
+
+
+def _selected_engine(args: argparse.Namespace) -> Any:
+    bootstrap_engine(getattr(args, "engine_home", None))
+    from editaplot_engine import get_engine
+
+    return get_engine(getattr(args, "engine", "origin"))
+
+
+def _run_smoke(args: argparse.Namespace) -> int:
+    engine = _selected_engine(args)
+    report = engine.smoke(
+        args.output_dir,
+        engine_home=args.engine_home,
+        python_executable=args.python_executable,
+        visible=not args.hidden,
+        keep_application_open=args.keep_application_open,
     )
-    stdout = process.stdout
-    if stdout is None:
-        process.kill()
-        raise EditaPlotError("worker_pipe_missing", "Could not read the Origin worker output stream.")
-    for line in stdout:
-        print(line.rstrip("\r\n"), flush=True)
-    return int(process.wait())
+    if engine.name != "origin":
+        _emit(report)
+    return 0 if report.get("status") not in {"failed", "error"} else 2
 
 
 def _run_origin_smoke(args: argparse.Namespace) -> int:
@@ -383,8 +405,17 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
         if args.command == "doctor":
-            before = doctor(engine_home=args.engine_home)
+            before = (
+                doctor(engine_home=args.engine_home)
+                if args.engine == "origin"
+                else _selected_engine(args).doctor(engine_home=args.engine_home)
+            )
             if args.repair and not before["ready_for_render"]:
+                if args.engine != "origin":
+                    raise EditaPlotError(
+                        "automatic_repair_unavailable",
+                        "Automatic dependency repair is currently available only for Origin.",
+                    )
                 if before["automatic_repair"]["available"]:
                     _emit(
                         {
@@ -533,6 +564,8 @@ def main(argv: list[str] | None = None) -> int:
             _emit(payload, args.output)
         elif args.command == "render":
             return _run_render(args)
+        elif args.command == "smoke":
+            return _run_smoke(args)
         elif args.command == "origin-smoke":
             return _run_origin_smoke(args)
         elif args.command == "grapher-smoke":
@@ -547,7 +580,10 @@ def main(argv: list[str] | None = None) -> int:
             return 0 if report["status"] == "ok" else 2
         elif args.command == "verify":
             _ensure_verify_output_does_not_replace_artifact(args.output_directory, args.output)
-            _emit(verify_output(args.output_directory), args.output)
+            report = _selected_engine(args).verify(args.output_directory)
+            _emit(report, args.output)
+            if args.engine != "origin" and report.get("status") == "failed":
+                return 2
         elif args.command == "panel-plan":
             _ensure_output_does_not_replace_input(args.config_file, args.output)
             _emit(
@@ -564,6 +600,12 @@ def main(argv: list[str] | None = None) -> int:
     except EditaPlotError as exc:
         print(json.dumps(exc.to_dict(), ensure_ascii=False, indent=2), file=sys.stderr, flush=True)
         return 2
+    except Exception as exc:
+        to_dict = getattr(exc, "to_dict", None)
+        if callable(to_dict) and hasattr(exc, "engine"):
+            print(json.dumps(to_dict(), ensure_ascii=False, indent=2), file=sys.stderr, flush=True)
+            return int(getattr(exc, "exit_code", 2))
+        raise
     except KeyboardInterrupt:
         print(json.dumps({"ok": False, "error": {"code": "cancelled"}}), file=sys.stderr)
         return 130

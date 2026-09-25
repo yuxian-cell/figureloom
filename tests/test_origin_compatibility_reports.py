@@ -233,10 +233,16 @@ def test_render_plan_freezes_data_dependent_optional_capabilities() -> None:
         engine_home=runtime,
     )
 
-    assert bar_plan["template"]["activated_optional_capabilities"] == ["error_bars"]
-    assert uv_plan["template"]["activated_optional_capabilities"] == ["inset_layer"]
-    assert stacked_plan["template"]["activated_optional_capabilities"] == ["error_bars"]
-    assert shap_plan["template"]["activated_optional_capabilities"] == [
+    assert bar_plan["backend_options"]["origin"]["activated_optional_capabilities"] == [
+        "error_bars"
+    ]
+    assert uv_plan["backend_options"]["origin"]["activated_optional_capabilities"] == [
+        "inset_layer"
+    ]
+    assert stacked_plan["backend_options"]["origin"]["activated_optional_capabilities"] == [
+        "error_bars"
+    ]
+    assert shap_plan["backend_options"]["origin"]["activated_optional_capabilities"] == [
         "dataset_color_scale",
         "horizontal_bar_layer",
         "multi_layer_page",

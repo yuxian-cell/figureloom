@@ -1,5 +1,9 @@
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+  "origin: tests that require a real local Origin/OriginPro installation",
+  "grapher: tests that require a real local Grapher installation",
+]
 
 [tool.ruff]
 line-length = 110

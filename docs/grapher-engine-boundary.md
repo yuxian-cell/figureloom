@@ -1,41 +1,69 @@
-# Grapher backend: phase 1 boundary and smoke
+# Engine boundary and Grapher backend
 
-## Current flow
+## Runtime flow
 
 ```text
-editaplot.cmd → bootstrap_editaplot.py → editaplot.py / editaplot_core.py
-    → inspect → recommend → understand → semantic confirmation → RenderPlan 1.3
-    → build_worker_command → origin_sciplot.workers.run_template_worker
-    → runtime/templates/<id>/runner.py → origin_sciplot.origin_backend
-    → Origin → OPJU + PNG/PDF/TIF + Origin object readback
+inspect → recommend → understand → semantic confirmation → RenderPlan 1.4
+    → Engine registry (default: origin)
+        ├── OriginEngine → existing origin_sciplot worker → OPJU + PNG/PDF/TIF
+        └── GrapherEngine → native Grapher COM objects → GRF + PNG/PDF
 ```
 
-`--engine-home` and `EDITAPLOT_ENGINE_HOME` locate the *runtime directory*. They do not select a drawing application. The runtime marker currently requires `origin_sciplot` and its worker.
+The Engine boundary is after `validate_plan` and before backend application launch. Analysis,
+scientific semantics, confirmation, palette choice, source identity, and output policy remain shared.
 
-## Boundary
+## Code ownership
 
-| Mostly software independent, though currently under `origin_sciplot` | Origin specific |
-| --- | --- |
-| `data_loader`, `scientific_workflow`, `semantic_analysis`, `semantic_contract`, `template_service`, `palette_catalog`, reference parsing/style, source hash and confirmation in `editaplot_core.py` | `origin_backend/`, `workers/origin_smoke_worker.py`, `workers/run_template_worker.py`, template `runner.py` files, OPJU/export/readback/verify code |
+| Shared | Origin | Grapher |
+| --- | --- | --- |
+| `editaplot_core.py`, RenderPlan, `editaplot_engine/models.py`, registry and CLI dispatch | `OriginEngine` adapts the unchanged `origin_sciplot` worker and verifier | `grapher_sciplot/engine.py` owns COM launch, native XY creation, GRF save, export, reopen, readback and verify |
 
-The insertion point is **after `validate_plan` and before `build_worker_command` launches an Origin worker**. `RenderPlan` 1.3 is not fully engine neutral: `template.origin_capability_profile`, `execution.keep_origin_open`, `origin_callability_check`, `required_outputs`, and the default target text encode Origin. The plan freezes a digest and `worker_mapping`, but does not serialize the full scientific `plot_spec`; the worker re-prepares it from the source. A Grapher renderer must perform the same source-hash, semantic-confirmation, mapping, and digest checks before translating the prepared plot specification into native Grapher objects.
+`grapher_sciplot` does not import `origin_sciplot`. The first formal Grapher route reads the frozen
+backend-neutral `render_spec` and creates a deterministic staging CSV from the original CSV/XLSX.
 
-## Phase 1 result
-
-`editaplot.cmd grapher-smoke [--output-dir <parent>] [--hidden]` creates a unique subdirectory with `smoke.csv`, native `smoke.grf`, Grapher-exported PNG/PDF, and `smoke-report.json`. It starts an isolated `Grapher.Application`, closes the document, reopens the GRF, and reads graph/plot/axis counts plus X/Y column assignments from the COM Object Model. The smoke does not use `RenderPlan` or change any Origin runner.
-
-The installed Grapher 27.1.296 type library lists the required methods, but several live COM DISPIDs differ from its generated Python wrapper. The PoC resolves method names against the live `IDispatch` for each call. It refuses to quit an application unless COM activation creates one new Grapher process.
-
-## Smallest next interface
+## Engine contract
 
 ```python
-class Engine:
+class Engine(Protocol):
+    name: str
     def detect(self) -> dict: ...
-    def smoke(self, output_dir) -> dict: ...
-    def render(self, confirmed_plan, output_dir) -> dict: ...
+    def doctor(self, *, engine_home=None) -> dict: ...
+    def smoke(self, output_dir, **options) -> dict: ...
+    def render(self, plan, *, plan_file, output_dir=None, **options) -> RenderResult: ...
+    def readback(self, artifact) -> dict: ...
     def verify(self, output_dir) -> dict: ...
 ```
 
-`render` owns launch, editable save, export, readback, and cleanup. Separate public methods for each step would expose application lifecycle details before any caller needs them. `OriginEngine` can delegate to the existing worker and `verify_output` without changing Origin rendering. `GrapherEngine` should initially accept one confirmed XY route and return a structured unsupported-template error for other routes. Add `--engine` with default `origin`; retain `--engine-home` for runtime discovery. An unknown engine should fail before COM activation. Keep old Origin plans valid and their output policy unchanged; introduce engine-specific plan fields/version only when Grapher render is ready.
+`RenderResult` exposes `engine`, `status`, `editable`, `exports`, neutral readback, and metadata.
+Unknown engines fail with `unknown_engine` and list `origin` and `grapher`.
 
-Likely touch points for phase 2: `skill/editaplot/scripts/editaplot.py`, `editaplot_core.py`, `runtime/src/grapher_sciplot/`, a small runtime Engine selector, and tests. Leave `runtime/src/origin_sciplot/origin_backend/` and existing `runtime/templates/*/runner.py` unchanged.
+## RenderPlan compatibility
+
+RenderPlan 1.4 adds:
+
+- `render_spec`: chart type, source column bindings, axis titles, basic style and dimensions;
+- `backend_options.origin`: capability profile, optional capabilities, lifecycle hint and outputs;
+- `backend_options.grapher`: required Grapher outputs.
+
+Origin-only fields were removed from `template` and `execution`. Version 1.3 plans remain accepted
+by the Origin adapter. The existing Origin worker, templates, graph construction and export code were
+not changed.
+
+## CLI
+
+```powershell
+editaplot doctor --engine grapher
+editaplot smoke --engine grapher --output-dir <directory>
+editaplot render render-plan.json --engine grapher
+editaplot verify <output-directory> --engine grapher
+```
+
+Omitting `--engine` selects Origin. `origin-smoke` and `grapher-smoke` remain compatibility aliases.
+`--engine-home` still locates the runtime and does not select a backend.
+
+## Phase 2 Grapher support
+
+The formal route supports one confirmed `xy_scatter` with exactly one X and one Y column. It maps
+the graph title, axis titles, symbol color/size and output dimensions. Verification requires nonempty
+native GRF/PNG/PDF signatures, successful GRF reopen, one XY scatter binding to staging columns 1/2,
+and matching X/Y titles. Other Grapher chart routes return `grapher_route_unsupported`.

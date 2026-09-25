@@ -601,14 +601,15 @@ def test_plan_is_hash_bound_and_builds_safe_worker_command(tmp_path: Path) -> No
     )
 
     assert plan["can_render"] is True
-    assert plan["execution"]["origin_callability_check"] == "performed_by_render_worker"
     assert plan["execution"]["output_directory_policy"] == "source_sibling_unique_folder"
     assert plan["execution"]["output_folder_pattern"] == ("<source_stem>_EditaPlot_YYYYMMDD_HHMMSS")
     assert plan["execution"]["render_plan_copy"] == "render-plan.json"
     assert "requires_manual_origin_start_confirmation" not in plan["execution"]
-    assert plan["template"]["origin_capability_profile"]["template_id"] == "xrd"
-    assert "core_2d" in plan["template"]["origin_capability_profile"]["required"]
-    assert plan["template"]["activated_optional_capabilities"] == []
+    origin_options = plan["backend_options"]["origin"]
+    assert origin_options["callability_check"] == "performed_by_render_worker"
+    assert origin_options["capability_profile"]["template_id"] == "xrd"
+    assert "core_2d" in origin_options["capability_profile"]["required"]
+    assert origin_options["activated_optional_capabilities"] == []
     assert command[:3] == [sys.executable, "-m", "origin_sciplot.workers.run_template_worker"]
     assert "--expected-plan-digest" in command
     assert command[command.index("--render-plan-file") + 1] == str(plan_file.resolve())
@@ -670,6 +671,32 @@ def test_previous_render_plan_schema_is_rejected() -> None:
         validate_plan(plan)
 
     assert raised.value.code == "plan_version_unsupported"
+
+
+def test_previous_render_plan_schema_remains_origin_compatible() -> None:
+    source = ENGINE / "templates" / "xrd" / "example_standard.csv"
+    plan = build_plan(
+        source,
+        template_id="xrd",
+        claim="The teaching patterns differ across the measured angle range.",
+        evidence_role="comparison",
+        semantic_confirmation=_semantic_confirmation(source, "xrd"),
+        engine_home=ENGINE,
+    )
+    origin = plan.pop("backend_options")["origin"]
+    plan["plan_version"] = "1.3"
+    plan["template"]["origin_capability_profile"] = origin["capability_profile"]
+    plan["template"]["activated_optional_capabilities"] = origin[
+        "activated_optional_capabilities"
+    ]
+    plan["execution"].update(
+        keep_origin_open=origin["keep_application_open"],
+        origin_callability_check=origin["callability_check"],
+        required_outputs=origin["required_outputs"],
+    )
+    plan["plan_hash"] = core._json_hash({key: value for key, value in plan.items() if key != "plan_hash"})
+
+    validate_plan(plan)
 
 
 def test_render_reaches_plan_validation_without_origin_confirmation_flag(tmp_path: Path) -> None:

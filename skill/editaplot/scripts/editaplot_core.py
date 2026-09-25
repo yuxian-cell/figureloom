@@ -29,7 +29,8 @@ except ImportError:  # pragma: no cover - supported runtime is CPython 3.10-3.12
         importlib_metadata = None  # type: ignore[assignment]
 
 
-PLAN_VERSION = "1.3"
+PLAN_VERSION = "1.4"
+SUPPORTED_PLAN_VERSIONS = frozenset({"1.3", PLAN_VERSION})
 MEDICAL_PANEL_PLAN_VERSION = "1.0"
 AUTO_SCORE_THRESHOLD = 0.84
 AUTO_MARGIN_THRESHOLD = 0.13
@@ -2016,6 +2017,36 @@ def _serialize(value: Any) -> Any:
     return value
 
 
+def _render_spec(plot_spec: Any, palette: dict[str, Any]) -> dict[str, Any] | None:
+    """Freeze the small backend-neutral plot contract engines actually consume."""
+
+    if plot_spec is None:
+        return None
+    series = getattr(plot_spec, "series", ())
+    return {
+        "chart_type": (
+            "xy_scatter"
+            if getattr(plot_spec, "plot_kind", None) == "scatter"
+            else getattr(plot_spec, "plot_kind", None)
+        ),
+        "data": {
+            "x": getattr(plot_spec, "x_column", None),
+            "y": [getattr(item, "source_column", None) for item in series],
+        },
+        "axes": {
+            "x": {"title": getattr(plot_spec, "x_title", "")},
+            "y": {"title": getattr(plot_spec, "y_title", "")},
+        },
+        "style": {
+            "colors": list(palette.get("colors") or ()),
+            "marker_size_pt": getattr(
+                getattr(plot_spec, "display_plan", None), "marker_size_pt", None
+            ),
+        },
+        "size_inches": {"width": 6.5, "height": 4.5},
+    }
+
+
 def _confirm_semantic_proposal(
     proposal: Any,
     confirmation: dict[str, Any] | None,
@@ -2327,6 +2358,7 @@ def build_plan(
                 "report": explicit_visual_report,
             },
         },
+        "render_spec": _render_spec(plot_spec, palette_contract),
         "data_understanding": semantic_contract.to_dict(),
         "reference_adaptation": reference_adaptation,
         "reference_style": reference_style_report,
@@ -2346,19 +2378,26 @@ def build_plan(
             },
             "display_transform_or_profile": display_transform,
             "worker_mapping": _serialize(worker_mapping),
-            "origin_capability_profile": capability_profile.to_dict(),
-            "activated_optional_capabilities": sorted(
-                capability.value for capability in activated_optional_capabilities
-            ),
         },
         "execution": {
             "engine_home": str(root),
-            "keep_origin_open": True,
-            "origin_callability_check": "performed_by_render_worker",
             "output_directory_policy": "source_sibling_unique_folder",
             "output_folder_pattern": "<source_stem>_EditaPlot_YYYYMMDD_HHMMSS",
             "render_plan_copy": "render-plan.json",
-            "required_outputs": ["opju", "png", "pdf", "tif", "origin_verify_report"],
+        },
+        "backend_options": {
+            "origin": {
+                "capability_profile": capability_profile.to_dict(),
+                "activated_optional_capabilities": sorted(
+                    capability.value for capability in activated_optional_capabilities
+                ),
+                "keep_application_open": True,
+                "callability_check": "performed_by_render_worker",
+                "required_outputs": ["opju", "png", "pdf", "tif", "origin_verify_report"],
+            },
+            "grapher": {
+                "required_outputs": ["grf", "png", "pdf", "grapher_verify_report"],
+            },
         },
         "can_render": bool(
             template_id in VERIFIED_TEMPLATE_IDS
@@ -2410,7 +2449,7 @@ def _validate_frozen_semantic_contract(
 
 
 def validate_plan(plan: dict[str, Any]) -> None:
-    if plan.get("plan_version") != PLAN_VERSION:
+    if plan.get("plan_version") not in SUPPORTED_PLAN_VERSIONS:
         raise EditaPlotError("plan_version_unsupported", "Unsupported render-plan version.")
     expected_hash = plan.get("plan_hash")
     payload = dict(plan)

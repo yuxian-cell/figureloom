@@ -50,6 +50,8 @@ CLI_COMMANDS = frozenset(
         "recommend",
         "plan",
         "render",
+        "smoke",
+        "origin-smoke",
         "grapher-smoke",
         "repair-environment",
         "verify",
