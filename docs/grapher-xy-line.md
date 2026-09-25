@@ -26,7 +26,9 @@ line color values. Grapher's graph title must be unlinked from its object name b
   object readback and verifier. Manual inspection of the exported PNG found all five scatter
   points visible at (1,1), (2,4), (3,9), (4,16), (5,25), correctly labelled X/Y axes, readable
   ticks and markers, no clipped text, and no unnecessary legend. The OPJU was checked by Origin's
-  existing object readback; no Origin renderer files were changed.
+  existing object readback; no Origin renderer files were changed. Direct GUI inspection of the OPJU
+  remains pending: the Computer Use window capture returned `0x80004002` twice. The empty Origin
+  instance opened for that attempt was closed without opening or changing a project.
 
 ## Next stage: symmetric Y error
 
