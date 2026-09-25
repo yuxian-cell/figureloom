@@ -12,4 +12,6 @@ The deterministic fixture is `X,Y` with rows `(1,2.1), (2,4.0), (3,6.2), (4,8.1)
 
 Real integration tests: `pytest -q tests/test_fit_integration.py`. Existing Grapher route regression: `pytest -q tests/test_grapher_engine_integration.py`. The COM tests are marked and skip on machines without the corresponding application. The default test run can exclude GUI tests with `-m "not grapher and not origin"`.
 
+GUI acceptance: the user opened the final `.phase7-production/origin/result.opju` and `.phase7-production/grapher/result.grf` in their respective applications and confirmed that both native Fit objects can be selected, edited, and recalculated. The Grapher legend is normal. This is manual editability evidence in addition to the independent programmatic reopen/readback checks.
+
 This route does not implement Error + Fit, weighted or constrained fitting, polynomial or nonlinear models, confidence bands, or multiple fit curves. The next useful check is Error + Fit because it exercises composition of the two existing capabilities without adding a new solver.
