@@ -1295,7 +1295,7 @@ def role_options(template_id: str) -> tuple[tuple[str, str, bool], ...]:
     else:
         keys = (
             ("x", "series", "error", "ignored")
-            if template_id == "line_error"
+            if template_id in {"line_error", "scatter"}
             else (
                 "x",
                 "series",
@@ -1425,11 +1425,12 @@ def _error_info(column: str) -> tuple[str, str] | None:
     patterns = (
         (r"(?i)(?:[_\-\s]+|\()SEM\)?$", "sem"),
         (r"(?i)(?:[_\-\s]+|\()SD\)?$", "sd"),
-        (r"(?i)(?:[_\-\s]+|\()SE\)?$", "se"),
-        (r"(?i)(?:[_\-\s]+|\()(?:ERR|ERROR)\)?$", "custom"),
+        (r"(?i)(?:[_\-\s]+|\()SE\)?$", "sem"),
+        (r"(?i)(?:[_\-\s]+|\()CI\)?$", "ci"),
+        (r"(?i)(?:[_\-\s]+|\()(?:ERR|ERROR)\)?$", "explicit"),
         (r"标准差$", "sd"),
-        (r"标准误(?:差)?$", "se"),
-        (r"误差$", "custom"),
+        (r"标准误(?:差)?$", "sem"),
+        (r"误差$", "explicit"),
     )
     for pattern, kind in patterns:
         match = re.search(pattern, text)
@@ -1638,11 +1639,11 @@ def _automatic_error_mapping(loaded: LoadedTable, template_id: str) -> _AutoMapp
         if column == anchor:
             assignments[column] = anchor_role
         elif (
-            template_id in {"bar", "horizontal_bar", "stacked_bar", "line_error"}
+            template_id in {"bar", "horizontal_bar", "stacked_bar", "line_error", "scatter"}
             and _error_info(column) is not None
         ):
             assignments[column] = "error"
-            if _error_info(column)[1] == "custom":  # type: ignore[index]
+            if _error_info(column)[1] == "explicit":  # type: ignore[index]
                 warnings.append("error_kind_unspecified")
         else:
             assignments[column] = "series"
@@ -3124,15 +3125,14 @@ def _pair_errors(series_columns: list[str], error_columns: list[str]) -> dict[st
                 continue
             pairs[series] = (error, info[1])
             available.remove(error)
-    for series in series_columns:
-        if series in pairs or not available:
-            continue
-        error = available.pop(0)
+    unpaired = [series for series in series_columns if series not in pairs]
+    if len(unpaired) == len(available) == 1:
+        error = available.pop()
         info = _error_info(error)
-        pairs[series] = (error, info[1] if info else "custom")
+        pairs[unpaired[0]] = (error, info[1] if info else "explicit")
     if available:
         raise ScientificWorkflowError(
-            "error_pair_ambiguous", "Some error columns could not be paired to a data series."
+            "error_pair_ambiguous", "Error columns cannot be paired unambiguously to data series."
         )
     return pairs
 
@@ -4045,7 +4045,7 @@ def _build_error_spec(
                     column=error_column,
                     row=index + 2,
                 )
-            if error_kind == "custom":
+            if error_kind == "explicit":
                 warnings.append("error_kind_unspecified")
         series_items.append(
             ScientificSeries(
@@ -4196,7 +4196,7 @@ def _build_error_spec(
             warnings.append("pie_category_count_excessive")
         elif len(frame) > 8:
             warnings.append("pie_category_count_high")
-    plot_kind = plot_kinds.get(template_id, "line_error")
+    plot_kind = plot_kinds.get(template_id, "scatter" if template_id == "scatter" else "line_error")
     numeric_values = frame[series_columns].to_numpy(dtype=float)
     signed_values = bool(np.nanmin(numeric_values) < 0 < np.nanmax(numeric_values))
     max_label_length = max((len(value) for value in categories), default=0)
@@ -5965,7 +5965,9 @@ def _build_plot_spec(
         return _build_pl_spec(frame, assignments, plot_mode)
     if template_id == "uv_vis":
         return _build_uv_vis_spec(frame, assignments)
-    if template_id in {*_CATEGORY_TABLE_TEMPLATE_IDS, "line_error"}:
+    if template_id in {*_CATEGORY_TABLE_TEMPLATE_IDS, "line_error"} or (
+        template_id == "scatter" and "error" in assignments.values()
+    ):
         return _build_error_spec(template_id, frame, assignments)
     return _build_line_spec(template_id, frame, assignments)
 
@@ -6012,7 +6014,9 @@ def _automatic_mapping(loaded: LoadedTable, template_id: str) -> _AutoMapping:
         return _automatic_pl_mapping(loaded)
     if template_id == "uv_vis":
         return _automatic_uv_vis_mapping(loaded)
-    if template_id in {*_CATEGORY_TABLE_TEMPLATE_IDS, "line_error"}:
+    if template_id in {*_CATEGORY_TABLE_TEMPLATE_IDS, "line_error"} or (
+        template_id == "scatter" and any(_error_info(column) for column in loaded.columns)
+    ):
         return _automatic_error_mapping(loaded, template_id)
     return _automatic_line_mapping(loaded, template_id)
 

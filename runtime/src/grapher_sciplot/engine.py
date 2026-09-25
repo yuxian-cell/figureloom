@@ -17,6 +17,7 @@ from typing import Any
 import pandas as pd
 from editaplot_engine.models import EngineError, RenderResult
 
+from .error_bar import add_y_error, read_y_error
 from .smoke import (
     PROGID,
     call,
@@ -109,12 +110,15 @@ def _application(*, visible: bool) -> Iterator[tuple[Any, dict[str, Any]]]:
         owns_app = True
         owned_pid = created.pop()
         put(app, "Visible", visible)
-        yield app, {
-            **discover(),
-            "version": str(get(app, "Version")),
-            "visible": bool(get(app, "Visible")),
-            "pid": owned_pid,
-        }
+        yield (
+            app,
+            {
+                **discover(),
+                "version": str(get(app, "Version")),
+                "visible": bool(get(app, "Visible")),
+                "pid": owned_pid,
+            },
+        )
     except EngineError:
         raise
     except Exception as exc:
@@ -165,8 +169,7 @@ class GrapherEngine:
             info = win32api.GetFileVersionInfo(registration["executable"], "\\")
             most, least = info["FileVersionMS"], info["FileVersionLS"]
             version = ".".join(
-                str(value)
-                for value in (most >> 16, most & 0xFFFF, least >> 16, least & 0xFFFF)
+                str(value) for value in (most >> 16, most & 0xFFFF, least >> 16, least & 0xFFFF)
             )
         return {**registration, "version": version}
 
@@ -215,12 +218,12 @@ class GrapherEngine:
     def _prepare(plan: dict[str, Any]) -> tuple[dict[str, Any], pd.DataFrame]:
         render_spec = plan.get("render_spec")
         route = plan["template"]["id"]
-        if route not in {"scatter", "trend"} or not isinstance(render_spec, dict):
+        if route not in {"scatter", "trend", "line_error"} or not isinstance(render_spec, dict):
             raise EngineError(
                 "grapher_route_unsupported",
-                "Grapher currently supports the confirmed scatter and trend routes.",
+                "Grapher currently supports the confirmed scatter, trend, and line_error routes.",
                 engine="grapher",
-                supported_templates=["scatter", "trend"],
+                supported_templates=["scatter", "trend", "line_error"],
             )
         if plan.get("reference_adaptation") is not None or plan.get("reference_style") is not None:
             raise EngineError(
@@ -237,7 +240,7 @@ class GrapherEngine:
         ):
             raise EngineError(
                 "grapher_route_unsupported",
-                "The Grapher route requires scatter/xy_scatter or trend/xy_line.",
+                "The Grapher route requires scatter/xy_scatter or trend/line_error with xy_line.",
                 engine="grapher",
             )
         x_column = data.get("x")
@@ -254,11 +257,67 @@ class GrapherEngine:
                 "Grapher requires one X column and at least one Y series; scatter uses one Y.",
                 engine="grapher",
             )
+        y_errors = data.get("y_errors") or {}
+        if not isinstance(y_errors, dict) or set(y_errors) - set(y_columns):
+            raise EngineError(
+                "grapher_errorbar_create_failed", "Invalid per-series error mapping.", engine="grapher"
+            )
+        error_columns: list[str] = []
+        for y_column, error in y_errors.items():
+            if not isinstance(error, dict):
+                raise EngineError(
+                    "grapher_errorbar_create_failed", f"Invalid error for {y_column}.", engine="grapher"
+                )
+            if error.get("direction") != "y":
+                raise EngineError(
+                    "unsupported_error_direction", "Only Y errors are supported.", engine="grapher"
+                )
+            if error.get("symmetric") is not True or any(
+                key in error for key in ("negative_column", "positive_column", "lower_column", "upper_column")
+            ):
+                raise EngineError(
+                    "unsupported_asymmetric_error", "Only symmetric errors are supported.", engine="grapher"
+                )
+            if error.get("kind") not in {"sd", "sem", "ci", "explicit"}:
+                raise EngineError("unsupported_error_kind", "Unsupported error meaning.", engine="grapher")
+            column = error.get("column")
+            if not isinstance(column, str) or not column:
+                raise EngineError(
+                    "missing_error_column", f"No error column for {y_column}.", engine="grapher"
+                )
+            if column not in error_columns:
+                error_columns.append(column)
         try:
             frame = _read_source(plan)
-            selected = frame[[x_column, *y_columns]].copy()
+            missing = [column for column in error_columns if column not in frame]
+            if missing:
+                raise EngineError(
+                    "missing_error_column", f"Error column {missing[0]!r} is missing.", engine="grapher"
+                )
+            selected = frame[[x_column, *y_columns, *error_columns]].copy()
             for column in selected.columns:
-                selected[column] = pd.to_numeric(selected[column], errors="raise")
+                try:
+                    selected[column] = pd.to_numeric(selected[column], errors="raise")
+                except (TypeError, ValueError) as exc:
+                    code = (
+                        "error_column_not_numeric"
+                        if column in error_columns
+                        else "grapher_data_staging_failed"
+                    )
+                    raise EngineError(code, f"Column {column!r} must be numeric.", engine="grapher") from exc
+            for y_column, error in y_errors.items():
+                values = selected[error["column"]]
+                plotted = selected[x_column].notna() & selected[y_column].notna()
+                if bool(values[plotted].isna().any()):
+                    raise EngineError(
+                        "error_length_mismatch", f"Error data are missing for {y_column}.", engine="grapher"
+                    )
+                if bool((values[plotted] < 0).any()):
+                    raise EngineError(
+                        "negative_error", f"Error data are negative for {y_column}.", engine="grapher"
+                    )
+        except EngineError:
+            raise
         except Exception as exc:
             raise EngineError("grapher_data_staging_failed", str(exc), engine="grapher") from exc
         return render_spec, selected
@@ -289,13 +348,27 @@ class GrapherEngine:
                     symbol_frequency = int(_optional_get(plot, "symbolFreq") or 0)
                     line = get(plot, "line")
                     line_width = float(_optional_get(line, "width") or 0.0)
+                    worksheet = str(get(plot, "worksheet"))
+                    error = read_y_error(plot)
+                    if error["present"]:
+                        try:
+                            with Path(worksheet).open(encoding="utf-8-sig", newline="") as stream:
+                                columns = next(csv.reader(stream))
+                            error["column"] = columns[error["column_index"] - 1]
+                        except (OSError, IndexError, StopIteration) as exc:
+                            raise EngineError(
+                                "grapher_errorbar_readback_failed",
+                                "Could not resolve native error-column assignment.",
+                                engine="grapher",
+                            ) from exc
                     plots.append(
                         {
                             "type": _plot_mode(symbol_frequency, line_width),
                             "name": str(get(plot, "Name")),
                             "x_column_index": int(get(plot, "xCol")),
                             "y_column_index": int(get(plot, "yCol")),
-                            "worksheet": str(get(plot, "worksheet")),
+                            "worksheet": worksheet,
+                            "error": error,
                             "symbol_frequency": symbol_frequency,
                             "line_width": line_width,
                             "line_enabled": line_width > 0,
@@ -362,16 +435,13 @@ class GrapherEngine:
         render_spec, frame = self._prepare(plan)
         data = render_spec["data"]
         x_column, y_columns = data["x"], data["y"]
+        y_errors = data.get("y_errors") or {}
         chart_type = render_spec["chart_type"]
         axes_spec = render_spec["axes"]
         style = render_spec.get("style") or {}
         size = render_spec.get("size_inches") or {}
         source = Path(plan["source"]["path"]).resolve()
-        requested = (
-            Path(output_dir).expanduser().resolve()
-            if output_dir
-            else _default_output_dir(source)
-        )
+        requested = Path(output_dir).expanduser().resolve() if output_dir else _default_output_dir(source)
         target = _claim_output(requested)
         input_copy = target / f"input_copy{source.suffix.lower()}"
         shutil.copy2(source, input_copy)
@@ -392,11 +462,11 @@ class GrapherEngine:
                     plot = (
                         call(get(graph, "Plots"), "Item", 1)
                         if index == 0
-                        else call(graph, "AddLinePlot", str(staging), 1, index + 2)
+                        else call(graph, "AddLinePlot", str(staging), 1, frame.columns.get_loc(column) + 1)
                     )
                     put(plot, "Name", column)
                     put(plot, "xCol", 1)
-                    put(plot, "yCol", index + 2)
+                    put(plot, "yCol", frame.columns.get_loc(column) + 1)
                     symbol_frequency, line_width = _visual_mode(chart_type, style)
                     put(plot, "symbolFreq", symbol_frequency)
                     line = get(plot, "line")
@@ -406,6 +476,8 @@ class GrapherEngine:
                     symbol = get(plot, "symbol")
                     put(symbol, "size", max(0.06, float(style.get("marker_size_pt") or 7.0) / 72.0))
                     put(get(symbol, "Fill"), "foreColor", color)
+                    if column in y_errors:
+                        add_y_error(plot, frame.columns.get_loc(y_errors[column]["column"]) + 1)
                 if len(y_columns) > 1:
                     call(graph, "AddLegend", True)
                 axes = get(graph, "Axes")
@@ -444,12 +516,13 @@ class GrapherEngine:
             "staging": {
                 "path": str(staging),
                 "sha256": _sha256(staging),
-                "columns": [x_column, *y_columns],
+                "columns": list(frame.columns),
             },
             "expected": {
                 "chart_type": chart_type,
                 "x_column": x_column,
                 "y_columns": y_columns,
+                "y_errors": y_errors,
                 "colors": series_colors,
                 "graph_title": title,
                 "x_title": axes_spec["x"]["title"],
@@ -503,12 +576,11 @@ class GrapherEngine:
         signatures_ok = False
         readback: dict[str, Any] = {}
         bindings_ok = axes_ok = staging_ok = mode_ok = legend_ok = colors_ok = title_ok = False
+        error_bindings_ok = False
         error: dict[str, str] | None = None
         try:
             if not files_ok:
-                raise EngineError(
-                    "grapher_artifact_missing", "One or more Grapher artifacts are missing."
-                )
+                raise EngineError("grapher_artifact_missing", "One or more Grapher artifacts are missing.")
             signatures_ok = (
                 expected_files["editable"].read_bytes().startswith(b"Grapher")
                 and expected_files["png"].read_bytes().startswith(b"\x89PNG")
@@ -517,14 +589,17 @@ class GrapherEngine:
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
             expected = manifest["expected"]
             y_columns = expected.get("y_columns") or [expected["y_column"]]
+            y_errors = expected.get("y_errors") or {}
             staging_info = manifest["staging"]
             staging_path = Path(staging_info["path"]).resolve()
+            staging_columns: list[str] = []
             if staging_path.is_file():
                 with staging_path.open(encoding="utf-8-sig", newline="") as stream:
                     staging_columns = next(csv.reader(stream), [])
                 staging_ok = (
                     _sha256(staging_path) == staging_info["sha256"]
-                    and staging_columns == [expected["x_column"], *y_columns]
+                    and staging_columns
+                    == staging_info.get("columns", [expected["x_column"], *y_columns])
                 )
             readback = self.readback(expected_files["editable"])
             plots = readback.get("plots", [])
@@ -534,12 +609,10 @@ class GrapherEngine:
                 and len(plots) == len(y_columns)
                 and all(
                     plot.get("x_column_index") == 1
-                    and plot.get("y_column_index") == index + 2
+                    and plot.get("y_column_index") == staging_columns.index(column) + 1
                     and Path(plot.get("worksheet", "")).resolve() == staging_path
-                    and (
-                        "y_columns" not in expected or plot.get("name") == column
-                    )
-                    for index, (plot, column) in enumerate(zip(plots, y_columns, strict=True))
+                    and ("y_columns" not in expected or plot.get("name") == column)
+                    for plot, column in zip(plots, y_columns, strict=True)
                 )
             )
             mode_ok = all(
@@ -548,6 +621,19 @@ class GrapherEngine:
                 and (chart_type != "xy_scatter" or plot.get("symbol_frequency", 0) > 0)
                 for plot in plots
             ) and bool(plots)
+            error_bindings_ok = len(plots) == len(y_columns) and all(
+                (
+                    plot.get("error", {}).get("present") is True
+                    and plot["error"].get("column") == y_errors[column]["column"]
+                    and plot["error"].get("column_index")
+                    == staging_columns.index(y_errors[column]["column"]) + 1
+                    and plot["error"].get("direction") == "y"
+                    and plot["error"].get("symmetric") is True
+                )
+                if column in y_errors
+                else not plot.get("error", {}).get("present", False)
+                for plot, column in zip(plots, y_columns, strict=True)
+            )
             legend_ok = len(y_columns) == 1 or any(
                 legend.get("entries") == y_columns for legend in readback.get("legends", [])
             )
@@ -573,20 +659,24 @@ class GrapherEngine:
         except Exception as exc:
             error = {"code": getattr(exc, "code", "grapher_verify_failed"), "message": str(exc)}
         reopened = bool(readback.get("document", {}).get("opened"))
-        ok = all(
-            (
-                files_ok,
-                signatures_ok,
-                staging_ok,
-                reopened,
-                bindings_ok,
-                mode_ok,
-                legend_ok,
-                colors_ok,
-                title_ok,
-                axes_ok,
+        ok = (
+            all(
+                (
+                    files_ok,
+                    signatures_ok,
+                    staging_ok,
+                    reopened,
+                    bindings_ok,
+                    mode_ok,
+                    legend_ok,
+                    colors_ok,
+                    title_ok,
+                    axes_ok,
+                    error_bindings_ok,
+                )
             )
-        ) and error is None
+            and error is None
+        )
         report: dict[str, Any] = {
             "status": "ok" if ok else "failed",
             "engine": self.name,
@@ -604,6 +694,7 @@ class GrapherEngine:
                 "series_colors": colors_ok,
                 "graph_title": title_ok,
                 "axes": axes_ok,
+                "error_bindings": error_bindings_ok,
             },
             "readback": readback,
         }

@@ -2023,15 +2023,29 @@ def _render_spec(plot_spec: Any, palette: dict[str, Any]) -> dict[str, Any] | No
     if plot_spec is None:
         return None
     series = getattr(plot_spec, "series", ())
+    data: dict[str, Any] = {
+        "x": getattr(plot_spec, "x_column", None),
+        "y": [getattr(item, "source_column", None) for item in series],
+    }
+    y_errors = {
+        item.source_column: {
+            "column": item.error_column,
+            "kind": item.error_kind,
+            "direction": "y",
+            "symmetric": True,
+        }
+        for item in series
+        if getattr(item, "error_column", None)
+    }
+    if y_errors:
+        data["y_errors"] = y_errors
     return {
         "chart_type": {
             "scatter": "xy_scatter",
             "line": "xy_line",
+            "line_error": "xy_line",
         }.get(getattr(plot_spec, "plot_kind", None), getattr(plot_spec, "plot_kind", None)),
-        "data": {
-            "x": getattr(plot_spec, "x_column", None),
-            "y": [getattr(item, "source_column", None) for item in series],
-        },
+        "data": data,
         "axes": {
             "x": {"title": getattr(plot_spec, "x_title", "")},
             "y": {"title": getattr(plot_spec, "y_title", "")},

@@ -203,7 +203,7 @@ TEMPLATE_CAPABILITY_PROFILES: dict[str, TemplateCapabilityProfile] = {
         OriginCapability.STATISTICAL_PLOT,
     ),
     "sankey": _profile("sankey", OriginCapability.SANKEY),
-    "scatter": _profile("scatter"),
+    "scatter": _profile("scatter", optional=(OriginCapability.ERROR_BARS,)),
     "shap_summary": _profile(
         "shap_summary",
         OriginCapability.CATEGORICAL_AXIS,

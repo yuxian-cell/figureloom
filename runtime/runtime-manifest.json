@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "source_policy": "curated EditaPlot runtime; caches, tests, builds, outputs, binaries, and local paths excluded",
-  "file_count": 430,
+  "file_count": 431,
   "files": [
     {
       "path": "LICENSE",
@@ -55,8 +55,13 @@
     },
     {
       "path": "src/grapher_sciplot/engine.py",
-      "size_bytes": 25308,
-      "sha256": "d6f9e2c0a7576fbae1bb61dda55512cfcdbf30f170e5d164d24a648738cbdfb8"
+      "size_bytes": 30459,
+      "sha256": "06662a05ddd562bc6f0fc4ecace74d1d1e69f47ed30d1c79a75405f2d5d127a8"
+    },
+    {
+      "path": "src/grapher_sciplot/error_bar.py",
+      "size_bytes": 1669,
+      "sha256": "4580f2d4da0db281f7d679f7acced6965f3ff184dda64600512eeb610e85174e"
     },
     {
       "path": "src/grapher_sciplot/smoke.py",
@@ -180,8 +185,8 @@
     },
     {
       "path": "src/origin_sciplot/origin_backend/template_capabilities.py",
-      "size_bytes": 15573,
-      "sha256": "ed771e1a631345d01d58eb41573adc647bff8476d21b86a95d3d64f93cf9464e"
+      "size_bytes": 15614,
+      "sha256": "caaa6f7d62f5f2c78566544905197708caf226d167f54dbc0d6bb14c1749a291"
     },
     {
       "path": "src/origin_sciplot/origin_backend/trajectory3d_renderer.py",
@@ -240,8 +245,8 @@
     },
     {
       "path": "src/origin_sciplot/scientific_preview.py",
-      "size_bytes": 88674,
-      "sha256": "40b5416c66b75cd2a0f93f4dbba71649fd72bb7e8e8814ef511ffd56e0b50c73"
+      "size_bytes": 88692,
+      "sha256": "874b56fc38113685d51af8444b9931f6ebf29387fc4afa494cf8f9d435f905fd"
     },
     {
       "path": "src/origin_sciplot/scientific_visual.py",
@@ -250,8 +255,8 @@
     },
     {
       "path": "src/origin_sciplot/scientific_workflow.py",
-      "size_bytes": 222782,
-      "sha256": "6c9da4b92df3998dc803f0fc4c6e6db8ae061e8ac8a5302549654c878740aecb"
+      "size_bytes": 223118,
+      "sha256": "0e3a6135c6ef4dd38a923588e7d48590357a2103be1170155d2c667b33540352"
     },
     {
       "path": "src/origin_sciplot/semantic_analysis.py",

@@ -189,7 +189,7 @@ def _matplotlib_label(text: str) -> str:
 def _series_label(series: ScientificSeries) -> str:
     if not series.error_kind:
         return series.label
-    kind = series.error_kind.upper() if series.error_kind != "custom" else "error"
+    kind = series.error_kind.upper() if series.error_kind not in {"custom", "explicit"} else "error"
     return f"{series.label} (±{kind})"
 
 

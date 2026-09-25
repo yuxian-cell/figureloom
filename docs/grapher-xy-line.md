@@ -1,5 +1,8 @@
 # Grapher XY Line acceptance
 
+The symmetric Y error proposal below was implemented in [Phase 4](grapher-error-bar-phase4.md)
+with `direction: "y"` and `symmetric: true` as separate neutral fields.
+
 `trend` plans freeze `render_spec.chart_type = "xy_line"`; `scatter` remains `xy_scatter`.
 The only Core change is this neutral chart type and a neutral line width in points. Origin rendering
 continues to consume its existing plot specification. Grapher uses one XY render path for both modes:

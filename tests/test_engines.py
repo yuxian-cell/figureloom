@@ -190,6 +190,7 @@ def test_grapher_verify_uses_native_signatures_and_semantic_readback(
         "series_colors": True,
         "graph_title": True,
         "axes": True,
+        "error_bindings": True,
     }
 
 
