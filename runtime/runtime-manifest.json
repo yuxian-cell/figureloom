@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "source_policy": "curated EditaPlot runtime; caches, tests, builds, outputs, binaries, and local paths excluded",
-  "file_count": 432,
+  "file_count": 434,
   "files": [
     {
       "path": "LICENSE",
@@ -35,8 +35,8 @@
     },
     {
       "path": "src/editaplot_engine/fit_contract.py",
-      "size_bytes": 5789,
-      "sha256": "03ddf1871d35494e8286971f92b7bd00a1650fe92b6193cda3e9d75c370145bb"
+      "size_bytes": 8083,
+      "sha256": "12d961d399307e7558dec3c6a1cece7aca39c0cec31d5f8862ee847cc14cf7a2"
     },
     {
       "path": "src/editaplot_engine/models.py",
@@ -45,8 +45,8 @@
     },
     {
       "path": "src/editaplot_engine/origin.py",
-      "size_bytes": 6656,
-      "sha256": "2af164d6c36f05b2391b4ac477fef0c4284ff303d38f3addf0663f39040f5d91"
+      "size_bytes": 10814,
+      "sha256": "c2286546e93efa3322686c74efd083eae05e8fe5348c3562d2f8249bee4a165a"
     },
     {
       "path": "src/editaplot_engine/registry.py",
@@ -60,13 +60,18 @@
     },
     {
       "path": "src/grapher_sciplot/engine.py",
-      "size_bytes": 36598,
-      "sha256": "b52288f2fa7c8c0e19a7b9e17aa6f345badf45b35415702d8b376930980fa3bd"
+      "size_bytes": 39186,
+      "sha256": "4494751992a8c8cbc52b8777e9f54932d04aebc35b676a99461d7220c328f9c0"
     },
     {
       "path": "src/grapher_sciplot/error_bar.py",
       "size_bytes": 1981,
       "sha256": "0cec3bae782f4be937220b8918b8495448673a12d4017b490352c8a9c57f49d4"
+    },
+    {
+      "path": "src/grapher_sciplot/fit.py",
+      "size_bytes": 4240,
+      "sha256": "8f8543fe253e8cc4e95fd359b8503066d40ebd5629b9d646993457fb151796d3"
     },
     {
       "path": "src/grapher_sciplot/smoke.py",
@@ -152,6 +157,11 @@
       "path": "src/origin_sciplot/origin_backend/export_utils.py",
       "size_bytes": 2040,
       "sha256": "7d4addf430b9c2deaa9b1a71a707f4477350d2e7d608ec60f0aab6498d1f073c"
+    },
+    {
+      "path": "src/origin_sciplot/origin_backend/fit.py",
+      "size_bytes": 6274,
+      "sha256": "6b303a86b3807c746370617cee929d977f2c6e63a602f1e1c8ea84057beebfd4"
     },
     {
       "path": "src/origin_sciplot/origin_backend/job_queue.py",
