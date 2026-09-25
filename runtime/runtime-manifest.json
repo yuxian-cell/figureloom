@@ -55,8 +55,8 @@
     },
     {
       "path": "src/grapher_sciplot/engine.py",
-      "size_bytes": 19567,
-      "sha256": "93b43d3da3c83f72a6f963e3bffe3487211afabf5dafdaab9c0ddff5e242b35c"
+      "size_bytes": 25308,
+      "sha256": "d6f9e2c0a7576fbae1bb61dda55512cfcdbf30f170e5d164d24a648738cbdfb8"
     },
     {
       "path": "src/grapher_sciplot/smoke.py",

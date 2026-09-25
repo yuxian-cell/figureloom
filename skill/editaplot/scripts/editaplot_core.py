@@ -2024,11 +2024,10 @@ def _render_spec(plot_spec: Any, palette: dict[str, Any]) -> dict[str, Any] | No
         return None
     series = getattr(plot_spec, "series", ())
     return {
-        "chart_type": (
-            "xy_scatter"
-            if getattr(plot_spec, "plot_kind", None) == "scatter"
-            else getattr(plot_spec, "plot_kind", None)
-        ),
+        "chart_type": {
+            "scatter": "xy_scatter",
+            "line": "xy_line",
+        }.get(getattr(plot_spec, "plot_kind", None), getattr(plot_spec, "plot_kind", None)),
         "data": {
             "x": getattr(plot_spec, "x_column", None),
             "y": [getattr(item, "source_column", None) for item in series],
@@ -2041,6 +2040,11 @@ def _render_spec(plot_spec: Any, palette: dict[str, Any]) -> dict[str, Any] | No
             "colors": list(palette.get("colors") or ()),
             "marker_size_pt": getattr(
                 getattr(plot_spec, "display_plan", None), "marker_size_pt", None
+            ),
+            "line_width_pt": getattr(
+                getattr(getattr(plot_spec, "display_plan", None), "figure_style", None),
+                "plot_line_width_pt",
+                None,
             ),
         },
         "size_inches": {"width": 6.5, "height": 4.5},

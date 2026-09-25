@@ -9,6 +9,7 @@ __pycache__/
 .editaplot-venv/
 .test-venv/
 .phase2-e2e/
+.phase3-e2e/
 .editaplot-venv.build-*/
 .editaplot-venv.stale-*/
 .editaplot-environment.lock

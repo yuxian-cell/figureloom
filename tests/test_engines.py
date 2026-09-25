@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -13,9 +14,10 @@ for candidate in (ROOT / "skill" / "editaplot" / "scripts", ROOT / "runtime" / "
         sys.path.insert(0, str(candidate))
 
 import editaplot as cli  # noqa: E402
+import editaplot_core as core  # noqa: E402
 from editaplot_engine import DEFAULT_ENGINE, EngineError, get_engine  # noqa: E402
 from editaplot_engine.origin import OriginEngine  # noqa: E402
-from grapher_sciplot.engine import GrapherEngine  # noqa: E402
+from grapher_sciplot.engine import GrapherEngine, _plot_mode, _visual_mode  # noqa: E402
 from grapher_sciplot.smoke import SmokeFailure  # noqa: E402
 
 
@@ -80,18 +82,70 @@ def test_grapher_prepares_csv_from_backend_neutral_render_spec(tmp_path: Path) -
     assert frame.to_dict(orient="list") == {"X": [1, 2], "Y": [1, 4]}
 
 
+@pytest.mark.parametrize("series", [("Control",), ("Control", "Treatment")])
+def test_trend_plan_selects_xy_line_and_preserves_series_order(
+    tmp_path: Path, series: tuple[str, ...]
+) -> None:
+    source = tmp_path / "time.csv"
+    source.write_text(
+        "Time,Control,Treatment\n0,10,11\n1,14,16\n2,18,22\n",
+        encoding="utf-8",
+    )
+    mapping = {
+        "assignments": {
+            "Time": "x",
+            "Control": "series",
+            "Treatment": "series" if "Treatment" in series else "ignored",
+        }
+    }
+    understanding = core.understand_data(
+        source, template_id="trend", mapping=mapping, engine_home=ROOT / "runtime"
+    )
+    plan = core.build_plan(
+        source,
+        template_id="trend",
+        claim="Values increase with time.",
+        evidence_role="trend",
+        mapping=mapping,
+        semantic_confirmation=understanding["confirmation_gate"]["confirmation_payload_template"],
+        engine_home=ROOT / "runtime",
+    )
+    assert plan["render_spec"]["chart_type"] == "xy_line"
+    assert plan["render_spec"]["data"] == {"x": "Time", "y": list(series)}
+    assert plan["render_spec"]["style"]["line_width_pt"] > 0
+    _, frame = GrapherEngine._prepare(plan)
+    assert list(frame.columns) == ["Time", *series]
+
+
+def test_xy_style_and_readback_modes() -> None:
+    assert _visual_mode("xy_scatter", {}) == (1, 0.0)
+    assert _plot_mode(1, 0.0) == "xy_scatter"
+    symbols, width = _visual_mode("xy_line", {"line_width_pt": 2.0})
+    assert symbols == 0
+    assert width == pytest.approx(2.0 / 72.0)
+    assert _plot_mode(symbols, width) == "xy_line"
+    assert _visual_mode("xy_line", {"show_symbols": True})[0] == 1
+
+
 def test_grapher_verify_uses_native_signatures_and_semantic_readback(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     (tmp_path / "result.grf").write_bytes(b"Grapher native")
     (tmp_path / "result.png").write_bytes(b"\x89PNG native")
     (tmp_path / "result.pdf").write_bytes(b"%PDF native")
+    staging = tmp_path / "grapher_staging.csv"
+    staging.write_text("X,Y\n1,2\n", encoding="utf-8-sig")
     (tmp_path / "manifest.json").write_text(
         json.dumps(
             {
+                "staging": {
+                    "path": str(staging),
+                    "sha256": hashlib.sha256(staging.read_bytes()).hexdigest(),
+                },
                 "expected": {
+                    "chart_type": "xy_scatter",
                     "x_column": "X",
-                    "y_column": "Y",
+                    "y_columns": ["Y"],
                     "x_title": "Time",
                     "y_title": "Response",
                 }
@@ -105,7 +159,19 @@ def test_grapher_verify_uses_native_signatures_and_semantic_readback(
         "readback",
         lambda _artifact: {
             "document": {"opened": True},
-            "plots": [{"type": "xy_scatter", "x_column_index": 1, "y_column_index": 2}],
+            "graph_count": 1,
+            "plots": [
+                {
+                    "type": "xy_scatter",
+                    "name": "Y",
+                    "x_column_index": 1,
+                    "y_column_index": 2,
+                    "worksheet": str(staging),
+                    "symbol_frequency": 1,
+                    "line_enabled": False,
+                }
+            ],
+            "legends": [],
             "axes": {"x": {"title": "Time"}, "y": {"title": "Response"}},
         },
     )
@@ -116,10 +182,71 @@ def test_grapher_verify_uses_native_signatures_and_semantic_readback(
     assert report["checks"] == {
         "files_nonempty": True,
         "native_signatures": True,
+        "staging_integrity": True,
         "document_reopened": True,
         "plot_binding": True,
+        "line_symbol_mode": True,
+        "legend_labels": True,
+        "series_colors": True,
+        "graph_title": True,
         "axes": True,
     }
+
+
+def test_grapher_verify_rejects_missing_second_line_and_wrong_legend(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    for name, contents in (
+        ("result.grf", b"Grapher native"),
+        ("result.png", b"\x89PNG native"),
+        ("result.pdf", b"%PDF native"),
+    ):
+        (tmp_path / name).write_bytes(contents)
+    staging = tmp_path / "grapher_staging.csv"
+    staging.write_text("Time,Control,Treatment\n0,10,11\n", encoding="utf-8-sig")
+    (tmp_path / "manifest.json").write_text(
+        json.dumps(
+            {
+                "staging": {
+                    "path": str(staging),
+                    "sha256": hashlib.sha256(staging.read_bytes()).hexdigest(),
+                },
+                "expected": {
+                    "chart_type": "xy_line",
+                    "x_column": "Time",
+                    "y_columns": ["Control", "Treatment"],
+                    "x_title": "Time",
+                    "y_title": "Response",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    engine = GrapherEngine()
+    monkeypatch.setattr(
+        engine,
+        "readback",
+        lambda _artifact: {
+            "document": {"opened": True},
+            "graph_count": 1,
+            "plots": [
+                {
+                    "type": "xy_line",
+                    "name": "Control",
+                    "x_column_index": 1,
+                    "y_column_index": 2,
+                    "worksheet": str(staging),
+                    "line_enabled": True,
+                }
+            ],
+            "legends": [{"entries": ["Control", "Plot 2"]}],
+            "axes": {"x": {"title": "Time"}, "y": {"title": "Response"}},
+        },
+    )
+    report = engine.verify(tmp_path)
+    assert report["status"] == "failed"
+    assert report["checks"]["plot_binding"] is False
+    assert report["checks"]["legend_labels"] is False
 
 
 def test_cli_dispatches_render_and_verify_to_selected_engine(

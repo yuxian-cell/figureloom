@@ -1,7 +1,8 @@
-"""Formal EditaPlot engine for one native Grapher XY scatter route."""
+"""Native Grapher XY scatter and line routes for EditaPlot RenderPlans."""
 
 from __future__ import annotations
 
+import csv
 import hashlib
 import importlib.util
 import json
@@ -27,6 +28,8 @@ from .smoke import (
     require_file,
     run_smoke,
 )
+
+_DEFAULT_COLORS = ("#1F6F78", "#C86B3C", "#6A5D98", "#5E8D4E")
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
@@ -135,6 +138,21 @@ def _optional_get(obj: Any, name: str) -> Any | None:
         return None
 
 
+def _plot_mode(symbol_frequency: int, line_width: float) -> str:
+    if line_width > 0:
+        return "xy_line"
+    return "xy_scatter" if symbol_frequency > 0 else "unknown"
+
+
+def _visual_mode(chart_type: str, style: dict[str, Any]) -> tuple[int, float]:
+    if chart_type == "xy_scatter":
+        return 1, 0.0
+    return (
+        1 if style.get("show_symbols") else 0,
+        max(0.005, float(style.get("line_width_pt") or 1.5) / 72.0),
+    )
+
+
 class GrapherEngine:
     name = "grapher"
 
@@ -196,12 +214,13 @@ class GrapherEngine:
     @staticmethod
     def _prepare(plan: dict[str, Any]) -> tuple[dict[str, Any], pd.DataFrame]:
         render_spec = plan.get("render_spec")
-        if plan["template"]["id"] != "scatter" or not isinstance(render_spec, dict):
+        route = plan["template"]["id"]
+        if route not in {"scatter", "trend"} or not isinstance(render_spec, dict):
             raise EngineError(
                 "grapher_route_unsupported",
-                "Grapher currently supports only the confirmed scatter route.",
+                "Grapher currently supports the confirmed scatter and trend routes.",
                 engine="grapher",
-                supported_templates=["scatter"],
+                supported_templates=["scatter", "trend"],
             )
         if plan.get("reference_adaptation") is not None or plan.get("reference_style") is not None:
             raise EngineError(
@@ -210,23 +229,34 @@ class GrapherEngine:
                 engine="grapher",
             )
         data = render_spec.get("data")
-        if render_spec.get("chart_type") != "xy_scatter" or not isinstance(data, dict):
+        chart_type = render_spec.get("chart_type")
+        if (
+            chart_type not in {"xy_scatter", "xy_line"}
+            or (route == "scatter") != (chart_type == "xy_scatter")
+            or not isinstance(data, dict)
+        ):
             raise EngineError(
                 "grapher_route_unsupported",
-                "The Grapher route requires chart_type=xy_scatter.",
+                "The Grapher route requires scatter/xy_scatter or trend/xy_line.",
                 engine="grapher",
             )
         x_column = data.get("x")
         y_columns = data.get("y")
-        if not isinstance(x_column, str) or not isinstance(y_columns, list) or len(y_columns) != 1:
+        if (
+            not isinstance(x_column, str)
+            or not isinstance(y_columns, list)
+            or not y_columns
+            or any(not isinstance(column, str) for column in y_columns)
+            or (chart_type == "xy_scatter" and len(y_columns) != 1)
+        ):
             raise EngineError(
                 "grapher_route_unsupported",
-                "The first Grapher route requires one X column and one Y series.",
+                "Grapher requires one X column and at least one Y series; scatter uses one Y.",
                 engine="grapher",
             )
         try:
             frame = _read_source(plan)
-            selected = frame[[x_column, y_columns[0]]].copy()
+            selected = frame[[x_column, *y_columns]].copy()
             for column in selected.columns:
                 selected[column] = pd.to_numeric(selected[column], errors="raise")
         except Exception as exc:
@@ -241,6 +271,9 @@ class GrapherEngine:
             shapes = get(document, "Shapes")
             plots: list[dict[str, Any]] = []
             axes_payload: dict[str, Any] = {}
+            legends_payload: list[dict[str, Any]] = []
+            graph_title = ""
+            graph_title_linked = False
             graph_count = 0
             for shape_index in range(1, int(get(shapes, "Count")) + 1):
                 shape = call(shapes, "Item", shape_index)
@@ -249,18 +282,36 @@ class GrapherEngine:
                 if graph_plots is None or graph_axes is None:
                     continue
                 graph_count += 1
+                graph_title = str(get(get(shape, "title"), "text"))
+                graph_title_linked = bool(get(shape, "LinkTitleToObjectName"))
                 for plot_index in range(1, int(get(graph_plots, "Count")) + 1):
                     plot = call(graph_plots, "Item", plot_index)
+                    symbol_frequency = int(_optional_get(plot, "symbolFreq") or 0)
+                    line = get(plot, "line")
+                    line_width = float(_optional_get(line, "width") or 0.0)
                     plots.append(
                         {
-                            "type": "xy_scatter"
-                            if int(_optional_get(plot, "symbolFreq") or 0) == 1
-                            else "xy_line",
+                            "type": _plot_mode(symbol_frequency, line_width),
+                            "name": str(get(plot, "Name")),
                             "x_column_index": int(get(plot, "xCol")),
                             "y_column_index": int(get(plot, "yCol")),
-                            "symbol_frequency": int(_optional_get(plot, "symbolFreq") or 0),
-                            "line_width": float(_optional_get(get(plot, "line"), "width") or 0.0),
+                            "worksheet": str(get(plot, "worksheet")),
+                            "symbol_frequency": symbol_frequency,
+                            "line_width": line_width,
+                            "line_enabled": line_width > 0,
+                            "line_color": int(get(line, "foreColor")),
                             "object_type": int(get(plot, "Type")),
+                        }
+                    )
+                graph_legends = get(shape, "Legends")
+                for legend_index in range(1, int(get(graph_legends, "Count")) + 1):
+                    legend = call(graph_legends, "Item", legend_index)
+                    legends_payload.append(
+                        {
+                            "entries": [
+                                str(call(legend, "EntryName", entry_index))
+                                for entry_index in range(1, int(get(legend, "EntryCount")) + 1)
+                            ]
                         }
                     )
                 for axis_index, key in ((1, "x"), (2, "y")):
@@ -276,8 +327,12 @@ class GrapherEngine:
                 "engine": "grapher",
                 "document": {"opened": True, "path": str(artifact)},
                 "graph_count": graph_count,
+                "series_count": len(plots),
+                "graph_title": graph_title,
+                "graph_title_linked_to_name": graph_title_linked,
                 "plots": plots,
                 "axes": axes_payload,
+                "legends": legends_payload,
             }
         finally:
             if document is not None:
@@ -306,7 +361,8 @@ class GrapherEngine:
         editaplot_core.validate_plan(plan)
         render_spec, frame = self._prepare(plan)
         data = render_spec["data"]
-        x_column, y_column = data["x"], data["y"][0]
+        x_column, y_columns = data["x"], data["y"]
+        chart_type = render_spec["chart_type"]
         axes_spec = render_spec["axes"]
         style = render_spec.get("style") or {}
         size = render_spec.get("size_inches") or {}
@@ -323,7 +379,8 @@ class GrapherEngine:
         staging = target / "grapher_staging.csv"
         frame.to_csv(staging, index=False, encoding="utf-8-sig", lineterminator="\n")
         grf, png, pdf = (target / f"result.{suffix}" for suffix in ("grf", "png", "pdf"))
-        colors = style.get("colors") or ["#1F6F78"]
+        colors = style.get("colors") or _DEFAULT_COLORS
+        series_colors = [str(colors[index % len(colors)]) for index in range(len(y_columns))]
         document = graph = plot = None
         with _application(visible=True) as (app, application):
             try:
@@ -331,22 +388,31 @@ class GrapherEngine:
                 graph = call(get(document, "Shapes"), "AddLinePlotGraph", str(staging), 1, 2)
                 put(graph, "width", float(size.get("width", 6.5)))
                 put(graph, "height", float(size.get("height", 4.5)))
-                plots = get(graph, "Plots")
-                plot = call(plots, "Item", 1)
-                put(plot, "xCol", 1)
-                put(plot, "yCol", 2)
-                put(plot, "symbolFreq", 1)
-                line = get(plot, "line")
-                put(line, "width", 0.0)
-                color = _color_value(str(colors[0]))
-                put(line, "foreColor", color)
-                symbol = get(plot, "symbol")
-                put(symbol, "size", max(0.06, float(style.get("marker_size_pt") or 7.0) / 72.0))
-                put(get(symbol, "Fill"), "foreColor", color)
+                for index, column in enumerate(y_columns):
+                    plot = (
+                        call(get(graph, "Plots"), "Item", 1)
+                        if index == 0
+                        else call(graph, "AddLinePlot", str(staging), 1, index + 2)
+                    )
+                    put(plot, "Name", column)
+                    put(plot, "xCol", 1)
+                    put(plot, "yCol", index + 2)
+                    symbol_frequency, line_width = _visual_mode(chart_type, style)
+                    put(plot, "symbolFreq", symbol_frequency)
+                    line = get(plot, "line")
+                    put(line, "width", line_width)
+                    color = _color_value(series_colors[index])
+                    put(line, "foreColor", color)
+                    symbol = get(plot, "symbol")
+                    put(symbol, "size", max(0.06, float(style.get("marker_size_pt") or 7.0) / 72.0))
+                    put(get(symbol, "Fill"), "foreColor", color)
+                if len(y_columns) > 1:
+                    call(graph, "AddLegend", True)
                 axes = get(graph, "Axes")
                 put(get(call(axes, "Item", 1), "title"), "text", axes_spec["x"]["title"])
                 put(get(call(axes, "Item", 2), "title"), "text", axes_spec["y"]["title"])
                 title = str(plan["figure_contract"].get("core_conclusion") or "EditaPlot")
+                put(graph, "LinkTitleToObjectName", False)
                 put(get(graph, "title"), "text", title)
                 call(document, "SaveAs", str(grf))
                 require_file(grf, "grapher_save_failed")
@@ -378,12 +444,14 @@ class GrapherEngine:
             "staging": {
                 "path": str(staging),
                 "sha256": _sha256(staging),
-                "columns": [x_column, y_column],
+                "columns": [x_column, *y_columns],
             },
             "expected": {
-                "chart_type": "xy_scatter",
+                "chart_type": chart_type,
                 "x_column": x_column,
-                "y_column": y_column,
+                "y_columns": y_columns,
+                "colors": series_colors,
+                "graph_title": title,
                 "x_title": axes_spec["x"]["title"],
                 "y_title": axes_spec["y"]["title"],
             },
@@ -434,7 +502,7 @@ class GrapherEngine:
         files_ok = all(item["size_bytes"] > 0 for item in artifacts.values())
         signatures_ok = False
         readback: dict[str, Any] = {}
-        bindings_ok = axes_ok = False
+        bindings_ok = axes_ok = staging_ok = mode_ok = legend_ok = colors_ok = title_ok = False
         error: dict[str, str] | None = None
         try:
             if not files_ok:
@@ -447,23 +515,78 @@ class GrapherEngine:
                 and expected_files["pdf"].read_bytes().startswith(b"%PDF")
             )
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-            readback = self.readback(expected_files["editable"])
             expected = manifest["expected"]
-            plot = readback["plots"][0] if readback.get("plots") else {}
-            plot["x_column"] = expected["x_column"]
-            plot["y_column"] = expected["y_column"]
+            y_columns = expected.get("y_columns") or [expected["y_column"]]
+            staging_info = manifest["staging"]
+            staging_path = Path(staging_info["path"]).resolve()
+            if staging_path.is_file():
+                with staging_path.open(encoding="utf-8-sig", newline="") as stream:
+                    staging_columns = next(csv.reader(stream), [])
+                staging_ok = (
+                    _sha256(staging_path) == staging_info["sha256"]
+                    and staging_columns == [expected["x_column"], *y_columns]
+                )
+            readback = self.readback(expected_files["editable"])
+            plots = readback.get("plots", [])
+            chart_type = expected["chart_type"]
             bindings_ok = (
-                plot.get("type") == "xy_scatter"
-                and plot.get("x_column_index") == 1
-                and plot.get("y_column_index") == 2
+                readback.get("graph_count") == 1
+                and len(plots) == len(y_columns)
+                and all(
+                    plot.get("x_column_index") == 1
+                    and plot.get("y_column_index") == index + 2
+                    and Path(plot.get("worksheet", "")).resolve() == staging_path
+                    and (
+                        "y_columns" not in expected or plot.get("name") == column
+                    )
+                    for index, (plot, column) in enumerate(zip(plots, y_columns, strict=True))
+                )
+            )
+            mode_ok = all(
+                plot.get("type") == chart_type
+                and bool(plot.get("line_enabled")) == (chart_type == "xy_line")
+                and (chart_type != "xy_scatter" or plot.get("symbol_frequency", 0) > 0)
+                for plot in plots
+            ) and bool(plots)
+            legend_ok = len(y_columns) == 1 or any(
+                legend.get("entries") == y_columns for legend in readback.get("legends", [])
+            )
+            colors_ok = "colors" not in expected or (
+                len(plots) == len(expected["colors"])
+                and all(
+                    plot.get("line_color") == _color_value(color)
+                    for plot, color in zip(plots, expected["colors"], strict=True)
+                )
             )
             axes_ok = (
                 readback.get("axes", {}).get("x", {}).get("title") == expected["x_title"]
                 and readback.get("axes", {}).get("y", {}).get("title") == expected["y_title"]
             )
+            title_ok = "graph_title" not in expected or (
+                readback.get("graph_title") == expected["graph_title"]
+                and readback.get("graph_title_linked_to_name") is False
+            )
+            if bindings_ok and staging_ok:
+                for plot, column in zip(plots, y_columns, strict=True):
+                    plot["x_column"] = expected["x_column"]
+                    plot["y_column"] = column
         except Exception as exc:
             error = {"code": getattr(exc, "code", "grapher_verify_failed"), "message": str(exc)}
-        ok = files_ok and signatures_ok and bindings_ok and axes_ok and error is None
+        reopened = bool(readback.get("document", {}).get("opened"))
+        ok = all(
+            (
+                files_ok,
+                signatures_ok,
+                staging_ok,
+                reopened,
+                bindings_ok,
+                mode_ok,
+                legend_ok,
+                colors_ok,
+                title_ok,
+                axes_ok,
+            )
+        ) and error is None
         report: dict[str, Any] = {
             "status": "ok" if ok else "failed",
             "engine": self.name,
@@ -473,8 +596,13 @@ class GrapherEngine:
             "checks": {
                 "files_nonempty": files_ok,
                 "native_signatures": signatures_ok,
-                "document_reopened": bool(readback.get("document", {}).get("opened")),
+                "staging_integrity": staging_ok,
+                "document_reopened": reopened,
                 "plot_binding": bindings_ok,
+                "line_symbol_mode": mode_ok,
+                "legend_labels": legend_ok,
+                "series_colors": colors_ok,
+                "graph_title": title_ok,
                 "axes": axes_ok,
             },
             "readback": readback,
