@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import sys
 from pathlib import Path
 
@@ -85,3 +87,64 @@ def test_bar_rejects_invalid_staging(tmp_path: Path, contents: str, code: str) -
 def test_scatter_mode_requires_native_invisible_line() -> None:
     assert _plot_mode(1, "Invisible") == "xy_scatter"
     assert _plot_mode(1, "Solid") == "xy_line"
+
+
+def test_verify_rejects_wrong_native_category_binding(tmp_path: Path, monkeypatch) -> None:
+    for name, signature in (("result.grf", b"Grapher"), ("result.png", b"\x89PNG"), ("result.pdf", b"%PDF")):
+        (tmp_path / name).write_bytes(signature)
+    staging = tmp_path / "grapher_staging.csv"
+    staging.write_text("Group,Control\nA,10\n", encoding="utf-8-sig")
+    (tmp_path / "manifest.json").write_text(
+        json.dumps(
+            {
+                "staging": {
+                    "path": str(staging),
+                    "sha256": hashlib.sha256(staging.read_bytes()).hexdigest(),
+                    "columns": ["Group", "Control"],
+                },
+                "expected": {
+                    "chart_type": "simple_bar",
+                    "category_column": "Group",
+                    "y_columns": ["Control"],
+                    "y_errors": {},
+                    "x_title": "Group",
+                    "y_title": "Control",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    readback = {
+        "document": {"opened": True},
+        "graph_count": 1,
+        "chart_type": "simple_bar",
+        "category_column": "Group",
+        "category_labels": {
+            "mode": 2,
+            "data_column_index": 0,
+            "label_column_index": 1,
+            "first_row": 2,
+            "worksheet": str(staging),
+        },
+        "plots": [
+            {
+                "type": "bar",
+                "name": "Control",
+                "x_column_index": 0,
+                "y_column_index": 2,
+                "worksheet": str(staging),
+                "stacked": False,
+                "orientation": 0,
+                "error": {"present": False},
+            }
+        ],
+        "axes": {"x": {"title": "Group"}, "y": {"title": "Control"}},
+        "legends": [],
+    }
+    engine = GrapherEngine()
+    monkeypatch.setattr(engine, "readback", lambda _path: readback)
+    assert engine.verify(tmp_path)["status"] == "ok"
+    readback["category_labels"]["label_column_index"] = 2
+    report = engine.verify(tmp_path)
+    assert report["status"] == "failed"
+    assert report["checks"]["category_binding"] is False

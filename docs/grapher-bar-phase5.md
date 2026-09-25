@@ -16,7 +16,7 @@ The old Scatter line came from `line.width=0`: Grapher draws it one pixel wide. 
 
 The retained `.phase5-e2e` directory contains `simple_bar`, `grouped_bar`, `bar_error`, and `grouped_bar_error` as GRF/PNG/PDF, plus each render's staging CSV and JSON verification report. Every Grapher GRF reopened, reported one graph and two axes, retained ordered Y bindings, native worksheet category labels, palette colors, and its expected per-series errors. Scatter regression output has symbols and no connecting line. Origin `line_error` single and multi outputs both produced OPJU/PNG/PDF/TIF with in-page legends.
 
-Tests: 10 real Grapher integration cases passed; the full non-Grapher/Origin GUI suite passed with 959 passed, 7 skipped, 11 deselected. A full native GUI edit check is separately requested from the user.
+Tests: 10 real Grapher integration cases passed; the full non-Grapher/Origin GUI suite passed with 960 passed, 7 skipped, 11 deselected. A separate GRF editability probe changed a native Bar fill color from the planned color to `0xFF0000` and bar width from 80 to 64, saved another GRF, reopened it, and read back both changes. A visual GUI edit check is separately requested from the user.
 
 The same simple Bar RenderPlan reached Origin's existing renderer, but that route failed its color readback (`get -c` returned 1 for a column plot; expected the planned palette color). This occurs in the existing Origin Bar styling/verification path before the new legend placement code. A one-line color-order experiment did not fix it and was reverted. Origin Bar dual-backend parity is therefore **not verified**; its color setter/readback needs a separate native Origin investigation. No claim is made that all Origin Bar outputs passed.
 

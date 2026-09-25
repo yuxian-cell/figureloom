@@ -655,6 +655,7 @@ class GrapherEngine:
         readback: dict[str, Any] = {}
         bindings_ok = axes_ok = staging_ok = mode_ok = legend_ok = colors_ok = title_ok = False
         error_bindings_ok = False
+        is_bar = False
         error: dict[str, str] | None = None
         try:
             if not files_ok:
@@ -793,6 +794,8 @@ class GrapherEngine:
                 "document_reopened": reopened,
                 "plot_binding": bindings_ok,
                 "line_symbol_mode": mode_ok,
+                "chart_mode": mode_ok,
+                "category_binding": mode_ok if is_bar else True,
                 "legend_labels": legend_ok,
                 "series_colors": colors_ok,
                 "graph_title": title_ok,

@@ -186,6 +186,8 @@ def test_grapher_verify_uses_native_signatures_and_semantic_readback(
         "document_reopened": True,
         "plot_binding": True,
         "line_symbol_mode": True,
+        "chart_mode": True,
+        "category_binding": True,
         "legend_labels": True,
         "series_colors": True,
         "graph_title": True,
