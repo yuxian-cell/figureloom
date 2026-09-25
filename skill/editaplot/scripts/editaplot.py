@@ -136,6 +136,7 @@ def build_parser() -> argparse.ArgumentParser:
         default="editable Origin figure and publication exports",
     )
     plan_parser.add_argument("--mapping-json", help="Confirmed assignments/context JSON")
+    plan_parser.add_argument("--fit-spec-json", help="Optional backend-neutral FitSpec JSON file")
     plan_parser.add_argument(
         "--semantic-confirmation-json",
         required=True,
@@ -338,7 +339,7 @@ def _run_render(args: argparse.Namespace) -> int:
         output_dir=args.output_dir,
         close_application=args.close_origin,
     )
-    if engine.name != "origin":
+    if engine.name != "origin" or plan.get("fit") is not None:
         _emit(result.to_dict())
     return 0
 
@@ -521,9 +522,11 @@ def main(argv: list[str] | None = None) -> int:
                 args.reference_spec_json,
                 args.reference_confirmation_json,
                 args.reference_bindings_json,
+                args.fit_spec_json,
             ):
                 _ensure_output_does_not_replace_input(reference_input, args.output)
             mapping = load_json(args.mapping_json) if args.mapping_json else None
+            fit_spec = load_json(args.fit_spec_json) if args.fit_spec_json else None
             visual_style = load_json(args.visual_style_json) if args.visual_style_json else None
             semantic_confirmation = load_json(args.semantic_confirmation_json)
             reference_spec = (
@@ -560,6 +563,7 @@ def main(argv: list[str] | None = None) -> int:
                 reference_route=args.reference_route,
                 reference_bindings=reference_bindings,
                 engine_home=args.engine_home,
+                fit_spec=fit_spec,
             )
             _emit(payload, args.output)
         elif args.command == "render":

@@ -11,13 +11,18 @@ from .models import EngineError
 FIT_ERRORS = frozenset(
     {
         "unsupported_fit_model",
+        "unsupported_multi_series_fit",
+        "unsupported_fit_range",
         "unsupported_fit_weighting",
+        "unsupported_fit_parameter_policy",
         "native_fit_not_supported",
         "fit_create_failed",
         "fit_execution_failed",
         "fit_readback_failed",
         "fit_result_invalid",
         "fit_source_binding_failed",
+        "fit_verify_failed",
+        "native_fit_relationship_lost",
     }
 )
 RESULT_SOURCES = frozenset({"backend_native", "core_computed", "imported"})
@@ -149,3 +154,40 @@ def fit_error(code: str, *, engine: str, cause: Exception | None = None) -> Engi
         engine=engine,
         cause_type=type(cause).__name__ if cause else None,
     )
+
+
+def production_linear_fit(plan: dict[str, Any]) -> FitSpec | None:
+    """Validate the single-series native Fit scope before any desktop application starts."""
+    payload = plan.get("fit")
+    if payload is None:
+        return None
+    if not isinstance(payload, dict):
+        raise EngineError("unsupported_fit_model", "FitSpec must be an object")
+    try:
+        spec = FitSpec.from_dict(payload)
+    except EngineError:
+        raise
+    except (KeyError, TypeError, ValueError) as exc:
+        raise EngineError("fit_result_invalid", "FitSpec is malformed") from exc
+    render = plan.get("render_spec") or {}
+    data = render.get("data") or {}
+    if plan.get("template", {}).get("id") != "scatter" or render.get("chart_type") != "xy_scatter":
+        raise EngineError("native_fit_not_supported", "Native linear Fit currently requires XY Scatter")
+    y_columns = data.get("y")
+    if not isinstance(y_columns, list) or len(y_columns) != 1:
+        raise EngineError("unsupported_multi_series_fit", "Native linear Fit requires one Y series")
+    if spec.x_column != data.get("x") or spec.y_column != y_columns[0]:
+        raise EngineError("fit_source_binding_failed", "FitSpec columns differ from the scatter plan")
+    if data.get("y_errors"):
+        raise EngineError("native_fit_not_supported", "Scatter + Error + Fit is not supported yet")
+    if spec.fit_range is not None:
+        raise EngineError("unsupported_fit_range", "Partial-range Fit is not supported")
+    if spec.weight_mode != "none":
+        raise EngineError("unsupported_fit_weighting", "Weighted Fit is not supported")
+    if any(parameter != ParameterSpec() for parameter in spec.parameters.values()):
+        raise EngineError("unsupported_fit_parameter_policy", "Only free parameters are supported")
+    if spec.result_source != "backend_native":
+        raise EngineError("native_fit_not_supported", "This route requires backend-native fitting")
+    if spec.requested_statistics != ("r_squared",):
+        raise EngineError("native_fit_not_supported", "Only R-squared is available in this Fit route")
+    return spec

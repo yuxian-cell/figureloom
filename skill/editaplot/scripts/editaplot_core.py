@@ -2140,6 +2140,7 @@ def build_plan(
     reference_route: str = "template_adaptation",
     reference_bindings: dict[str, str] | None = None,
     engine_home: str | Path | None = None,
+    fit_spec: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Freeze a selected template preparation into a source-bound render plan."""
     if not claim.strip():
@@ -2431,8 +2432,23 @@ def build_plan(
             + reference_blocked_reasons
         ),
     }
+    if fit_spec is not None:
+        plan["fit"] = fit_spec
+        _validate_fit_plan(plan)
     plan["plan_hash"] = _json_hash(plan)
     return plan
+
+
+def _validate_fit_plan(plan: dict[str, Any]) -> None:
+    if plan.get("fit") is None:
+        return
+    from editaplot_engine.fit_contract import production_linear_fit
+    from editaplot_engine.models import EngineError
+
+    try:
+        production_linear_fit(plan)
+    except EngineError as exc:
+        raise EditaPlotError(exc.code, str(exc)) from exc
 
 
 def _validate_frozen_semantic_contract(
@@ -2478,6 +2494,7 @@ def validate_plan(plan: dict[str, Any]) -> None:
     payload.pop("plan_hash", None)
     if not isinstance(expected_hash, str) or expected_hash != _json_hash(payload):
         raise EditaPlotError("plan_hash_mismatch", "The render plan was modified after creation.")
+    _validate_fit_plan(plan)
     source_payload = plan.get("source")
     if not isinstance(source_payload, dict) or not isinstance(source_payload.get("sha256"), str):
         raise EditaPlotError("source_contract_missing", "The render plan has no source contract.")

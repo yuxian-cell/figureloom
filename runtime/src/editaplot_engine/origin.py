@@ -7,6 +7,7 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+from .fit_contract import FitSpec, production_linear_fit
 from .models import EngineError, EngineProcessError, RenderResult
 
 
@@ -120,13 +121,14 @@ class OriginEngine:
         close_application: bool = False,
     ) -> RenderResult:
         core = self._core()
+        fit_spec = production_linear_fit(plan)
         command, env, root = core.build_worker_command(
             plan,
             plan_file=plan_file,
             engine_home=engine_home,
             python_executable=python_executable,
             output_dir=output_dir,
-            close_origin=close_application,
+            close_origin=close_application or fit_spec is not None,
         )
         print(
             json.dumps(
@@ -155,16 +157,40 @@ class OriginEngine:
             for name in ("png", "pdf", "tif")
             if isinstance(payload.get(name), str)
         }
+        fit_readback: dict[str, Any] | None = None
+        if fit_spec is not None:
+            from origin_sciplot.origin_backend.fit import apply_linear_fit
+
+            fit_readback = apply_linear_fit(Path(str(payload["output_dir"])), fit_spec)
+            fit_manifest = {
+                "engine": "origin",
+                "engine_version": fit_readback["engine_version"],
+                "result_source": "backend_native",
+                "spec": fit_spec.to_dict(),
+                "readback": fit_readback,
+            }
+            (Path(str(payload["output_dir"])) / "fit-manifest.json").write_text(
+                json.dumps(fit_manifest, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
+            verify_path = Path(str(payload["output_dir"])) / "origin_verify_report.json"
+            verify_report = json.loads(verify_path.read_text(encoding="utf-8"))
+            verify_report["fit"] = fit_readback
+            verify_path.write_text(json.dumps(verify_report, ensure_ascii=False, indent=2), encoding="utf-8")
+            verified = self.verify(Path(str(payload["output_dir"])))
+            if verified["status"] != "ok":
+                raise EngineError("fit_verify_failed", "Origin Fit verification failed", engine=self.name)
         result = RenderResult(
             engine=self.name,
             status="ok",
             output_dir=Path(str(payload["output_dir"])),
             editable_path=editable,
             exports=exports,
+            readback={"fit": fit_readback} if fit_readback else {},
             metadata={
                 "engine_version": payload.get("origin_version"),
                 "editable_format": "opju",
                 "verify_report": payload.get("origin_verify_report"),
+                **({"fit": fit_readback["result"]} if fit_readback else {}),
             },
         )
         (result.output_dir / "render-result.json").write_text(
@@ -182,12 +208,59 @@ class OriginEngine:
 
     def verify(self, output_dir: str | Path) -> dict[str, Any]:
         result = self._core().verify_output(output_dir)
-        return {
+        report = {
             "status": "ok" if result["programmatic_pass"] else "failed",
             "engine": self.name,
             "editable_format": "opju",
             **result,
         }
+        fit_manifest_path = Path(output_dir) / "fit-manifest.json"
+        plan_copy = Path(output_dir) / "render-plan.json"
+        planned_fit = None
+        if plan_copy.is_file():
+            planned_fit = json.loads(plan_copy.read_text(encoding="utf-8")).get("fit")
+        if planned_fit is not None and not fit_manifest_path.is_file():
+            report["status"] = "failed"
+            report["ok"] = report["programmatic_pass"] = False
+            report["checks"] = {"native_fit": False, "artifact_reopened": False}
+            report["error"] = {"code": "native_fit_relationship_lost", "message": "Fit manifest is missing"}
+            return report
+        if fit_manifest_path.is_file():
+            from origin_sciplot.origin_backend.fit import verify_linear_fit
+
+            try:
+                fit_manifest = json.loads(fit_manifest_path.read_text(encoding="utf-8"))
+                spec = FitSpec.from_dict(fit_manifest["spec"])
+                if FitSpec.from_dict(planned_fit) != spec:
+                    raise EngineError(
+                        "fit_verify_failed", "Saved FitSpec differs from RenderPlan", engine=self.name
+                    )
+                saved = fit_manifest["readback"]
+                native = verify_linear_fit(
+                    Path(output_dir), spec, saved["report_sheet"], saved["curve_sheet"]
+                )
+                fit_ok = all(
+                    (
+                        native["present"], native["curve_present"], native["scatter_present"],
+                        native["full_range"], native["result"]["result_source"] == "backend_native",
+                        native["source_x_column"] == spec.x_column,
+                        native["source_y_column"] == spec.y_column,
+                    )
+                )
+                report["checks"] = {"native_fit": fit_ok, "artifact_reopened": True}
+                report["readback"] = {"fit": native}
+            except (EngineError, KeyError, ValueError, OSError) as exc:
+                fit_ok = False
+                report["checks"] = {"native_fit": False, "artifact_reopened": False}
+                report["error"] = {
+                    "code": getattr(exc, "code", "fit_verify_failed"), "message": str(exc)
+                }
+            report["ok"] = report["programmatic_pass"] = report["programmatic_pass"] and fit_ok
+            report["status"] = "ok" if report["ok"] else "failed"
+            (Path(output_dir) / "origin_fit_verify_report.json").write_text(
+                json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
+        return report
 
 
 __all__ = ["OriginEngine"]

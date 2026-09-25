@@ -15,9 +15,11 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
+from editaplot_engine.fit_contract import production_linear_fit
 from editaplot_engine.models import EngineError, RenderResult
 
 from .error_bar import add_y_error, read_y_error
+from .fit import add_linear_fit, read_linear_fit
 from .smoke import (
     PROGID,
     call,
@@ -356,6 +358,7 @@ class GrapherEngine:
             graph_title = ""
             graph_title_linked = False
             graph_count = 0
+            fit_readback: dict[str, Any] | None = None
             category_column: str | None = None
             category_labels: dict[str, Any] = {}
             for shape_index in range(1, int(get(shapes, "Count")) + 1):
@@ -369,7 +372,11 @@ class GrapherEngine:
                 graph_title_linked = bool(get(shape, "LinkTitleToObjectName"))
                 for plot_index in range(1, int(get(graph_plots, "Count")) + 1):
                     plot = call(graph_plots, "Item", plot_index)
+                    if _optional_get(plot, "fitType") is not None:
+                        continue
                     bar_plot = _optional_get(plot, "Stacked") is not None
+                    if not bar_plot:
+                        fit_readback = read_linear_fit(plot) or fit_readback
                     symbol_frequency = int(_optional_get(plot, "symbolFreq") or 0)
                     line = get(plot, "line")
                     line_width = float(_optional_get(line, "width") or 0.0)
@@ -438,7 +445,7 @@ class GrapherEngine:
                                 "first_row": int(get(ticks, "FirstLabelRow")),
                                 "worksheet": str(get(ticks, "worksheet")),
                             }
-            return {
+            result = {
                 "engine": "grapher",
                 "document": {"opened": True, "path": str(artifact)},
                 "graph_count": graph_count,
@@ -454,6 +461,9 @@ class GrapherEngine:
                 "axes": axes_payload,
                 "legends": legends_payload,
             }
+            if fit_readback is not None:
+                result["fit"] = fit_readback
+            return result
         finally:
             if document is not None:
                 call(document, "Close", False)
@@ -479,6 +489,7 @@ class GrapherEngine:
         import editaplot_core
 
         editaplot_core.validate_plan(plan)
+        fit_spec = production_linear_fit(plan)
         render_spec, frame = self._prepare(plan)
         data = render_spec["data"]
         chart_type = render_spec["chart_type"]
@@ -547,6 +558,9 @@ class GrapherEngine:
                         put(get(symbol, "Fill"), "foreColor", color)
                     if column in y_errors:
                         add_y_error(plot, frame.columns.get_loc(y_errors[column]["column"]) + 1, color=color)
+                if fit_spec is not None:
+                    add_linear_fit(plot)
+                    call(graph, "AddLegend", True)
                 if is_bar:
                     put(graph, "GroupsAdjacent", True)
                     labels = get(call(get(graph, "Axes"), "Item", 1), "TickLabels")
@@ -601,6 +615,7 @@ class GrapherEngine:
                 "category_column" if is_bar else "x_column": x_column,
                 "y_columns": y_columns,
                 "y_errors": y_errors,
+                **({"fit": fit_spec.to_dict()} if fit_spec else {}),
                 "colors": series_colors,
                 "graph_title": title,
                 "x_title": axes_spec["x"]["title"],
@@ -628,6 +643,7 @@ class GrapherEngine:
                 "editable_format": "grf",
                 "manifest": str(target / "manifest.json"),
                 "verify_report": str(target / "grapher_verify_report.json"),
+                **({"fit": report["readback"]["fit"]["result"]} if fit_spec else {}),
             },
         )
         _write_json(target / "render-result.json", result.to_dict())
@@ -655,6 +671,7 @@ class GrapherEngine:
         readback: dict[str, Any] = {}
         bindings_ok = axes_ok = staging_ok = mode_ok = legend_ok = colors_ok = title_ok = False
         error_bindings_ok = False
+        fit_ok = True
         is_bar = False
         error: dict[str, str] | None = None
         try:
@@ -667,6 +684,13 @@ class GrapherEngine:
             )
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
             expected = manifest["expected"]
+            plan_copy = target / "render-plan.json"
+            if plan_copy.is_file():
+                planned_fit = json.loads(plan_copy.read_text(encoding="utf-8")).get("fit")
+                if planned_fit != expected.get("fit"):
+                    raise EngineError(
+                        "fit_verify_failed", "Saved FitSpec differs from RenderPlan", engine="grapher"
+                    )
             y_columns = expected.get("y_columns") or [expected["y_column"]]
             y_errors = expected.get("y_errors") or {}
             chart_type = expected["chart_type"]
@@ -760,6 +784,28 @@ class GrapherEngine:
                 for plot, column in zip(plots, y_columns, strict=True):
                     plot["category_column" if is_bar else "x_column"] = anchor
                     plot["y_column"] = column
+            fit_ok = True
+            if "fit" in expected:
+                native_fit = readback.get("fit") or {}
+                fit_result = native_fit.get("result") or {}
+                fit_legend = any(
+                    legend.get("entries") == [y_columns[0], f"Linear Fit - {y_columns[0]}"]
+                    for legend in readback.get("legends", [])
+                )
+                fit_ok = (
+                    native_fit.get("present") is True
+                    and native_fit.get("native_editable") is True
+                    and native_fit.get("curve_present") is True
+                    and native_fit.get("full_range") is True
+                    and native_fit.get("source_x_column_index") == 1
+                    and native_fit.get("source_y_column_index") == staging_columns.index(y_columns[0]) + 1
+                    and Path(native_fit.get("source_worksheet", "")).resolve() == staging_path
+                    and fit_result.get("model") == "linear"
+                    and fit_result.get("result_source") == "backend_native"
+                    and fit_result.get("weight_mode") == "none"
+                    and fit_result.get("n_points", 0) >= 2
+                    and fit_legend
+                )
         except Exception as exc:
             error = {"code": getattr(exc, "code", "grapher_verify_failed"), "message": str(exc)}
         reopened = bool(readback.get("document", {}).get("opened"))
@@ -777,6 +823,7 @@ class GrapherEngine:
                     title_ok,
                     axes_ok,
                     error_bindings_ok,
+                    fit_ok,
                 )
             )
             and error is None
@@ -801,6 +848,7 @@ class GrapherEngine:
                 "graph_title": title_ok,
                 "axes": axes_ok,
                 "error_bindings": error_bindings_ok,
+                **({"native_fit": fit_ok} if "fit" in expected else {}),
             },
             "readback": readback,
         }
