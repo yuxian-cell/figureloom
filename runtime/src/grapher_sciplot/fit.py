@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import re
+import tempfile
+from pathlib import Path
 from typing import Any
+from xml.etree import ElementTree
 
 from editaplot_engine.fit_contract import FitResult, FitSpec
 from editaplot_engine.models import EngineError
@@ -31,38 +34,39 @@ def add_linear_fit(plot: Any, spec: FitSpec) -> Any:
     return fit
 
 
-def _native_statistics(fit: Any) -> str:
-    """Read Grapher's statistics without leaving the user's clipboard changed."""
-    import win32clipboard as clipboard
-
-    saved: list[tuple[int, bytes | str]] = []
-    clipboard.OpenClipboard()
+def _native_statistics(document: Any, fit: Any) -> str:
+    """Read a linked native Fit text object through Grapher's SVG export."""
+    shapes = get(document, "Shapes")
+    before = int(get(shapes, "Count"))
+    call(fit, "InsertStatistics", 1.0, 1.0)
+    if int(get(shapes, "Count")) != before + 1:
+        raise EngineError("fit_readback_failed", "Grapher did not insert Fit statistics", engine="grapher")
+    shape = call(shapes, "Item", before + 1)
     try:
-        fmt = 0
-        while fmt := clipboard.EnumClipboardFormats(fmt):
-            value = clipboard.GetClipboardData(fmt)
-            if not isinstance(value, (bytes, str)):
+        if int(get(shape, "Type")) != 6 or int(get(get(shape, "FitPlot"), "fitType")) != 0:
+            raise EngineError(
+                "fit_readback_failed", "Statistics text is not linked to Linear Fit", engine="grapher"
+            )
+        with tempfile.TemporaryDirectory(prefix="editaplot-fit-") as directory:
+            svg = Path(directory) / "fit-statistics.svg"
+            if not call(document, "Export", str(svg)) or not svg.is_file():
                 raise EngineError(
-                    "fit_readback_failed", "Clipboard format cannot be safely restored", engine="grapher"
+                    "fit_readback_failed", "Grapher could not export native Fit text", engine="grapher"
                 )
-            saved.append((fmt, value))
+            root = ElementTree.parse(svg).getroot()  # noqa: S314 - Grapher just generated this file
+            lines = [
+                "".join(node.itertext()) for node in root.iter() if node.tag.endswith("}text")
+            ]
+            if "Fit Results" not in lines:
+                raise EngineError("fit_readback_failed", "Grapher SVG lacks Fit report", engine="grapher")
+            text = "\n".join(lines[lines.index("Fit Results"):])
+            if "Equation Y =" not in text or "R-sq'd =" not in text:
+                raise EngineError(
+                    "fit_readback_failed", "Grapher SVG lacks native Fit statistics", engine="grapher"
+                )
+            return text
     finally:
-        clipboard.CloseClipboard()
-    try:
-        call(fit, "CopyStatsToClipboard")
-        clipboard.OpenClipboard()
-        try:
-            return str(clipboard.GetClipboardData(clipboard.CF_UNICODETEXT))
-        finally:
-            clipboard.CloseClipboard()
-    finally:
-        clipboard.OpenClipboard()
-        try:
-            clipboard.EmptyClipboard()
-            for fmt, value in saved:
-                clipboard.SetClipboardData(fmt, value)
-        finally:
-            clipboard.CloseClipboard()
+        call(shape, "Delete")
 
 
 def parse_statistics(text: str) -> tuple[float, float, float, int]:
@@ -80,7 +84,7 @@ def parse_statistics(text: str) -> tuple[float, float, float, int]:
     )
 
 
-def read_linear_fit(plot: Any) -> dict[str, Any] | None:
+def read_linear_fit(plot: Any, document: Any) -> dict[str, Any] | None:
     fits = get(plot, "Fits")
     if int(get(fits, "Count")) == 0:
         return None
@@ -90,7 +94,7 @@ def read_linear_fit(plot: Any) -> dict[str, Any] | None:
     if int(get(fit, "fitType")) != 0:
         raise EngineError("fit_readback_failed", "Native Fit is not linear", engine="grapher")
     try:
-        slope, intercept, r_squared, n_points = parse_statistics(_native_statistics(fit))
+        slope, intercept, r_squared, n_points = parse_statistics(_native_statistics(document, fit))
         minimum, maximum = float(get(fit, "MinX")), float(get(fit, "MaxX"))
         full_range = bool(get(fit, "UseCurveLimits"))
         fit_range = None if full_range else (minimum, maximum)
@@ -116,6 +120,7 @@ def read_linear_fit(plot: Any) -> dict[str, Any] | None:
             "fit_max_x": maximum,
             "full_range": full_range,
             "weighting_readback": "unsupported",
+            "statistics_readback_source": "native_linked_text_svg",
             "curve_present": True,
             "result": result.to_dict(),
         }

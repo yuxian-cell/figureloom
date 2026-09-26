@@ -1,0 +1,28 @@
+{
+  "version": "27.1.296",
+  "fit_type": 0,
+  "runtime_typeinfo_available": false,
+  "interface": null,
+  "candidate_dispids": {
+    "Weight": null,
+    "Weights": null,
+    "WeightColumn": null,
+    "Weighting": null,
+    "Weighted": null,
+    "Sigma": null,
+    "Error": null,
+    "ErrorColumn": null,
+    "Variance": null,
+    "Instrumental": null,
+    "Uncertainty": null,
+    "Regression": null,
+    "Data": null,
+    "Column": null,
+    "SetWeight": 43,
+    "LoadWeights": 41,
+    "SaveWeights": 42
+  },
+  "linear_set_weight_probe": "rejected: Parameter 1: Value must be >= 1 and <= 0",
+  "weighted_average_fit_type": 9,
+  "weighted_average_set_weight_probe": "accepted"
+}

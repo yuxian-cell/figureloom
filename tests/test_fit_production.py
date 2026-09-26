@@ -4,6 +4,7 @@ import math
 import sys
 from pathlib import Path
 
+import pandas as pd
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "runtime" / "src"))
@@ -16,6 +17,7 @@ from editaplot_engine.fit_contract import (  # noqa: E402
 )
 from editaplot_engine.models import EngineError  # noqa: E402
 from grapher_sciplot.fit import parse_statistics  # noqa: E402
+from origin_sciplot.origin_backend.fit import _fit_source  # noqa: E402
 
 
 def _plan() -> dict:
@@ -112,3 +114,53 @@ def test_fit_range_skips_missing_values_and_preserves_input_order():
     frame = pd.DataFrame({"X": [5, 2, 4, 1, 3], "Y": [10, 4, float("nan"), 2, 6]})
     spec = FitSpec(model="linear", x_column="X", y_column="Y", fit_range=(2, 5))
     assert selected_fit_points(frame, spec)["X"].tolist() == [5, 2, 3]
+
+
+def test_weight_column_is_independent_of_error_bar():
+    plan = _plan()
+    plan["source"] = {"columns": ["X", "Y", "Y_SD", "W"]}
+    plan["render_spec"]["data"]["y_errors"] = {
+        "Y": {"column": "Y_SD", "kind": "sd", "direction": "y", "symmetric": True}
+    }
+    plan["fit"].update(
+        weight_mode="column", weight_column="W", weight_interpretation="direct_weight"
+    )
+    selected = production_linear_fit(plan)
+    assert selected.weight_column == "W"
+    assert plan["render_spec"]["data"]["y_errors"]["Y"]["column"] == "Y_SD"
+    plan["fit"].update(weight_mode="none", weight_column=None, weight_interpretation=None)
+    assert production_linear_fit(plan).weight_column is None
+
+
+def test_origin_weight_staging_keeps_plot_source_separate():
+    original = pd.DataFrame({"X": [1, 2, 3], "Y": [2, 4, 9], "Y_SD": [0.2, 0.3, 0.4], "W": [10, 10, 0.1]})
+
+    class Sheet:
+        name = "Sheet1"
+
+        def __init__(self, frame=None):
+            self.frame = frame
+
+        def to_df(self):
+            return self.frame
+
+        def from_df(self, frame):
+            self.frame = frame.copy()
+
+        def get_book(self):
+            return type("Book", (), {"name": "Book2"})()
+
+    class Origin:
+        def new_sheet(self, kind, lname):
+            assert (kind, lname) == ("w", "EditaPlot Fit Weights")
+            return Sheet()
+
+    source = Sheet(original)
+    spec = FitSpec(
+        model="linear", x_column="X", y_column="Y", weight_mode="column",
+        weight_column="W", weight_interpretation="direct_weight",
+    )
+    helper, reference, rows = _fit_source(Origin(), source, spec)
+    assert helper is not source and reference == "[Book2]Sheet1" and rows is None
+    assert helper.to_df().columns.tolist() == ["X", "Y", "W"]
+    assert source.to_df().equals(original)

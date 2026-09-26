@@ -9,11 +9,13 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "runtime" / "src"))
 
 from editaplot_engine.fit_contract import (
+    FIT_CAPABILITIES,
     FitCapabilities,
     FitResult,
     FitSpec,
     ParameterSpec,
     fit_error,
+    selected_weighted_points,
 )
 from editaplot_engine.models import EngineError
 
@@ -78,9 +80,37 @@ def test_fit_result_provenance_and_finite_values():
 
 def test_capability_and_error_report():
     assert FitCapabilities(True, True, True, True, True).to_dict()["native_linear"]
+    assert FIT_CAPABILITIES["origin"].explicit_weight is True
+    assert FIT_CAPABILITIES["grapher"].explicit_weight is False
+    assert all(cap.partial_range and cap.native_linear for cap in FIT_CAPABILITIES.values())
     assert (
         fit_error("fit_readback_failed", engine="grapher", cause=RuntimeError()).to_dict()["error"]["code"]
         == "fit_readback_failed"
     )
     with pytest.raises(ValueError):
         fit_error("unlisted", engine="grapher")
+
+
+def test_explicit_direct_weight_contract_and_validation():
+    import pandas as pd
+
+    spec = FitSpec(
+        model="linear", x_column="X", y_column="Y", weight_mode="column",
+        weight_column="W", weight_interpretation="direct_weight",
+    )
+    assert FitSpec.from_dict(spec.to_dict()) == spec
+    frame = pd.DataFrame({"X": [1, 2, 3], "Y": [2, 4, 8], "W": [10, 10, 0.1]})
+    assert selected_weighted_points(frame, spec)["W"].tolist() == [10, 10, 0.1]
+    for bad, code in ((0, "invalid_weight_value"), (-1, "invalid_weight_value"),
+                      (math.inf, "invalid_weight_value"), ("bad", "non_numeric_weight_column")):
+        changed = frame.astype({"W": object})
+        changed.loc[2, "W"] = bad
+        with pytest.raises(EngineError) as error:
+            selected_weighted_points(changed, spec)
+        assert error.value.code == code
+    with pytest.raises(EngineError) as error:
+        selected_weighted_points(frame.drop(columns="W"), spec)
+    assert error.value.code == "missing_weight_column"
+    with pytest.raises(EngineError) as error:
+        FitSpec(model="linear", x_column="X", y_column="Y", weight_mode="column", weight_column="W")
+    assert error.value.code == "unsupported_fit_weighting"

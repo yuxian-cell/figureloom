@@ -7,7 +7,7 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-from .fit_contract import FitSpec, production_linear_fit
+from .fit_contract import FIT_CAPABILITIES, FitSpec, production_linear_fit, selected_weighted_points
 from .models import EngineError, EngineProcessError, RenderResult
 
 
@@ -77,7 +77,11 @@ class OriginEngine:
         return self._core().discover_origin_application()
 
     def doctor(self, *, engine_home: str | Path | None = None) -> dict[str, Any]:
-        return {"engine": self.name, **self._core().doctor(engine_home=engine_home)}
+        return {
+            "engine": self.name,
+            **self._core().doctor(engine_home=engine_home),
+            "fit_capabilities": FIT_CAPABILITIES[self.name].to_dict(),
+        }
 
     def smoke(
         self,
@@ -122,6 +126,10 @@ class OriginEngine:
     ) -> RenderResult:
         core = self._core()
         fit_spec = production_linear_fit(plan)
+        if fit_spec is not None and fit_spec.weight_mode == "column":
+            from origin_sciplot.data_loader import load_table
+
+            selected_weighted_points(load_table(plan["source"]["path"]).frame, fit_spec)
         command, env, root = core.build_worker_command(
             plan,
             plan_file=plan_file,
@@ -271,6 +279,20 @@ class OriginEngine:
                         "fit_range_mismatch", "Saved Origin Fit does not use the requested X interval",
                         engine=self.name,
                     )
+                weight_ok = (
+                    native["result"]["weight_mode"] == spec.weight_mode
+                    and native["result"].get("weight_column") == spec.weight_column
+                    and native["result"].get("weight_interpretation") == spec.weight_interpretation
+                    and (spec.weight_mode == "none" or (
+                        f'"{spec.weight_column}"' in (native.get("source_weight_binding") or "")
+                        and native.get("weighting_readback") == "direct_weight_verified"
+                    ))
+                )
+                if not weight_ok:
+                    raise EngineError(
+                        "weight_verify_mismatch", "Saved Origin Fit lost direct weight binding",
+                        engine=self.name,
+                    )
                 fit_ok = all(
                     (
                         native["present"], native["curve_present"], native["scatter_present"],
@@ -278,6 +300,7 @@ class OriginEngine:
                         native["source_x_column"] == spec.x_column,
                         native["source_y_column"] == spec.y_column,
                         native["scatter_n_points"] == plan.get("source", {}).get("row_count"),
+                        weight_ok,
                         error_ok,
                     )
                 )

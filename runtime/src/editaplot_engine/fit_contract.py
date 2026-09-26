@@ -20,6 +20,14 @@ FIT_ERRORS = frozenset(
         "fit_range_readback_failed",
         "fit_range_mismatch",
         "unsupported_fit_weighting",
+        "missing_weight_column",
+        "non_numeric_weight_column",
+        "invalid_weight_value",
+        "weight_length_mismatch",
+        "weight_semantic_translation_failed",
+        "weight_binding_failed",
+        "weight_readback_failed",
+        "weight_verify_mismatch",
         "unsupported_fit_parameter_policy",
         "native_fit_not_supported",
         "fit_create_failed",
@@ -67,6 +75,7 @@ class FitSpec:
     fit_range: tuple[float, float] | None = None
     weight_mode: str = "none"
     weight_column: str | None = None
+    weight_interpretation: str | None = None
     result_source: str = "backend_native"
     requested_statistics: tuple[str, ...] = ("r_squared",)
     curve_points: int = 100
@@ -80,8 +89,19 @@ class FitSpec:
             raise ValueError("Linear fit parameters must be intercept and slope")
         if self.weight_mode not in WEIGHT_MODES:
             raise EngineError("unsupported_fit_weighting", f"Unsupported weight mode: {self.weight_mode}")
-        if (self.weight_mode == "column") != (self.weight_column is not None):
-            raise ValueError("Weight column is required only for column weighting")
+        if self.weight_mode == "column" and self.weight_column is None:
+            raise EngineError("missing_weight_column", "Fit weight column is missing")
+        if self.weight_mode != "column" and self.weight_column is not None:
+            raise EngineError("unsupported_fit_weighting", "Weight column requires column weighting")
+        if self.weight_mode == "column":
+            if self.weight_column in {"", self.x_column, self.y_column}:
+                raise EngineError("missing_weight_column", "Fit needs a distinct weight column")
+            if self.weight_interpretation != "direct_weight":
+                raise EngineError(
+                    "unsupported_fit_weighting", "Explicit column weights must mean direct_weight"
+                )
+        elif self.weight_interpretation is not None:
+            raise EngineError("unsupported_fit_weighting", "Weight interpretation requires a weight column")
         if self.fit_range is not None:
             try:
                 valid_range = (
@@ -127,6 +147,8 @@ class FitResult:
     weight_mode: str
     backend: str
     result_source: str
+    weight_column: str | None = None
+    weight_interpretation: str | None = None
 
     def __post_init__(self) -> None:
         if self.model != "linear" or set(self.parameters) != {"intercept", "slope"}:
@@ -147,6 +169,14 @@ class FitResult:
             or not self.backend
         ):
             raise EngineError("fit_result_invalid", "Fit result provenance is invalid")
+        if self.weight_mode == "column" and (
+            not self.weight_column or self.weight_interpretation != "direct_weight"
+        ):
+            raise EngineError("fit_result_invalid", "Direct weight provenance is missing")
+        if self.weight_mode != "column" and (
+            self.weight_column is not None or self.weight_interpretation is not None
+        ):
+            raise EngineError("fit_result_invalid", "Unweighted Fit has unexpected weight provenance")
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -159,9 +189,17 @@ class FitCapabilities:
     reopen: bool
     parameters_readback: bool
     r_squared_readback: bool
+    partial_range: bool = False
+    explicit_weight: bool = False
 
     def to_dict(self) -> dict[str, bool]:
         return asdict(self)
+
+
+FIT_CAPABILITIES = {
+    "origin": FitCapabilities(True, True, True, True, True, partial_range=True, explicit_weight=True),
+    "grapher": FitCapabilities(True, True, True, True, True, partial_range=True, explicit_weight=False),
+}
 
 
 def fit_error(code: str, *, engine: str, cause: Exception | None = None) -> EngineError:
@@ -189,6 +227,28 @@ def selected_fit_points(frame: Any, spec: FitSpec) -> Any:
     if len(pairs) < 2 or pairs[spec.x_column].nunique() < 2:
         raise EngineError("insufficient_fit_points", "Fit interval needs two distinct valid X values")
     return pairs
+
+
+def selected_weighted_points(frame: Any, spec: FitSpec) -> Any:
+    """Validate direct weights for finite X/Y pairs without changing Scatter data."""
+    import numpy as np
+    import pandas as pd
+
+    if spec.weight_mode != "column" or not spec.weight_column:
+        raise EngineError("unsupported_fit_weighting", "Explicit direct weights are required")
+    if spec.weight_column not in frame:
+        raise EngineError("missing_weight_column", f"Weight column {spec.weight_column!r} is missing")
+    pairs = selected_fit_points(frame, spec)
+    values = frame.loc[pairs.index, spec.weight_column]
+    if len(values) != len(pairs):
+        raise EngineError("weight_length_mismatch", "Weight count differs from valid Fit points")
+    try:
+        weights = pd.to_numeric(values, errors="raise")
+    except (TypeError, ValueError) as exc:
+        raise EngineError("non_numeric_weight_column", "Weight values must be numeric") from exc
+    if not np.isfinite(weights.to_numpy()).all() or bool((weights <= 0).any()):
+        raise EngineError("invalid_weight_value", "Direct weights must be finite and positive")
+    return pairs.assign(**{spec.weight_column: weights})
 
 
 def production_linear_fit(plan: dict[str, Any]) -> FitSpec | None:
@@ -225,8 +285,12 @@ def production_linear_fit(plan: dict[str, Any]) -> FitSpec | None:
         or errors[spec.y_column]["column"] in {"", spec.x_column, spec.y_column}
     ):
         raise EngineError("native_fit_not_supported", "Only one symmetric Y SD error is supported with Fit")
-    if spec.weight_mode != "none":
+    if spec.weight_mode not in {"none", "column"}:
         raise EngineError("unsupported_fit_weighting", "Weighted Fit is not supported")
+    if spec.weight_mode == "column" and spec.fit_range is not None:
+        raise EngineError("unsupported_fit_weighting", "Partial-range weighted Fit is not supported")
+    if spec.weight_mode == "column" and spec.weight_column not in plan.get("source", {}).get("columns", []):
+        raise EngineError("missing_weight_column", "Fit weight column is absent from source data")
     if any(parameter != ParameterSpec() for parameter in spec.parameters.values()):
         raise EngineError("unsupported_fit_parameter_policy", "Only free parameters are supported")
     if spec.result_source != "backend_native":

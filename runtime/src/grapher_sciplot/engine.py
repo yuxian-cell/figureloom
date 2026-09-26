@@ -17,7 +17,12 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
-from editaplot_engine.fit_contract import FitSpec, production_linear_fit, selected_fit_points
+from editaplot_engine.fit_contract import (
+    FIT_CAPABILITIES,
+    FitSpec,
+    production_linear_fit,
+    selected_fit_points,
+)
 from editaplot_engine.models import EngineError, RenderResult
 
 from .error_bar import add_y_error, read_y_error
@@ -192,6 +197,7 @@ class GrapherEngine:
                 "executable": detection["executable"],
                 "ready_for_analysis": True,
                 "ready_for_render": automation_available,
+                "fit_capabilities": FIT_CAPABILITIES[self.name].to_dict(),
             }
         except Exception as exc:
             code = getattr(exc, "code", "grapher_not_installed")
@@ -203,6 +209,7 @@ class GrapherEngine:
                 "version": None,
                 "ready_for_analysis": True,
                 "ready_for_render": False,
+                "fit_capabilities": FIT_CAPABILITIES[self.name].to_dict(),
                 "error": {"code": code, "message": str(exc)},
             }
 
@@ -378,7 +385,7 @@ class GrapherEngine:
                         continue
                     bar_plot = _optional_get(plot, "Stacked") is not None
                     if not bar_plot:
-                        fit_readback = read_linear_fit(plot) or fit_readback
+                        fit_readback = read_linear_fit(plot, document) or fit_readback
                     symbol_frequency = int(_optional_get(plot, "symbolFreq") or 0)
                     line = get(plot, "line")
                     line_width = float(_optional_get(line, "width") or 0.0)
@@ -492,6 +499,18 @@ class GrapherEngine:
 
         editaplot_core.validate_plan(plan)
         fit_spec = production_linear_fit(plan)
+        if (
+            fit_spec is not None
+            and fit_spec.weight_mode == "column"
+            and not FIT_CAPABILITIES[self.name].explicit_weight
+        ):
+            raise EngineError(
+                "unsupported_fit_weighting",
+                "Grapher native Linear Fit does not support explicit per-point direct weights",
+                engine=self.name,
+                requested_capability="explicit_weighted_linear_fit",
+                native_support=False,
+            )
         render_spec, frame = self._prepare(plan)
         if fit_spec is not None and fit_spec.fit_range is not None:
             selected_fit_points(frame, fit_spec)

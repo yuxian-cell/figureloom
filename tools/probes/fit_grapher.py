@@ -7,39 +7,8 @@ import re
 import sys
 from pathlib import Path
 
+from grapher_sciplot.fit import _native_statistics
 from grapher_sciplot.smoke import call, discover, get, grapher_pids, put, quit_owned_application
-
-
-def native_statistics(fit: object) -> str:
-    """Ask Grapher for its stats and restore every original clipboard format."""
-    import win32clipboard as clipboard
-
-    saved: list[tuple[int, bytes | str]] = []
-    clipboard.OpenClipboard()
-    try:
-        fmt = 0
-        while fmt := clipboard.EnumClipboardFormats(fmt):
-            value = clipboard.GetClipboardData(fmt)
-            if not isinstance(value, (bytes, str)):
-                raise RuntimeError("Clipboard has a format that cannot be safely restored")
-            saved.append((fmt, value))
-    finally:
-        clipboard.CloseClipboard()
-    try:
-        call(fit, "CopyStatsToClipboard")
-        clipboard.OpenClipboard()
-        try:
-            return str(clipboard.GetClipboardData(clipboard.CF_UNICODETEXT))
-        finally:
-            clipboard.CloseClipboard()
-    finally:
-        clipboard.OpenClipboard()
-        try:
-            clipboard.EmptyClipboard()
-            for fmt, value in saved:
-                clipboard.SetClipboardData(fmt, value)
-        finally:
-            clipboard.CloseClipboard()
 
 
 def parse_statistics(text: str) -> dict[str, float]:
@@ -101,7 +70,7 @@ def run(directory: Path) -> dict:
         graph = call(get(reopened, "Shapes"), "Item", 1)
         plot = call(get(graph, "Plots"), "Item", 1)
         fit = call(get(plot, "Fits"), "Item", 1)
-        report["native_statistics"] = native_statistics(fit)
+        report["native_statistics"] = _native_statistics(reopened, fit)
         report["result"] = parse_statistics(report["native_statistics"])
         report["readback"] = {
             "fit_type": get(fit, "fitType"),

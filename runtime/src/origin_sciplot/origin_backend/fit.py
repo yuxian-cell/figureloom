@@ -12,7 +12,12 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
-from editaplot_engine.fit_contract import FitResult, FitSpec, selected_fit_points
+from editaplot_engine.fit_contract import (
+    FitResult,
+    FitSpec,
+    selected_fit_points,
+    selected_weighted_points,
+)
 from editaplot_engine.models import EngineError
 
 from .export_utils import export_graph
@@ -20,10 +25,15 @@ from .session import OriginSession
 
 
 def _source_sheet(op: Any, spec: FitSpec) -> tuple[Any, int, int]:
+    graph = next(op.pages("g"), None)
+    plotted = {plot.name for plot in graph[0].plot_list()} if graph is not None else set()
     for book in op.pages("w"):
         for sheet in book:
             columns = list(sheet.to_df().columns)
-            if spec.x_column in columns and spec.y_column in columns:
+            if (
+                spec.x_column in columns and spec.y_column in columns
+                and (not plotted or _dataset_name(sheet, columns.index(spec.y_column)) in plotted)
+            ):
                 return sheet, columns.index(spec.x_column), columns.index(spec.y_column)
     raise EngineError("fit_source_binding_failed", "Origin source columns are missing", engine="origin")
 
@@ -38,6 +48,10 @@ def _dataset_name(source: Any, column_index: int) -> str:
 
 
 def _fit_source(op: Any, source: Any, spec: FitSpec) -> tuple[Any, str | None, tuple[int, int] | None]:
+    if spec.weight_mode == "column":
+        helper = op.new_sheet("w", lname="EditaPlot Fit Weights")
+        helper.from_df(selected_weighted_points(source.to_df(), spec).reset_index(drop=True))
+        return helper, f"[{helper.get_book().name}]{helper.name}", None
     if spec.fit_range is None:
         return source, None, None
     full = selected_fit_points(source.to_df(), replace(spec, fit_range=None))
@@ -72,11 +86,12 @@ def _read_saved_fit(
         )
     columns = [report.to_list(i) for i in range(report.shape[1])]
     try:
-        offset = int(error_column is not None)
+        offset = int(error_column is not None or spec.weight_mode == "column")
         model = str(columns[2][3])
         source_x = str(columns[3][0])
         source_y = str(columns[4][0])
         range_text = str(columns[5][0])
+        source_weight = str(columns[6][0]) if spec.weight_mode == "column" else None
         intercept, slope = float(columns[8 + offset][0]), float(columns[8 + offset][1])
         n_points, r_squared = int(columns[12 + offset][0]), float(columns[12 + offset][4])
     except (IndexError, TypeError, ValueError) as exc:
@@ -88,8 +103,15 @@ def _read_saved_fit(
     plot_names = [plot.name for plot in graph[0].plot_list()]
     scatter_present = _dataset_name(source, y_index) in plot_names
     source_frame = source.to_df()
+    weighted_points = None
+    if spec.weight_mode == "column":
+        if spec.weight_column not in source_frame:
+            raise EngineError("weight_readback_failed", "Origin saved W column is missing", engine="origin")
+        weighted_points = selected_weighted_points(source_frame, spec)
+        if f'"{spec.weight_column}"' not in (source_weight or ""):
+            raise EngineError("weight_binding_failed", "Origin Fit no longer binds to W", engine="origin")
     native_range: tuple[float, float] | None = None
-    if fit_source_ref is not None:
+    if fit_source_ref is not None and spec.fit_range is not None:
         helper = op.find_sheet("w", fit_source_ref)
         match = re.fullmatch(r"\[(\d+):(\d+)\]", range_text)
         if helper is None or match is None:
@@ -117,6 +139,29 @@ def _read_saved_fit(
             float(sorted_full[spec.x_column].iloc[first - 1]),
             float(sorted_full[spec.x_column].iloc[last - 1]),
         )
+    if fit_source_ref is not None and spec.weight_mode == "column":
+        helper = op.find_sheet("w", fit_source_ref)
+        if helper is None or weighted_points is None:
+            raise EngineError(
+                "weight_readback_failed", "Origin weighted Fit helper is missing", engine="origin"
+            )
+        expected = weighted_points[[spec.x_column, spec.y_column, spec.weight_column]].reset_index(drop=True)
+        helper_frame = helper.to_df()
+        if not set(expected.columns).issubset(helper_frame):
+            raise EngineError(
+                "weight_readback_failed", "Origin weighted Fit helper lacks source columns", engine="origin"
+            )
+        if not helper_frame[list(expected.columns)].equals(expected):
+            raise EngineError(
+                "weight_verify_mismatch", "Origin Fit helper differs from source", engine="origin"
+            )
+        if not all(
+            f"[{helper.get_book().name}]" in binding
+            for binding in (source_x, source_y, source_weight or "")
+        ):
+            raise EngineError(
+                "weight_binding_failed", "Origin Fit is not bound to weight helper", engine="origin"
+            )
     if error_column and error_column not in source_frame:
         raise EngineError("native_fit_relationship_lost", "Origin error column is missing", engine="origin")
     error_index = list(source_frame.columns).index(error_column) if error_column else None
@@ -132,27 +177,43 @@ def _read_saved_fit(
         or n_points < 2
     ):
         raise EngineError("native_fit_relationship_lost", "Origin Fit lost source or curve", engine="origin")
-    if error_column is not None or fit_source_ref is not None:
+    if error_column is not None or fit_source_ref is not None or spec.weight_mode == "column":
         try:
-            selected = selected_fit_points(source_frame, spec)
-            expected = statistics.linear_regression(
-                selected[spec.x_column], selected[spec.y_column]
-            )
-            expected_r_squared = statistics.correlation(
-                selected[spec.x_column], selected[spec.y_column]
-            ) ** 2
+            if weighted_points is not None:
+                selected = weighted_points
+                x, y, w = (
+                    selected[column].to_numpy(dtype=float)
+                    for column in (spec.x_column, spec.y_column, spec.weight_column)
+                )
+                weight_total = w.sum()
+                x_mean, y_mean = (w @ x) / weight_total, (w @ y) / weight_total
+                expected_slope = (w @ ((x - x_mean) * (y - y_mean))) / (w @ ((x - x_mean) ** 2))
+                expected_intercept = y_mean - expected_slope * x_mean
+                expected_r_squared = 1 - (w @ ((y - expected_intercept - expected_slope * x) ** 2)) / (
+                    w @ ((y - y_mean) ** 2)
+                )
+            else:
+                selected = selected_fit_points(source_frame, spec)
+                expected = statistics.linear_regression(
+                    selected[spec.x_column], selected[spec.y_column]
+                )
+                expected_slope, expected_intercept = expected.slope, expected.intercept
+                expected_r_squared = statistics.correlation(
+                    selected[spec.x_column], selected[spec.y_column]
+                ) ** 2
         except (TypeError, ValueError, statistics.StatisticsError) as exc:
             raise EngineError(
                 "fit_result_invalid", "Origin Fit source data are invalid", engine="origin"
             ) from exc
         if (
             n_points != len(selected)
-            or not math.isclose(slope, expected.slope, rel_tol=1e-6, abs_tol=1e-8)
-            or not math.isclose(intercept, expected.intercept, rel_tol=1e-6, abs_tol=1e-8)
+            or not math.isclose(slope, expected_slope, rel_tol=1e-6, abs_tol=1e-8)
+            or not math.isclose(intercept, expected_intercept, rel_tol=1e-6, abs_tol=1e-8)
             or not math.isclose(r_squared, expected_r_squared, rel_tol=1e-6, abs_tol=1e-8)
         ):
             raise EngineError(
-                "fit_result_invalid", "Origin Fit differs from the unweighted X interval", engine="origin"
+                "weight_verify_mismatch" if weighted_points is not None else "fit_result_invalid",
+                "Origin Fit differs from the specified X/Y/weight data", engine="origin"
             )
     result = FitResult(
         model="linear",
@@ -160,9 +221,11 @@ def _read_saved_fit(
         statistics={"r_squared": r_squared},
         n_points=n_points,
         fit_range=native_range,
-        weight_mode="none",
+        weight_mode=spec.weight_mode,
         backend="origin",
         result_source="backend_native",
+        weight_column=spec.weight_column,
+        weight_interpretation=spec.weight_interpretation,
     )
     return {
         "present": True,
@@ -187,14 +250,22 @@ def _read_saved_fit(
         "source_y_column": spec.y_column,
         "source_x_binding": source_x,
         "source_y_binding": source_y,
+        "source_weight_binding": source_weight,
+        "weighting_readback_source": (
+            "native_report_binding_and_numeric_direct_wls" if weighted_points is not None else None
+        ),
         "source_x_index": x_index,
         "source_y_index": y_index,
         "source_sheet": source.name,
         "fit_source_ref": fit_source_ref,
         "fit_range_native": range_text,
         "full_range": range_text == f"[1*:{len(source.to_df())}*]",
-        "weighting_readback": "unsupported",
-        "unweighted_numeric_check": error_column is not None or fit_source_ref is not None,
+        "weighting_readback": (
+            "direct_weight_verified" if weighted_points is not None else "unsupported"
+        ),
+        "unweighted_numeric_check": (
+            spec.weight_mode == "none" and (error_column is not None or fit_source_ref is not None)
+        ),
         "result": result.to_dict(),
     }
 
@@ -215,8 +286,8 @@ def apply_linear_fit(output_dir: Path, spec: FitSpec, error_column: str | None =
         try:
             fit_source, fit_source_ref, rows = _fit_source(op, source, spec)
             fit = op.LinearFit()
-            fit_x, fit_y = (0, 1) if rows is not None else (x_index, y_index)
-            fit.set_data(fit_source, fit_x, fit_y)
+            fit_x, fit_y = (0, 1) if fit_source_ref is not None else (x_index, y_index)
+            fit.set_data(fit_source, fit_x, fit_y, spec.weight_column or "")
             if rows is not None:
                 try:
                     for label, index in (("X", 0), ("Y", 1)):
@@ -229,9 +300,9 @@ def apply_linear_fit(output_dir: Path, spec: FitSpec, error_column: str | None =
                         "fit_range_apply_failed", "Origin could not set native input range",
                         engine="origin",
                     ) from exc
-            # Origin selects the plotted Y error column and defaults to 1/e²
-            # weighting. FitSpec keeps display error and regression weight separate.
-            fit._set("Fit.ErrBarWeight", 0)
+            # Origin's Direct Weighting mode uses the ED source as direct W.
+            # An unweighted Fit must explicitly turn off Origin's automatic Y-error weighting.
+            fit._set("Fit.ErrBarWeight", 1 if spec.weight_mode == "column" else 0)
             report_ref, curve_ref = fit.report()
             del fit
             curve = op.find_sheet("w", curve_ref)

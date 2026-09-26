@@ -17,12 +17,15 @@ for path in (ROOT / "runtime" / "src", ROOT / "skill" / "editaplot" / "scripts")
 
 import editaplot_core as core  # noqa: E402
 from editaplot_engine.fit_contract import FitSpec  # noqa: E402
+from editaplot_engine.models import EngineError  # noqa: E402
+from grapher_sciplot.engine import GrapherEngine  # noqa: E402
 from grapher_sciplot.smoke import SmokeFailure, discover  # noqa: E402
 
 
 def _plan(
     tmp_path: Path, *, with_error: bool = False,
     range_fixture: bool = False, fit_range: tuple[float, float] | None = None,
+    weighted: bool = False, weight_fixture: bool = False,
 ) -> Path:
     tmp_path.mkdir(parents=True, exist_ok=True)
     source = tmp_path / "fit.csv"
@@ -33,9 +36,17 @@ def _plan(
     )
     if range_fixture:
         source.write_text("X,Y\n1,2\n6,30\n2,4\n7,50\n3,6\n4,8\n5,10\n", encoding="ascii")
+    if weighted or weight_fixture:
+        source.write_text(
+            "X,Y,Y_SD,W\n1,2,0.20,10\n2,4,0.30,10\n3,6,0.40,10\n4,8,0.50,10\n5,20,0.60,0.1\n"
+            if with_error else "X,Y,W\n1,2,10\n2,4,10\n3,6,10\n4,8,10\n5,20,0.1\n",
+            encoding="ascii",
+        )
     mapping = {"assignments": {"X": "x", "Y": "series"}}
     if with_error:
         mapping["assignments"]["Y_SD"] = "error"
+    if weighted or weight_fixture:
+        mapping["assignments"]["W"] = "ignored"
     understanding = core.understand_data(
         source, template_id="scatter", mapping=mapping, engine_home=ROOT / "runtime"
     )
@@ -46,7 +57,12 @@ def _plan(
         evidence_role="relationship",
         mapping=mapping,
         semantic_confirmation=understanding["confirmation_gate"]["confirmation_payload_template"],
-        fit_spec=FitSpec(model="linear", x_column="X", y_column="Y", fit_range=fit_range).to_dict(),
+        fit_spec=FitSpec(
+            model="linear", x_column="X", y_column="Y", fit_range=fit_range,
+            weight_mode="column" if weighted else "none",
+            weight_column="W" if weighted else None,
+            weight_interpretation="direct_weight" if weighted else None,
+        ).to_dict(),
         engine_home=ROOT / "runtime",
     )
     plan_file = tmp_path / "render-plan.json"
@@ -69,6 +85,35 @@ def _run_cli(*arguments: str) -> dict:
     return json.loads(process.stdout[start:])
 
 
+def _direct_wls_oracle() -> tuple[float, float, float]:
+    rows = ((1, 2, 10), (2, 4, 10), (3, 6, 10), (4, 8, 10), (5, 20, 0.1))
+    total = sum(w for _, _, w in rows)
+    x_bar = sum(x * w for x, _, w in rows) / total
+    y_bar = sum(y * w for _, y, w in rows) / total
+    slope = sum(w * (x - x_bar) * (y - y_bar) for x, y, w in rows) / sum(
+        w * (x - x_bar) ** 2 for x, _, w in rows
+    )
+    intercept = y_bar - slope * x_bar
+    r_squared = 1 - sum(w * (y - intercept - slope * x) ** 2 for x, y, w in rows) / sum(
+        w * (y - y_bar) ** 2 for _, y, w in rows
+    )
+    return slope, intercept, r_squared
+
+
+def test_grapher_explicit_weight_rejected_before_com(tmp_path: Path) -> None:
+    plan_file = _plan(tmp_path, weighted=True)
+    plan = json.loads(plan_file.read_text(encoding="utf-8"))
+    with pytest.raises(EngineError) as error:
+        GrapherEngine().render(plan, plan_file=plan_file, output_dir=tmp_path / "grapher")
+    assert error.value.code == "unsupported_fit_weighting"
+    assert error.value.engine == "grapher"
+    assert error.value.details == {
+        "requested_capability": "explicit_weighted_linear_fit",
+        "native_support": False,
+    }
+    assert not (tmp_path / "grapher").exists()
+
+
 @pytest.mark.grapher
 @pytest.mark.skipif(os.name != "nt", reason="Grapher COM requires Windows")
 def test_production_grapher_scatter_linear_fit(tmp_path: Path) -> None:
@@ -89,6 +134,7 @@ def test_production_grapher_scatter_linear_fit(tmp_path: Path) -> None:
     assert verified["checks"]["line_symbol_mode"]
     assert verified["readback"]["plots"][0]["line_enabled"] is False
     assert verified["readback"]["legends"][0]["entries"] == ["Y", "Linear Fit - Y"]
+    assert verified["readback"]["fit"]["statistics_readback_source"] == "native_linked_text_svg"
     assert verified["readback"]["fit"]["result"]["parameters"]["slope"] == pytest.approx(1.97, abs=1e-6)
     assert verified["readback"]["fit"]["result"]["statistics"]["r_squared"] == pytest.approx(
         0.998893235869, abs=1e-7
@@ -252,3 +298,65 @@ def test_production_origin_partial_range_linear_fit(tmp_path: Path) -> None:
     _assert_partial(full, partial)
     for suffix in ("opju", "png", "pdf", "tif"):
         assert (partial_dir / f"result.{suffix}").stat().st_size > 0
+
+
+@pytest.mark.origin
+@pytest.mark.skipif(os.name != "nt", reason="Origin automation requires Windows")
+def test_production_origin_explicit_direct_weight_fit(tmp_path: Path) -> None:
+    pytest.importorskip("originpro")
+    if not core.discover_origin_application()["launch_registration_detected"]:
+        pytest.skip("Origin isolated COM registration is unavailable")
+    base_plan = _plan(tmp_path / "base", weight_fixture=True)
+    weighted_plan = _plan(tmp_path / "weighted", weighted=True)
+    source = weighted_plan.parent / "fit.csv"
+    source_bytes = source.read_bytes()
+    render_args = ("--engine", "origin", "--engine-home", str(ROOT / "runtime"), "--python", sys.executable)
+    base_dir, weighted_dir = tmp_path / "base-out", tmp_path / "weighted-out"
+    _run_cli("render", str(base_plan), *render_args, "--output-dir", str(base_dir))
+    _run_cli("render", str(weighted_plan), *render_args, "--output-dir", str(weighted_dir))
+    base = _run_cli("verify", str(base_dir), "--engine", "origin")
+    weighted = _run_cli("verify", str(weighted_dir), "--engine", "origin")
+    assert base["status"] == weighted["status"] == "ok"
+    base_fit = base["readback"]["fit"]["result"]
+    native = weighted["readback"]["fit"]
+    weighted_fit = native["result"]
+    slope, intercept, r_squared = _direct_wls_oracle()
+    assert base_fit["parameters"] == pytest.approx({"slope": 4.0, "intercept": -4.0}, abs=1e-7)
+    assert weighted_fit["parameters"] == pytest.approx(
+        {"slope": slope, "intercept": intercept}, abs=1e-7
+    )
+    assert weighted_fit["statistics"]["r_squared"] == pytest.approx(r_squared, abs=1e-7)
+    assert abs(base_fit["parameters"]["slope"] - weighted_fit["parameters"]["slope"]) > 1
+    assert weighted_fit["n_points"] == native["scatter_n_points"] == 5
+    assert weighted_fit["result_source"] == "backend_native"
+    assert weighted_fit["weight_mode"] == "column"
+    assert weighted_fit["weight_column"] == "W"
+    assert weighted_fit["weight_interpretation"] == "direct_weight"
+    assert '"W"' in native["source_weight_binding"]
+    assert native["weighting_readback"] == "direct_weight_verified"
+    assert not native["error"]["present"]
+    assert source.read_bytes() == source_bytes
+    for suffix in ("opju", "png", "pdf", "tif"):
+        assert (weighted_dir / f"result.{suffix}").stat().st_size > 0
+
+
+@pytest.mark.origin
+@pytest.mark.skipif(os.name != "nt", reason="Origin automation requires Windows")
+def test_production_origin_error_and_explicit_weight_are_independent(tmp_path: Path) -> None:
+    pytest.importorskip("originpro")
+    if not core.discover_origin_application()["launch_registration_detected"]:
+        pytest.skip("Origin isolated COM registration is unavailable")
+    plan_file = _plan(tmp_path, with_error=True, weighted=True)
+    output = tmp_path / "origin"
+    _run_cli(
+        "render", str(plan_file), "--engine", "origin", "--engine-home", str(ROOT / "runtime"),
+        "--python", sys.executable, "--output-dir", str(output),
+    )
+    verified = _run_cli("verify", str(output), "--engine", "origin")
+    assert verified["status"] == "ok"
+    native = verified["readback"]["fit"]
+    assert native["error"]["column"] == "Y_SD"
+    assert native["error"]["present"] is True
+    assert native["result"]["weight_column"] == "W"
+    assert native["result"]["parameters"]["slope"] == pytest.approx(2.0492610837438425, abs=1e-7)
+    assert native["scatter_n_points"] == 5

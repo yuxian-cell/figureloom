@@ -62,6 +62,7 @@ def test_grapher_doctor_does_not_activate_com(monkeypatch: pytest.MonkeyPatch) -
 
     assert report["engine"] == "grapher"
     assert report["ready_for_render"] is True
+    assert report["fit_capabilities"]["explicit_weight"] is False
 
 
 def test_grapher_prepares_csv_from_backend_neutral_render_spec(tmp_path: Path) -> None:
