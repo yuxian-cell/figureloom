@@ -2140,7 +2140,7 @@ def build_plan(
     reference_route: str = "template_adaptation",
     reference_bindings: dict[str, str] | None = None,
     engine_home: str | Path | None = None,
-    fit_spec: dict[str, Any] | None = None,
+    fit_spec: dict[str, Any] | list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Freeze a selected template preparation into a source-bound render plan."""
     if not claim.strip():
@@ -2442,11 +2442,11 @@ def build_plan(
 def _validate_fit_plan(plan: dict[str, Any]) -> None:
     if plan.get("fit") is None:
         return
-    from editaplot_engine.fit_contract import production_linear_fit
+    from editaplot_engine.fit_contract import production_linear_fits
     from editaplot_engine.models import EngineError
 
     try:
-        production_linear_fit(plan)
+        production_linear_fits(plan)
     except EngineError as exc:
         raise EditaPlotError(exc.code, str(exc)) from exc
 

@@ -298,3 +298,42 @@ def production_linear_fit(plan: dict[str, Any]) -> FitSpec | None:
     if spec.requested_statistics != ("r_squared",):
         raise EngineError("native_fit_not_supported", "Only R-squared is available in this Fit route")
     return spec
+
+
+def production_linear_fits(plan: dict[str, Any]) -> tuple[FitSpec, ...]:
+    """Accept the legacy single Fit or independent full-range fits on an XY line graph."""
+    payload = plan.get("fit")
+    if not isinstance(payload, list):
+        single = production_linear_fit(plan)
+        return (single,) if single is not None else ()
+    data = (plan.get("render_spec") or {}).get("data") or {}
+    y_columns = data.get("y")
+    if (
+        plan.get("template", {}).get("id") != "trend"
+        or (plan.get("render_spec") or {}).get("chart_type") != "xy_line"
+        or not isinstance(y_columns, list)
+        or len(y_columns) < 2
+        or len(payload) != len(y_columns)
+        or data.get("y_errors")
+    ):
+        raise EngineError(
+            "unsupported_multi_series_fit", "Independent Fit needs an XY line for each Y series"
+        )
+    try:
+        specs = tuple(FitSpec.from_dict(item) for item in payload)
+    except EngineError:
+        raise
+    except (KeyError, TypeError, ValueError) as exc:
+        raise EngineError("fit_result_invalid", "Multi-series FitSpec is malformed") from exc
+    for column, spec in zip(y_columns, specs, strict=True):
+        if spec.x_column != data.get("x") or spec.y_column != column:
+            raise EngineError("fit_source_binding_failed", "FitSpec order must match the XY series")
+        if spec.fit_range is not None:
+            raise EngineError("unsupported_fit_range", "Multi-series Fit currently requires full range")
+        if spec.weight_mode != "none":
+            raise EngineError("unsupported_fit_weighting", "Multi-series Fit currently requires no weights")
+        if any(parameter != ParameterSpec() for parameter in spec.parameters.values()):
+            raise EngineError("unsupported_fit_parameter_policy", "Only free parameters are supported")
+        if spec.result_source != "backend_native" or spec.requested_statistics != ("r_squared",):
+            raise EngineError("native_fit_not_supported", "Multi-series Fit requires native R-squared")
+    return specs

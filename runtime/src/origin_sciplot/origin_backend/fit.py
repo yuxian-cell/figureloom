@@ -24,8 +24,14 @@ from .export_utils import export_graph
 from .session import OriginSession
 
 
+def _main_graph(op: Any) -> Any:
+    graphs = list(op.pages("g"))
+    figures = [graph for graph in graphs if not graph.name.startswith(("FitLine", "Residual"))]
+    return max(figures or graphs, key=lambda graph: len(graph[0].plot_list()), default=None)
+
+
 def _source_sheet(op: Any, spec: FitSpec) -> tuple[Any, int, int]:
-    graph = next(op.pages("g"), None)
+    graph = _main_graph(op)
     plotted = {plot.name for plot in graph[0].plot_list()} if graph is not None else set()
     for book in op.pages("w"):
         for sheet in book:
@@ -75,10 +81,11 @@ def _fit_source(op: Any, source: Any, spec: FitSpec) -> tuple[Any, str | None, t
 def _read_saved_fit(
     op: Any, report_ref: str, curve_ref: str, spec: FitSpec,
     error_column: str | None = None, fit_source_ref: str | None = None,
+    *, multi_series: bool = False,
 ) -> dict[str, Any]:
     report = op.find_sheet("w", report_ref)
     curve = op.find_sheet("w", curve_ref)
-    graph = next(op.pages("g"), None)
+    graph = _main_graph(op) if multi_series else next(op.pages("g"), None)
     source, x_index, y_index = _source_sheet(op, spec)
     if report is None or curve is None or graph is None:
         raise EngineError(
@@ -102,6 +109,38 @@ def _read_saved_fit(
         raise EngineError("fit_result_invalid", "Origin native linear Fit result is invalid", engine="origin")
     plot_names = [plot.name for plot in graph[0].plot_list()]
     scatter_present = _dataset_name(source, y_index) in plot_names
+    operation_binding = None
+    if multi_series:
+        if not op.lt_exec(f"op_change ir:={report_ref} tr:=ED_FIT_OPERATION;"):
+            raise EngineError("fit_readback_failed", "Origin analysis operation is missing", engine="origin")
+        try:
+            operation = op.lt_tree_to_dict("ED_FIT_OPERATION", add_attributes=True)
+            native_input = operation["GUI"]["InputData"]["Range1"]
+            native_uid = int(operation["GUI"]["InputData"]["___Range1"]["PlotObjUID"])
+            target = next(
+                plot for plot in graph[0].plot_list()
+                if plot.name == _dataset_name(source, y_index)
+            )
+            expected_uid = op.lt_int(f"range2uid({target.lt_range()})")
+            operation_binding = {
+                "x": native_input["X"], "y": native_input["Y"],
+                "plot_uid": native_uid,
+            }
+        except (KeyError, TypeError, ValueError, StopIteration) as exc:
+            raise EngineError(
+                "fit_readback_failed", "Origin analysis operation input is incomplete", engine="origin"
+            ) from exc
+        finally:
+            op.lt_exec("del -vt ED_FIT_OPERATION;")
+        if (
+            f'"{spec.x_column}"' not in operation_binding["x"]
+            or f'"{spec.y_column}"' not in operation_binding["y"]
+            or native_uid != expected_uid
+        ):
+            raise EngineError(
+                "fit_source_binding_failed", "Origin analysis lock targets the wrong XY plot",
+                engine="origin",
+            )
     source_frame = source.to_df()
     weighted_points = None
     if spec.weight_mode == "column":
@@ -250,6 +289,7 @@ def _read_saved_fit(
         "source_y_column": spec.y_column,
         "source_x_binding": source_x,
         "source_y_binding": source_y,
+        "operation_binding": operation_binding,
         "source_weight_binding": source_weight,
         "weighting_readback_source": (
             "native_report_binding_and_numeric_direct_wls" if weighted_points is not None else None
@@ -270,15 +310,19 @@ def _read_saved_fit(
     }
 
 
-def apply_linear_fit(output_dir: Path, spec: FitSpec, error_column: str | None = None) -> dict[str, Any]:
+def apply_linear_fit(
+    output_dir: Path, spec: FitSpec, error_column: str | None = None, *, allow_existing: bool = False
+) -> dict[str, Any]:
     opju = output_dir / "result.opju"
     with OriginSession(keep_open=False) as session:
         op = session.op
         if not op.open(str(opju), asksave=False):
             raise EngineError("fit_create_failed", "Origin could not reopen Scatter OPJU", engine="origin")
         source, x_index, y_index = _source_sheet(op, spec)
-        graph = next(op.pages("g"), None)
-        if graph is None or len(graph[0].plot_list()) != 1 + (error_column is not None):
+        graph = _main_graph(op)
+        if graph is None or (
+            not allow_existing and len(graph[0].plot_list()) != 1 + (error_column is not None)
+        ):
             raise EngineError(
                 "fit_source_binding_failed", "Expected native Scatter and optional error plot",
                 engine="origin",
@@ -288,6 +332,26 @@ def apply_linear_fit(output_dir: Path, spec: FitSpec, error_column: str | None =
             fit = op.LinearFit()
             fit_x, fit_y = (0, 1) if fit_source_ref is not None else (x_index, y_index)
             fit.set_data(fit_source, fit_x, fit_y, spec.weight_column or "")
+            if allow_existing:
+                target = next(
+                    plot for plot in graph[0].plot_list()
+                    if plot.name == _dataset_name(source, y_index)
+                )
+                uid = op.lt_int(f"range2uid({target.lt_range()})")
+                if uid <= 0:
+                    raise EngineError(
+                        "fit_source_binding_failed", "Origin could not bind Fit to XY plot",
+                        engine="origin",
+                    )
+                op.lt_exec(
+                    f'{fit._get_tree_name()}.GUI.InputData.Range1.SetAttribute("PlotObjUID", {uid});'
+                )
+                native_input = op.lt_tree_to_dict(fit._get_tree_name(), add_attributes=True)
+                if int(native_input["GUI"]["InputData"]["___Range1"]["PlotObjUID"]) != uid:
+                    raise EngineError(
+                        "fit_source_binding_failed", "Origin Fit ignored XY plot binding",
+                        engine="origin",
+                    )
             if rows is not None:
                 try:
                     for label, index in (("X", 0), ("Y", 1)):
@@ -304,11 +368,13 @@ def apply_linear_fit(output_dir: Path, spec: FitSpec, error_column: str | None =
             # An unweighted Fit must explicitly turn off Origin's automatic Y-error weighting.
             fit._set("Fit.ErrBarWeight", 1 if spec.weight_mode == "column" else 0)
             report_ref, curve_ref = fit.report()
+            op.lt_exec("xop execute:=cleanup;")
             del fit
             curve = op.find_sheet("w", curve_ref)
             if curve is None:
                 raise RuntimeError("Origin Fit curve worksheet is missing")
-            graph[0].add_plot(curve, 1, 0, type="l")
+            if not allow_existing:
+                graph[0].add_plot(curve, 1, 0, type="l")
             graph[0].rescale()
             if error_column is not None:
                 legend = graph[0].label("legend")
@@ -331,7 +397,10 @@ def apply_linear_fit(output_dir: Path, spec: FitSpec, error_column: str | None =
         op.new(asksave=False)
         if not op.open(str(opju), asksave=False):
             raise EngineError("fit_readback_failed", "Origin fitted OPJU cannot reopen", engine="origin")
-        readback = _read_saved_fit(op, report_ref, curve_ref, spec, error_column, fit_source_ref)
+        readback = _read_saved_fit(
+            op, report_ref, curve_ref, spec, error_column, fit_source_ref,
+            multi_series=allow_existing,
+        )
         readback["engine_version"] = session.environment.origin_version
     (output_dir / "origin_fit_readback.json").write_text(
         json.dumps(readback, ensure_ascii=False, indent=2), encoding="utf-8"
@@ -342,6 +411,7 @@ def apply_linear_fit(output_dir: Path, spec: FitSpec, error_column: str | None =
 def verify_linear_fit(
     output_dir: Path, spec: FitSpec, report_ref: str, curve_ref: str,
     error_column: str | None = None, fit_source_ref: str | None = None,
+    *, multi_series: bool = False,
 ) -> dict[str, Any]:
     with tempfile.NamedTemporaryFile(suffix=".opju", dir=output_dir, delete=False) as temporary:
         copy = Path(temporary.name)
@@ -351,7 +421,10 @@ def verify_linear_fit(
             op = session.op
             if not op.open(str(copy), asksave=False):
                 raise EngineError("fit_readback_failed", "Origin fitted OPJU cannot reopen", engine="origin")
-            readback = _read_saved_fit(op, report_ref, curve_ref, spec, error_column, fit_source_ref)
+            readback = _read_saved_fit(
+                op, report_ref, curve_ref, spec, error_column, fit_source_ref,
+                multi_series=multi_series,
+            )
             op.new(asksave=False)
             return readback
     finally:

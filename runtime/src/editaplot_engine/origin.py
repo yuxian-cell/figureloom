@@ -7,7 +7,7 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-from .fit_contract import FIT_CAPABILITIES, FitSpec, production_linear_fit, selected_weighted_points
+from .fit_contract import FIT_CAPABILITIES, FitSpec, production_linear_fits, selected_weighted_points
 from .models import EngineError, EngineProcessError, RenderResult
 
 
@@ -125,7 +125,8 @@ class OriginEngine:
         close_application: bool = False,
     ) -> RenderResult:
         core = self._core()
-        fit_spec = production_linear_fit(plan)
+        fit_specs = production_linear_fits(plan)
+        fit_spec = fit_specs[0] if len(fit_specs) == 1 else None
         if fit_spec is not None and fit_spec.weight_mode == "column":
             from origin_sciplot.data_loader import load_table
 
@@ -136,7 +137,7 @@ class OriginEngine:
             engine_home=engine_home,
             python_executable=python_executable,
             output_dir=output_dir,
-            close_origin=close_application or fit_spec is not None,
+            close_origin=close_application or bool(fit_specs),
         )
         print(
             json.dumps(
@@ -166,28 +167,36 @@ class OriginEngine:
             if isinstance(payload.get(name), str)
         }
         fit_readback: dict[str, Any] | None = None
-        if fit_spec is not None:
+        if fit_specs:
             from origin_sciplot.origin_backend.fit import apply_linear_fit
 
-            error_semantic = (plan["render_spec"]["data"].get("y_errors") or {}).get(
-                fit_spec.y_column
-            )
-            error_column = error_semantic["column"] if error_semantic else None
-            fit_readback = apply_linear_fit(Path(str(payload["output_dir"])), fit_spec, error_column)
+            fit_readbacks: dict[str, dict[str, Any]] = {}
+            entries = []
+            for spec in fit_specs:
+                error_semantic = (plan["render_spec"]["data"].get("y_errors") or {}).get(spec.y_column)
+                error_column = error_semantic["column"] if error_semantic else None
+                native = apply_linear_fit(
+                    Path(str(payload["output_dir"])), spec, error_column,
+                    allow_existing=len(fit_specs) > 1,
+                )
+                fit_readbacks[spec.y_column] = native
+                entries.append({"spec": spec.to_dict(), "error_column": error_column, "readback": native})
+            fit_readback = next(iter(fit_readbacks.values())) if len(fit_specs) == 1 else None
             fit_manifest = {
                 "engine": "origin",
-                "engine_version": fit_readback["engine_version"],
+                "engine_version": entries[-1]["readback"]["engine_version"],
                 "result_source": "backend_native",
-                "spec": fit_spec.to_dict(),
-                "error_column": error_column,
-                "readback": fit_readback,
+                **({"spec": entries[0]["spec"], "error_column": entries[0]["error_column"],
+                    "readback": entries[0]["readback"]} if fit_spec else {"fits": entries}),
             }
             (Path(str(payload["output_dir"])) / "fit-manifest.json").write_text(
                 json.dumps(fit_manifest, ensure_ascii=False, indent=2), encoding="utf-8"
             )
             verify_path = Path(str(payload["output_dir"])) / "origin_verify_report.json"
             verify_report = json.loads(verify_path.read_text(encoding="utf-8"))
-            verify_report["fit"] = fit_readback
+            verify_report["fit" if fit_spec else "fits"] = (
+                fit_readback if fit_spec else fit_readbacks
+            )
             verify_path.write_text(json.dumps(verify_report, ensure_ascii=False, indent=2), encoding="utf-8")
             verified = self.verify(Path(str(payload["output_dir"])))
             if verified["status"] != "ok":
@@ -198,12 +207,14 @@ class OriginEngine:
             output_dir=Path(str(payload["output_dir"])),
             editable_path=editable,
             exports=exports,
-            readback={"fit": fit_readback} if fit_readback else {},
+            readback={"fit": fit_readback} if fit_spec else {"fits": fit_readbacks} if fit_specs else {},
             metadata={
                 "engine_version": payload.get("origin_version"),
                 "editable_format": "opju",
                 "verify_report": payload.get("origin_verify_report"),
-                **({"fit": fit_readback["result"]} if fit_readback else {}),
+                **({"fit": fit_readback["result"]} if fit_spec else {}),
+                **({"fits": {name: native["result"] for name, native in fit_readbacks.items()}}
+                   if len(fit_specs) > 1 else {}),
             },
         )
         (result.output_dir / "render-result.json").write_text(
@@ -245,6 +256,55 @@ class OriginEngine:
 
             try:
                 fit_manifest = json.loads(fit_manifest_path.read_text(encoding="utf-8"))
+                if "fits" in fit_manifest:
+                    entries = fit_manifest["fits"]
+                    if planned_fit != [entry["spec"] for entry in entries]:
+                        raise EngineError(
+                            "fit_verify_failed", "Saved independent FitSpecs differ from RenderPlan",
+                            engine=self.name,
+                        )
+                    native_fits = {}
+                    report_refs = set()
+                    curve_refs = set()
+                    for entry in entries:
+                        spec = FitSpec.from_dict(entry["spec"])
+                        saved_fit = entry["readback"]
+                        native = verify_linear_fit(
+                            Path(output_dir), spec, saved_fit["report_sheet"], saved_fit["curve_sheet"],
+                            multi_series=True,
+                        )
+                        if not all((
+                            native["present"], native["curve_present"], native["scatter_present"],
+                            native["source_x_column"] == spec.x_column,
+                            native["source_y_column"] == spec.y_column,
+                            native["result"]["result_source"] == "backend_native",
+                            native["result"]["weight_mode"] == "none",
+                            native["full_range"],
+                        )):
+                            raise EngineError(
+                                "fit_verify_failed", "Independent Origin Fit lost native binding",
+                                engine=self.name,
+                            )
+                        native_fits[spec.y_column] = native
+                        report_refs.add(native["report_sheet"])
+                        curve_refs.add(native["curve_sheet"])
+                    if (
+                        len(native_fits) != len(entries)
+                        or len(report_refs) != len(entries)
+                        or len(curve_refs) != len(entries)
+                    ):
+                        raise EngineError(
+                            "fit_verify_failed", "Independent Origin Fits share native analysis objects",
+                            engine=self.name,
+                        )
+                    report["checks"] = {"native_fit": True, "artifact_reopened": True}
+                    report["readback"] = {"fits": native_fits}
+                    report["ok"] = report["programmatic_pass"]
+                    report["status"] = "ok" if report["ok"] else "failed"
+                    (Path(output_dir) / "origin_fit_verify_report.json").write_text(
+                        json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"
+                    )
+                    return report
                 spec = FitSpec.from_dict(fit_manifest["spec"])
                 if FitSpec.from_dict(planned_fit) != spec:
                     raise EngineError(
