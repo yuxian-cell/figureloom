@@ -35,8 +35,9 @@ def test_fit_spec_rejects_invalid_semantics():
     assert error.value.code == "unsupported_fit_weighting"
     with pytest.raises(ValueError):
         FitSpec(model="linear", x_column="X", y_column="Y", result_source="unknown")
-    with pytest.raises(ValueError):
+    with pytest.raises(EngineError) as error:
         FitSpec(model="linear", x_column="X", y_column="Y", fit_range=(4, 2))
+    assert error.value.code == "invalid_fit_range"
     with pytest.raises(ValueError):
         ParameterSpec(mode="fixed")
     with pytest.raises(ValueError):

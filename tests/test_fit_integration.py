@@ -20,7 +20,10 @@ from editaplot_engine.fit_contract import FitSpec  # noqa: E402
 from grapher_sciplot.smoke import SmokeFailure, discover  # noqa: E402
 
 
-def _plan(tmp_path: Path, *, with_error: bool = False) -> Path:
+def _plan(
+    tmp_path: Path, *, with_error: bool = False,
+    range_fixture: bool = False, fit_range: tuple[float, float] | None = None,
+) -> Path:
     tmp_path.mkdir(parents=True, exist_ok=True)
     source = tmp_path / "fit.csv"
     source.write_text(
@@ -28,6 +31,8 @@ def _plan(tmp_path: Path, *, with_error: bool = False) -> Path:
         if with_error else "X,Y\n1,2.1\n2,4.0\n3,6.2\n4,8.1\n5,9.9\n",
         encoding="ascii",
     )
+    if range_fixture:
+        source.write_text("X,Y\n1,2\n6,30\n2,4\n7,50\n3,6\n4,8\n5,10\n", encoding="ascii")
     mapping = {"assignments": {"X": "x", "Y": "series"}}
     if with_error:
         mapping["assignments"]["Y_SD"] = "error"
@@ -41,7 +46,7 @@ def _plan(tmp_path: Path, *, with_error: bool = False) -> Path:
         evidence_role="relationship",
         mapping=mapping,
         semantic_confirmation=understanding["confirmation_gate"]["confirmation_payload_template"],
-        fit_spec=FitSpec(model="linear", x_column="X", y_column="Y").to_dict(),
+        fit_spec=FitSpec(model="linear", x_column="X", y_column="Y", fit_range=fit_range).to_dict(),
         engine_home=ROOT / "runtime",
     )
     plan_file = tmp_path / "render-plan.json"
@@ -182,3 +187,68 @@ def test_production_origin_scatter_error_linear_fit(tmp_path: Path) -> None:
     _assert_fit_unchanged(fit_only["readback"]["fit"]["result"], native["result"])
     for suffix in ("opju", "png", "pdf", "tif"):
         assert (combo / f"result.{suffix}").stat().st_size > 0
+
+
+def _assert_partial(full: dict, partial: dict) -> None:
+    full_result = full["readback"]["fit"]["result"]
+    partial_result = partial["readback"]["fit"]["result"]
+    assert full_result["n_points"] == 7
+    assert full_result["fit_range"] is None
+    assert partial_result["n_points"] == 5
+    assert partial_result["fit_range"] == [1.0, 5.0]
+    assert partial_result["parameters"]["slope"] == pytest.approx(2, abs=1e-6)
+    assert partial_result["parameters"]["intercept"] == pytest.approx(0, abs=1e-6)
+    assert partial_result["statistics"]["r_squared"] == pytest.approx(1, abs=1e-6)
+    assert abs(full_result["parameters"]["slope"] - partial_result["parameters"]["slope"]) > 1
+    assert full_result["weight_mode"] == partial_result["weight_mode"] == "none"
+    assert partial_result["result_source"] == "backend_native"
+
+
+@pytest.mark.grapher
+@pytest.mark.skipif(os.name != "nt", reason="Grapher COM requires Windows")
+def test_production_grapher_partial_range_linear_fit(tmp_path: Path) -> None:
+    pytest.importorskip("pythoncom")
+    try:
+        discover()
+    except SmokeFailure as exc:
+        pytest.skip(str(exc))
+    full_plan = _plan(tmp_path / "full", range_fixture=True)
+    partial_plan = _plan(tmp_path / "partial", range_fixture=True, fit_range=(1, 5))
+    full_dir, partial_dir = tmp_path / "grapher-full", tmp_path / "grapher-partial"
+    _run_cli("render", str(full_plan), "--engine", "grapher", "--output-dir", str(full_dir))
+    _run_cli("render", str(partial_plan), "--engine", "grapher", "--output-dir", str(partial_dir))
+    full = _run_cli("verify", str(full_dir), "--engine", "grapher")
+    partial = _run_cli("verify", str(partial_dir), "--engine", "grapher")
+    assert full["status"] == partial["status"] == "ok"
+    assert partial["readback"]["fit"]["full_range"] is False
+    assert partial["readback"]["fit"]["fit_min_x"] == 1
+    assert partial["readback"]["fit"]["fit_max_x"] == 5
+    assert partial["readback"]["plots"][0]["line_enabled"] is False
+    assert len((partial_dir / "grapher_staging.csv").read_text().splitlines()) == 8
+    _assert_partial(full, partial)
+    for suffix in ("grf", "png", "pdf"):
+        assert (partial_dir / f"result.{suffix}").stat().st_size > 0
+
+
+@pytest.mark.origin
+@pytest.mark.skipif(os.name != "nt", reason="Origin automation requires Windows")
+def test_production_origin_partial_range_linear_fit(tmp_path: Path) -> None:
+    pytest.importorskip("originpro")
+    if not core.discover_origin_application()["launch_registration_detected"]:
+        pytest.skip("Origin isolated COM registration is unavailable")
+    full_plan = _plan(tmp_path / "full", range_fixture=True)
+    partial_plan = _plan(tmp_path / "partial", range_fixture=True, fit_range=(1, 5))
+    full_dir, partial_dir = tmp_path / "origin-full", tmp_path / "origin-partial"
+    render_args = ("--engine", "origin", "--engine-home", str(ROOT / "runtime"), "--python", sys.executable)
+    _run_cli("render", str(full_plan), *render_args, "--output-dir", str(full_dir))
+    _run_cli("render", str(partial_plan), *render_args, "--output-dir", str(partial_dir))
+    full = _run_cli("verify", str(full_dir), "--engine", "origin")
+    partial = _run_cli("verify", str(partial_dir), "--engine", "origin")
+    assert full["status"] == partial["status"] == "ok"
+    assert partial["readback"]["fit"]["full_range"] is False
+    assert partial["readback"]["fit"]["fit_range_native"] == "[1:5]"
+    assert partial["readback"]["fit"]["unweighted_numeric_check"] is True
+    assert partial["readback"]["fit"]["scatter_plot_count"] == 2
+    _assert_partial(full, partial)
+    for suffix in ("opju", "png", "pdf", "tif"):
+        assert (partial_dir / f"result.{suffix}").stat().st_size > 0

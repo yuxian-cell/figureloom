@@ -1,0 +1,18 @@
+# Phase 9: partial X-range native Linear Fit
+
+Production keeps the existing `xy_scatter` renderer and `FitSpec.fit_range`. The canonical plan value is either `null` (all valid X/Y points) or `[min_x, max_x]`, with both X bounds included. The interval must be finite and increasing. `FitResult.n_points` is the number used by the native fit. The Scatter data remain complete, and `weight_mode` remains `none`.
+
+The range fixture deliberately stores the seven source rows out of X order: `1, 6, 2, 7, 3, 4, 5`. The five in-range points follow `Y=2X`; X=6 and 7 are outliers. This catches accidental source-row slicing. Both engines fit the same unweighted subset and report slope `2`, intercept `0`, R² `1`, and `n_points=5`. Full-range native Fit on the same source reports slope about `7.1428571`, intercept about `-12.857143`, R² about `0.75528701`, and `n_points=7`.
+
+## Native mapping
+
+- Grapher 27.1: the installed COM `AutoFitPlot` accepts `UseCurveLimits=False`, `MinX`, and `MaxX`. The native fit's statistics change from 7 to 5 data points. After GRF reopen, these properties and the statistics persist. The original Scatter continues to reference the complete seven-row staging CSV. The native fit line follows Grapher's own display behavior.
+- Origin 2024: `FitLinear` accepts `InputData.Range1.X$` and `Y$` column references with a row suffix such as `[1:5]`. Because the plan interval is in X values, the backend embeds a deterministic, X-sorted helper worksheet in the OPJU. This sheet contains all finite source X/Y pairs, plus `FitMinX` and `FitMaxX` provenance columns. The native analysis binds to its corresponding inclusive row interval, while the Scatter remains bound to the unchanged original worksheet. The saved FitLinear report, curve, source binding, helper data, and row interval are reopened and checked. The native curve is produced by FitLinear; no Python line is drawn.
+
+The helper is retained inside OPJU so its native Fit relationship stays editable. Both backend verification paths recompute the intended subset from source X values, compare the native coefficients and point count, and check the saved native interval. Origin's fit report and Grapher's fit object are the numerical result sources. Origin's report exposes the native row interval; exact requested X bounds are read from the saved helper worksheet and checked against that interval. The Origin Fit report's localized weight label is not parsed, so weighting readback remains `unsupported`; explicit no-weighting setup and the independent numerical comparison guard this route.
+
+## Evidence and limits
+
+The Grapher and Origin native probes changed a seven-point full-range fit to five points and retained the interval after saving and reopening. Two production integration tests also rendered full and partial plans from the same unsorted data, reopened the projects, verified all exports and native bindings, and compared the results. All six Origin/Grapher real Fit integration tests passed; all ten existing Grapher real-route tests passed. The full non-GUI suite passed with `983 passed, 7 skipped, 19 deselected`. Independent verification of both final delivery directories returned `status=ok`. User GUI range-edit acceptance is tracked separately.
+
+Final editable projects and exports are in `.phase9-production/origin` and `.phase9-production/grapher`. Keep Grapher's GRF and `grapher_staging.csv` together. This phase does not add weighting, multiple series, polynomial or nonlinear models, fixed parameters, or error plus partial-range production coverage.
