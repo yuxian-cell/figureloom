@@ -13,6 +13,12 @@ FIT_ERRORS = frozenset(
         "unsupported_fit_model",
         "unsupported_multi_series_fit",
         "unsupported_fit_range",
+        "unsupported_fit_range_mode",
+        "invalid_fit_range",
+        "insufficient_fit_points",
+        "fit_range_apply_failed",
+        "fit_range_readback_failed",
+        "fit_range_mismatch",
         "unsupported_fit_weighting",
         "unsupported_fit_parameter_policy",
         "native_fit_not_supported",
@@ -76,12 +82,17 @@ class FitSpec:
             raise EngineError("unsupported_fit_weighting", f"Unsupported weight mode: {self.weight_mode}")
         if (self.weight_mode == "column") != (self.weight_column is not None):
             raise ValueError("Weight column is required only for column weighting")
-        if self.fit_range is not None and (
-            len(self.fit_range) != 2
-            or not all(math.isfinite(v) for v in self.fit_range)
-            or self.fit_range[0] >= self.fit_range[1]
-        ):
-            raise ValueError("Fit range must contain increasing finite X bounds")
+        if self.fit_range is not None:
+            try:
+                valid_range = (
+                    len(self.fit_range) == 2
+                    and all(isinstance(v, (int, float)) and math.isfinite(v) for v in self.fit_range)
+                    and self.fit_range[0] < self.fit_range[1]
+                )
+            except TypeError:
+                valid_range = False
+            if not valid_range:
+                raise EngineError("invalid_fit_range", "Fit range needs finite increasing X bounds")
         if self.result_source not in RESULT_SOURCES:
             raise ValueError("Unknown fit result source")
         if not self.requested_statistics or any(not item for item in self.requested_statistics):
@@ -98,6 +109,8 @@ class FitSpec:
         if "parameters" in data:
             data["parameters"] = {name: ParameterSpec(**item) for name, item in data["parameters"].items()}
         if data.get("fit_range") is not None:
+            if isinstance(data["fit_range"], dict):
+                raise EngineError("unsupported_fit_range_mode", "Use a closed [min_x, max_x] interval")
             data["fit_range"] = tuple(data["fit_range"])
         if "requested_statistics" in data:
             data["requested_statistics"] = tuple(data["requested_statistics"])
@@ -122,6 +135,12 @@ class FitResult:
             raise EngineError("fit_result_invalid", "Fit result lacks R-squared or enough points")
         if any(not math.isfinite(v) for v in (*self.parameters.values(), *self.statistics.values())):
             raise EngineError("fit_result_invalid", "Fit result contains nonfinite numbers")
+        if self.fit_range is not None and (
+            len(self.fit_range) != 2
+            or not all(math.isfinite(v) for v in self.fit_range)
+            or self.fit_range[0] >= self.fit_range[1]
+        ):
+            raise EngineError("fit_range_readback_failed", "Native Fit range is invalid")
         if (
             self.result_source not in RESULT_SOURCES
             or self.weight_mode not in WEIGHT_MODES
@@ -154,6 +173,22 @@ def fit_error(code: str, *, engine: str, cause: Exception | None = None) -> Engi
         engine=engine,
         cause_type=type(cause).__name__ if cause else None,
     )
+
+
+def selected_fit_points(frame: Any, spec: FitSpec) -> Any:
+    """Return finite X/Y pairs within the inclusive scientific X interval."""
+    import numpy as np
+    import pandas as pd
+
+    pairs = frame[[spec.x_column, spec.y_column]].apply(pd.to_numeric, errors="coerce")
+    pairs = pairs[pairs.notna().all(axis=1)]
+    pairs = pairs[np.isfinite(pairs.to_numpy()).all(axis=1)]
+    if spec.fit_range is not None:
+        lower, upper = spec.fit_range
+        pairs = pairs[pairs[spec.x_column].between(lower, upper, inclusive="both")]
+    if len(pairs) < 2 or pairs[spec.x_column].nunique() < 2:
+        raise EngineError("insufficient_fit_points", "Fit interval needs two distinct valid X values")
+    return pairs
 
 
 def production_linear_fit(plan: dict[str, Any]) -> FitSpec | None:
@@ -190,8 +225,6 @@ def production_linear_fit(plan: dict[str, Any]) -> FitSpec | None:
         or errors[spec.y_column]["column"] in {"", spec.x_column, spec.y_column}
     ):
         raise EngineError("native_fit_not_supported", "Only one symmetric Y SD error is supported with Fit")
-    if spec.fit_range is not None:
-        raise EngineError("unsupported_fit_range", "Partial-range Fit is not supported")
     if spec.weight_mode != "none":
         raise EngineError("unsupported_fit_weighting", "Weighted Fit is not supported")
     if any(parameter != ParameterSpec() for parameter in spec.parameters.values()):

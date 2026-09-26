@@ -4,13 +4,15 @@ from __future__ import annotations
 
 import json
 import math
+import re
 import shutil
 import statistics
 import tempfile
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
-from editaplot_engine.fit_contract import FitResult, FitSpec
+from editaplot_engine.fit_contract import FitResult, FitSpec, selected_fit_points
 from editaplot_engine.models import EngineError
 
 from .export_utils import export_graph
@@ -35,8 +37,30 @@ def _dataset_name(source: Any, column_index: int) -> str:
     return f"{source.get_book().name}_{letters}"
 
 
+def _fit_source(op: Any, source: Any, spec: FitSpec) -> tuple[Any, str | None, tuple[int, int] | None]:
+    if spec.fit_range is None:
+        return source, None, None
+    full = selected_fit_points(source.to_df(), replace(spec, fit_range=None))
+    selected = selected_fit_points(source.to_df(), spec)
+    full = full.sort_values(spec.x_column, kind="stable").reset_index(drop=True)
+    lower, upper = spec.fit_range
+    first = int((full[spec.x_column] < lower).sum()) + 1
+    last = int((full[spec.x_column] <= upper).sum())
+    if last - first + 1 != len(selected):
+        raise EngineError(
+            "fit_range_apply_failed", "Origin X interval mapping is inconsistent", engine="origin"
+        )
+    helper = op.new_sheet("w", lname="EditaPlot Fit Range")
+    helper_frame = full.copy()
+    helper_frame["FitMinX"] = [lower, *([float("nan")] * (len(full) - 1))]
+    helper_frame["FitMaxX"] = [upper, *([float("nan")] * (len(full) - 1))]
+    helper.from_df(helper_frame)
+    return helper, f"[{helper.get_book().name}]{helper.name}", (first, last)
+
+
 def _read_saved_fit(
-    op: Any, report_ref: str, curve_ref: str, spec: FitSpec, error_column: str | None = None
+    op: Any, report_ref: str, curve_ref: str, spec: FitSpec,
+    error_column: str | None = None, fit_source_ref: str | None = None,
 ) -> dict[str, Any]:
     report = op.find_sheet("w", report_ref)
     curve = op.find_sheet("w", curve_ref)
@@ -64,6 +88,35 @@ def _read_saved_fit(
     plot_names = [plot.name for plot in graph[0].plot_list()]
     scatter_present = _dataset_name(source, y_index) in plot_names
     source_frame = source.to_df()
+    native_range: tuple[float, float] | None = None
+    if fit_source_ref is not None:
+        helper = op.find_sheet("w", fit_source_ref)
+        match = re.fullmatch(r"\[(\d+):(\d+)\]", range_text)
+        if helper is None or match is None:
+            raise EngineError("fit_range_readback_failed", "Origin native range is missing", engine="origin")
+        helper_frame = helper.to_df()
+        first, last = int(match[1]), int(match[2])
+        if not (1 <= first < last <= len(helper_frame)):
+            raise EngineError(
+                "fit_range_readback_failed", "Origin native row range is invalid", engine="origin"
+            )
+        if not all(f"[{helper.get_book().name}]" in binding for binding in (source_x, source_y)):
+            raise EngineError(
+                "fit_range_mismatch", "Origin Fit no longer binds to its helper data", engine="origin"
+            )
+        full = selected_fit_points(source_frame, replace(spec, fit_range=None))
+        sorted_full = full.sort_values(spec.x_column, kind="stable").reset_index(drop=True)
+        if not helper_frame[[spec.x_column, spec.y_column]].equals(sorted_full):
+            raise EngineError(
+                "fit_range_mismatch", "Origin helper data differ from Scatter source", engine="origin"
+            )
+        stored = (float(helper_frame["FitMinX"].iloc[0]), float(helper_frame["FitMaxX"].iloc[0]))
+        expected_first = int((sorted_full[spec.x_column] < stored[0]).sum()) + 1
+        expected_last = int((sorted_full[spec.x_column] <= stored[1]).sum())
+        native_range = stored if (first, last) == (expected_first, expected_last) else (
+            float(sorted_full[spec.x_column].iloc[first - 1]),
+            float(sorted_full[spec.x_column].iloc[last - 1]),
+        )
     if error_column and error_column not in source_frame:
         raise EngineError("native_fit_relationship_lost", "Origin error column is missing", engine="origin")
     error_index = list(source_frame.columns).index(error_column) if error_column else None
@@ -79,35 +132,34 @@ def _read_saved_fit(
         or n_points < 2
     ):
         raise EngineError("native_fit_relationship_lost", "Origin Fit lost source or curve", engine="origin")
-    if error_column is not None:
+    if error_column is not None or fit_source_ref is not None:
         try:
-            pairs = []
-            for x, y in zip(source_frame[spec.x_column], source_frame[spec.y_column], strict=True):
-                try:
-                    x, y = float(x), float(y)
-                except (TypeError, ValueError):
-                    continue
-                if math.isfinite(x) and math.isfinite(y):
-                    pairs.append((x, y))
-            expected = statistics.linear_regression([x for x, _ in pairs], [y for _, y in pairs])
+            selected = selected_fit_points(source_frame, spec)
+            expected = statistics.linear_regression(
+                selected[spec.x_column], selected[spec.y_column]
+            )
+            expected_r_squared = statistics.correlation(
+                selected[spec.x_column], selected[spec.y_column]
+            ) ** 2
         except (TypeError, ValueError, statistics.StatisticsError) as exc:
             raise EngineError(
                 "fit_result_invalid", "Origin Fit source data are invalid", engine="origin"
             ) from exc
         if (
-            n_points != len(pairs)
+            n_points != len(selected)
             or not math.isclose(slope, expected.slope, rel_tol=1e-6, abs_tol=1e-8)
             or not math.isclose(intercept, expected.intercept, rel_tol=1e-6, abs_tol=1e-8)
+            or not math.isclose(r_squared, expected_r_squared, rel_tol=1e-6, abs_tol=1e-8)
         ):
             raise EngineError(
-                "fit_result_invalid", "Origin Fit unexpectedly used error weights", engine="origin"
+                "fit_result_invalid", "Origin Fit differs from the unweighted X interval", engine="origin"
             )
     result = FitResult(
         model="linear",
         parameters={"intercept": intercept, "slope": slope},
         statistics={"r_squared": r_squared},
         n_points=n_points,
-        fit_range=None,
+        fit_range=native_range,
         weight_mode="none",
         backend="origin",
         result_source="backend_native",
@@ -120,6 +172,7 @@ def _read_saved_fit(
         "curve_sheet": curve_ref,
         "curve_present": True,
         "scatter_present": scatter_present,
+        "scatter_n_points": len(source_frame),
         "scatter_plot_count": len(plot_names),
         "scatter_dataset": _dataset_name(source, y_index),
         "error": {
@@ -137,10 +190,11 @@ def _read_saved_fit(
         "source_x_index": x_index,
         "source_y_index": y_index,
         "source_sheet": source.name,
+        "fit_source_ref": fit_source_ref,
         "fit_range_native": range_text,
         "full_range": range_text == f"[1*:{len(source.to_df())}*]",
         "weighting_readback": "unsupported",
-        "unweighted_numeric_check": error_column is not None,
+        "unweighted_numeric_check": error_column is not None or fit_source_ref is not None,
         "result": result.to_dict(),
     }
 
@@ -159,8 +213,22 @@ def apply_linear_fit(output_dir: Path, spec: FitSpec, error_column: str | None =
                 engine="origin",
             )
         try:
+            fit_source, fit_source_ref, rows = _fit_source(op, source, spec)
             fit = op.LinearFit()
-            fit.set_data(source, x_index, y_index)
+            fit_x, fit_y = (0, 1) if rows is not None else (x_index, y_index)
+            fit.set_data(fit_source, fit_x, fit_y)
+            if rows is not None:
+                try:
+                    for label, index in (("X", 0), ("Y", 1)):
+                        fit._set(
+                            f"InputData.Range1.{label}$",
+                            f"{fit_source.to_col_range(index)}[{rows[0]}:{rows[1]}]",
+                        )
+                except Exception as exc:
+                    raise EngineError(
+                        "fit_range_apply_failed", "Origin could not set native input range",
+                        engine="origin",
+                    ) from exc
             # Origin selects the plotted Y error column and defaults to 1/e²
             # weighting. FitSpec keeps display error and regression weight separate.
             fit._set("Fit.ErrBarWeight", 0)
@@ -192,7 +260,7 @@ def apply_linear_fit(output_dir: Path, spec: FitSpec, error_column: str | None =
         op.new(asksave=False)
         if not op.open(str(opju), asksave=False):
             raise EngineError("fit_readback_failed", "Origin fitted OPJU cannot reopen", engine="origin")
-        readback = _read_saved_fit(op, report_ref, curve_ref, spec, error_column)
+        readback = _read_saved_fit(op, report_ref, curve_ref, spec, error_column, fit_source_ref)
         readback["engine_version"] = session.environment.origin_version
     (output_dir / "origin_fit_readback.json").write_text(
         json.dumps(readback, ensure_ascii=False, indent=2), encoding="utf-8"
@@ -201,7 +269,8 @@ def apply_linear_fit(output_dir: Path, spec: FitSpec, error_column: str | None =
 
 
 def verify_linear_fit(
-    output_dir: Path, spec: FitSpec, report_ref: str, curve_ref: str, error_column: str | None = None
+    output_dir: Path, spec: FitSpec, report_ref: str, curve_ref: str,
+    error_column: str | None = None, fit_source_ref: str | None = None,
 ) -> dict[str, Any]:
     with tempfile.NamedTemporaryFile(suffix=".opju", dir=output_dir, delete=False) as temporary:
         copy = Path(temporary.name)
@@ -211,7 +280,7 @@ def verify_linear_fit(
             op = session.op
             if not op.open(str(copy), asksave=False):
                 raise EngineError("fit_readback_failed", "Origin fitted OPJU cannot reopen", engine="origin")
-            readback = _read_saved_fit(op, report_ref, curve_ref, spec, error_column)
+            readback = _read_saved_fit(op, report_ref, curve_ref, spec, error_column, fit_source_ref)
             op.new(asksave=False)
             return readback
     finally:

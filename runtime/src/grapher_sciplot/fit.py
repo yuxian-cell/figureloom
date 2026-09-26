@@ -5,21 +5,30 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from editaplot_engine.fit_contract import FitResult
+from editaplot_engine.fit_contract import FitResult, FitSpec
 from editaplot_engine.models import EngineError
 
 from .smoke import call, get, put
 
 
-def add_linear_fit(plot: Any) -> Any:
+def add_linear_fit(plot: Any, spec: FitSpec) -> Any:
     try:
         fit = call(plot, "AddFit", 0)  # grfLinearFit, installed Grapher Type Library
         put(get(fit, "line"), "width", 0.025)
-        return fit
     except Exception as exc:
         raise EngineError(
             "fit_create_failed", "Grapher could not add native linear Fit", engine="grapher"
         ) from exc
+    if spec.fit_range is not None:
+        try:
+            put(fit, "UseCurveLimits", False)
+            put(fit, "MinX", float(spec.fit_range[0]))
+            put(fit, "MaxX", float(spec.fit_range[1]))
+        except Exception as exc:
+            raise EngineError(
+                "fit_range_apply_failed", "Grapher could not set native X limits", engine="grapher"
+            ) from exc
+    return fit
 
 
 def _native_statistics(fit: Any) -> str:
@@ -82,12 +91,15 @@ def read_linear_fit(plot: Any) -> dict[str, Any] | None:
         raise EngineError("fit_readback_failed", "Native Fit is not linear", engine="grapher")
     try:
         slope, intercept, r_squared, n_points = parse_statistics(_native_statistics(fit))
+        minimum, maximum = float(get(fit, "MinX")), float(get(fit, "MaxX"))
+        full_range = bool(get(fit, "UseCurveLimits"))
+        fit_range = None if full_range else (minimum, maximum)
         result = FitResult(
             model="linear",
             parameters={"intercept": intercept, "slope": slope},
             statistics={"r_squared": r_squared},
             n_points=n_points,
-            fit_range=None,
+            fit_range=fit_range,
             weight_mode="none",
             backend="grapher",
             result_source="backend_native",
@@ -100,9 +112,9 @@ def read_linear_fit(plot: Any) -> dict[str, Any] | None:
             "source_x_column_index": int(get(plot, "xCol")),
             "source_y_column_index": int(get(plot, "yCol")),
             "source_worksheet": str(get(plot, "worksheet")),
-            "fit_min_x": float(get(fit, "MinX")),
-            "fit_max_x": float(get(fit, "MaxX")),
-            "full_range": bool(get(fit, "UseCurveLimits")),
+            "fit_min_x": minimum,
+            "fit_max_x": maximum,
+            "full_range": full_range,
             "weighting_readback": "unsupported",
             "curve_present": True,
             "result": result.to_dict(),

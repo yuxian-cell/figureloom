@@ -6,8 +6,10 @@ import csv
 import hashlib
 import importlib.util
 import json
+import math
 import re
 import shutil
+import statistics
 from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import datetime
@@ -15,7 +17,7 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
-from editaplot_engine.fit_contract import production_linear_fit
+from editaplot_engine.fit_contract import FitSpec, production_linear_fit, selected_fit_points
 from editaplot_engine.models import EngineError, RenderResult
 
 from .error_bar import add_y_error, read_y_error
@@ -491,6 +493,8 @@ class GrapherEngine:
         editaplot_core.validate_plan(plan)
         fit_spec = production_linear_fit(plan)
         render_spec, frame = self._prepare(plan)
+        if fit_spec is not None and fit_spec.fit_range is not None:
+            selected_fit_points(frame, fit_spec)
         data = render_spec["data"]
         chart_type = render_spec["chart_type"]
         is_bar = chart_type in {"simple_bar", "grouped_bar"}
@@ -559,7 +563,7 @@ class GrapherEngine:
                     if column in y_errors:
                         add_y_error(plot, frame.columns.get_loc(y_errors[column]["column"]) + 1, color=color)
                 if fit_spec is not None:
-                    add_linear_fit(plot)
+                    add_linear_fit(plot, fit_spec)
                     call(graph, "AddLegend", True)
                 if is_bar:
                     put(graph, "GroupsAdjacent", True)
@@ -792,11 +796,43 @@ class GrapherEngine:
                     legend.get("entries") == [y_columns[0], f"Linear Fit - {y_columns[0]}"]
                     for legend in readback.get("legends", [])
                 )
+                fit_spec = FitSpec.from_dict(expected["fit"])
+                native_range = fit_result.get("fit_range")
+                range_ok = (
+                    native_fit.get("full_range") is (fit_spec.fit_range is None)
+                    and (native_range is None if fit_spec.fit_range is None else
+                         tuple(native_range or ()) == fit_spec.fit_range)
+                )
+                if range_ok and fit_spec.fit_range is not None:
+                    selected = selected_fit_points(pd.read_csv(staging_path), fit_spec)
+                    regression = statistics.linear_regression(
+                        selected[fit_spec.x_column], selected[fit_spec.y_column]
+                    )
+                    range_ok = (
+                        fit_result.get("n_points") == len(selected)
+                        and math.isclose(fit_result["parameters"]["slope"], regression.slope, rel_tol=1e-6)
+                        and math.isclose(
+                            fit_result["parameters"]["intercept"], regression.intercept, abs_tol=1e-6
+                        )
+                        and math.isclose(
+                            fit_result["statistics"]["r_squared"],
+                            statistics.correlation(
+                                selected[fit_spec.x_column], selected[fit_spec.y_column]
+                            ) ** 2,
+                            abs_tol=1e-6,
+                        )
+                    )
+                if not range_ok:
+                    fit_ok = False
+                    raise EngineError(
+                        "fit_range_mismatch", "Saved Grapher Fit does not use the requested X interval",
+                        engine="grapher",
+                    )
                 fit_ok = (
                     native_fit.get("present") is True
                     and native_fit.get("native_editable") is True
                     and native_fit.get("curve_present") is True
-                    and native_fit.get("full_range") is True
+                    and range_ok
                     and native_fit.get("source_x_column_index") == 1
                     and native_fit.get("source_y_column_index") == staging_columns.index(y_columns[0]) + 1
                     and Path(native_fit.get("source_worksheet", "")).resolve() == staging_path

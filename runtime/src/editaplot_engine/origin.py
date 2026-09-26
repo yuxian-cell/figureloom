@@ -253,7 +253,8 @@ class OriginEngine:
                         "fit_verify_failed", "Error binding differs from RenderPlan", engine=self.name
                     )
                 native = verify_linear_fit(
-                    Path(output_dir), spec, saved["report_sheet"], saved["curve_sheet"], expected_error
+                    Path(output_dir), spec, saved["report_sheet"], saved["curve_sheet"],
+                    expected_error, saved.get("fit_source_ref"),
                 )
                 error_ok = expected_error is None or (
                     native["error"]["present"] is True
@@ -261,12 +262,22 @@ class OriginEngine:
                     and native["error"]["direction"] == "y"
                     and native["error"]["symmetric"] is True
                 )
+                range_ok = (
+                    native["full_range"] is (spec.fit_range is None)
+                    and tuple(native["result"]["fit_range"] or ()) == tuple(spec.fit_range or ())
+                )
+                if not range_ok:
+                    raise EngineError(
+                        "fit_range_mismatch", "Saved Origin Fit does not use the requested X interval",
+                        engine=self.name,
+                    )
                 fit_ok = all(
                     (
                         native["present"], native["curve_present"], native["scatter_present"],
-                        native["full_range"], native["result"]["result_source"] == "backend_native",
+                        native["result"]["result_source"] == "backend_native",
                         native["source_x_column"] == spec.x_column,
                         native["source_y_column"] == spec.y_column,
+                        native["scatter_n_points"] == plan.get("source", {}).get("row_count"),
                         error_ok,
                     )
                 )
