@@ -230,6 +230,45 @@ class OriginEngine:
             )
         return json.loads(report.read_text(encoding="utf-8"))
 
+    def apply_edit(self, artifact: str | Path, edit: dict[str, str]) -> dict[str, Any]:
+        """Edit the saved OPJU through an owned Origin instance, then reopen it."""
+        if edit["operation"] != "set_axis_title":
+            raise EngineError(
+                "edit_unsupported", "Origin supports axis-title edits in this workflow.", engine=self.name
+            )
+        path = Path(artifact).resolve()
+        if not path.is_file():
+            raise EngineError("artifact_not_found", "The native OPJU is missing.", engine=self.name)
+        from origin_sciplot.origin_backend.export_utils import export_graph
+        from origin_sciplot.origin_backend.fit import _main_graph
+        from origin_sciplot.origin_backend.session import OriginSession
+
+        with OriginSession(keep_open=False) as session:
+            op = session.op
+            if not op.open(str(path), asksave=False):
+                raise EngineError("edit_open_failed", "Origin could not open the OPJU.", engine=self.name)
+            graph = _main_graph(op)
+            if graph is None:
+                raise EngineError("edit_target_not_found", "No native graph exists.", engine=self.name)
+            plot_count = len(graph[0].plot_list())
+            graph[0].axis(edit["axis"]).title = edit["value"]
+            if not op.save(str(path)):
+                raise EngineError("edit_save_failed", "Origin could not save the OPJU.", engine=self.name)
+            export_graph(
+                op, graph, path.with_suffix(".png"), path.with_suffix(".pdf"), path.with_suffix(".tif")
+            )
+            op.new(asksave=False)
+            if not op.open(str(path), asksave=False):
+                raise EngineError("edit_readback_failed", "Edited OPJU cannot reopen.", engine=self.name)
+            graph = _main_graph(op)
+            actual = graph[0].axis(edit["axis"]).title if graph is not None else None
+            reopened_count = len(graph[0].plot_list()) if graph is not None else 0
+        if actual != edit["value"] or reopened_count != plot_count:
+            raise EngineError("edit_verify_failed", "Origin axis title did not persist.", engine=self.name)
+        return {"status": "ok", "engine": self.name, "operation": edit["operation"],
+                "actual": actual, "plot_count": reopened_count,
+                "verification": "native_reopen_readback"}
+
     def verify(self, output_dir: str | Path) -> dict[str, Any]:
         result = self._core().verify_output(output_dir)
         report = {

@@ -198,6 +198,29 @@ def build_parser() -> argparse.ArgumentParser:
     _engine_option(verify_parser)
     _backend_option(verify_parser)
 
+    workflow_preview = subparsers.add_parser(
+        "workflow-preview", help="Inspect, recommend, and prepare confirmation"
+    )
+    workflow_preview.add_argument("input_file")
+    workflow_preview.add_argument("--output-dir", required=True)
+    workflow_preview.add_argument("--template-id")
+    workflow_preview.add_argument("--sheet")
+    workflow_preview.add_argument("--intent", default="")
+    workflow_preview.add_argument("--mapping-json")
+    workflow_preview.add_argument("--fit-spec-json")
+    _engine_option(workflow_preview)
+    _backend_option(workflow_preview)
+
+    workflow_render = subparsers.add_parser("workflow-render", help="Confirm and render a workflow preview")
+    workflow_render.add_argument("preview_file")
+    workflow_render.add_argument("--claim", required=True)
+    workflow_render.add_argument("--confirm", action="store_true", required=True)
+
+    edit_parser = subparsers.add_parser("edit", help="Modify a saved native project from its session")
+    edit_parser.add_argument("session_file")
+    edit_parser.add_argument("request", nargs="?")
+    edit_parser.add_argument("--edit-json")
+
     panel_parser = subparsers.add_parser(
         "panel-plan",
         help="Freeze a deidentification-aware medical multi-panel layout plan",
@@ -588,6 +611,35 @@ def main(argv: list[str] | None = None) -> int:
             _emit(report, args.output)
             if args.engine != "origin" and report.get("status") == "failed":
                 return 2
+        elif args.command == "workflow-preview":
+            bootstrap_engine(args.engine_home)
+            from editaplot_engine.workflow import preview
+
+            _emit(preview(
+                args.input_file, args.output_dir, engine_name=args.engine,
+                template_id=args.template_id, sheet=args.sheet, intent=args.intent,
+                mapping=load_json(args.mapping_json) if args.mapping_json else None,
+                fit_spec=load_json(args.fit_spec_json) if args.fit_spec_json else None,
+                engine_home=args.engine_home,
+            ))
+        elif args.command == "workflow-render":
+            bootstrap_engine(None)
+            from editaplot_engine.workflow import render_confirmed
+
+            _emit(render_confirmed(args.preview_file, claim=args.claim, confirmed=args.confirm))
+        elif args.command == "edit":
+            bootstrap_engine(None)
+            from editaplot_engine.workflow import edit_session, normalize_edit, parse_edit_phrase
+
+            if bool(args.request) == bool(args.edit_json):
+                raise EditaPlotError("edit_request_required", "Provide a phrase or --edit-json, not both.")
+            if args.edit_json:
+                raw = load_json(args.edit_json)
+                edit = normalize_edit(raw.get("operation", ""), value=raw.get("value", ""),
+                                      axis=raw.get("axis"), series=raw.get("series"))
+            else:
+                edit = parse_edit_phrase(args.request)
+            _emit(edit_session(args.session_file, edit, request=args.request or "structured EditPlan"))
         elif args.command == "panel-plan":
             _ensure_output_does_not_replace_input(args.config_file, args.output)
             _emit(

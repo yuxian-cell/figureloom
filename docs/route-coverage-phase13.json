@@ -860,7 +860,8 @@
         "tests/test_grapher_error.py",
         "tests/test_public_template_alignment.py",
         "tests/test_reference_style.py",
-        "tests/test_template_capabilities.py"
+        "tests/test_template_capabilities.py",
+        "tests/test_workflow_phase14.py"
       ],
       "origin_support": "supported",
       "grapher_status": "supported",
@@ -1350,7 +1351,8 @@
         "tests/test_grapher_error.py",
         "tests/test_origin_compatibility_reports.py",
         "tests/test_public_template_alignment.py",
-        "tests/test_template_capabilities.py"
+        "tests/test_template_capabilities.py",
+        "tests/test_workflow_phase14.py"
       ],
       "origin_support": "supported",
       "grapher_status": "supported",
@@ -1570,7 +1572,8 @@
         "tests/test_grapher_error.py",
         "tests/test_public_release_gate.py",
         "tests/test_public_template_alignment.py",
-        "tests/test_star_trend.py"
+        "tests/test_star_trend.py",
+        "tests/test_workflow_phase14.py"
       ],
       "origin_support": "supported",
       "grapher_status": "supported",

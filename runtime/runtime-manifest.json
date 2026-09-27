@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "source_policy": "curated EditaPlot runtime; caches, tests, builds, outputs, binaries, and local paths excluded",
-  "file_count": 434,
+  "file_count": 435,
   "files": [
     {
       "path": "LICENSE",
@@ -40,18 +40,23 @@
     },
     {
       "path": "src/editaplot_engine/models.py",
-      "size_bytes": 2651,
-      "sha256": "70ef1a13923a52c55313963678f6d9e4e34f1405bc56cb1479ea2c7273917f73"
+      "size_bytes": 2744,
+      "sha256": "9a4c17a580c03be42e6b11ec1134f0cb460d873c0d82e6bbc22ddf9bd6c314fd"
     },
     {
       "path": "src/editaplot_engine/origin.py",
-      "size_bytes": 17986,
-      "sha256": "188bea02980b979005123a6b08c12bc2947a3b791b84cbd1e6795f2563da1272"
+      "size_bytes": 20348,
+      "sha256": "8749dc748aa5ad39623fcc8100a654e871e45edb233cb0e34acaf10b12eec03c"
     },
     {
       "path": "src/editaplot_engine/registry.py",
       "size_bytes": 979,
       "sha256": "6c4437a58f57074e0567806498384365f786d93cfd8787d5d2e5e0f6be765db5"
+    },
+    {
+      "path": "src/editaplot_engine/workflow.py",
+      "size_bytes": 13442,
+      "sha256": "749a52057832f4eb5f4fb243b58db868f65a9da03f0a246812b3d95d47fdbca5"
     },
     {
       "path": "src/grapher_sciplot/__init__.py",
@@ -60,8 +65,8 @@
     },
     {
       "path": "src/grapher_sciplot/engine.py",
-      "size_bytes": 45297,
-      "sha256": "72c2be36ab3989ef874637bc689d19c457ff906c808d7c8ba04ba1612943ca86"
+      "size_bytes": 49018,
+      "sha256": "ba3428f7468004c72530bb332cda9cfc24c79bed5c7abc725fbf62422d2564bc"
     },
     {
       "path": "src/grapher_sciplot/error_bar.py",

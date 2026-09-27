@@ -489,6 +489,74 @@ class GrapherEngine:
         with _application(visible=False) as (app, _metadata):
             return self._readback_in_app(app, path)
 
+    def apply_edit(self, artifact: str | Path, edit: dict[str, str]) -> dict[str, Any]:
+        """Change an existing GRF object and verify it after reopening the saved file."""
+        path = Path(artifact).resolve()
+        require_file(path, "artifact_not_found")
+        operation = edit["operation"]
+        document = None
+        with _application(visible=False) as (app, _metadata):
+            try:
+                document = call(get(app, "Documents"), "Open", str(path))
+                shapes = get(document, "Shapes")
+                graph = next(
+                    (shape for index in range(1, int(get(shapes, "Count")) + 1)
+                     if (shape := call(shapes, "Item", index)) and _optional_get(shape, "Plots") is not None),
+                    None,
+                )
+                if graph is None:
+                    raise EngineError("edit_target_not_found", "No native graph exists.", engine=self.name)
+                if operation == "set_axis_title":
+                    axis_index = {"x": 1, "y": 2}[edit["axis"]]
+                    axis = call(get(graph, "Axes"), "Item", axis_index)
+                    put(get(axis, "title"), "text", edit["value"])
+                elif operation == "set_line_style":
+                    plots = get(graph, "Plots")
+                    target = next(
+                        (plot for index in range(1, int(get(plots, "Count")) + 1)
+                         if (plot := call(plots, "Item", index))
+                         and str(get(plot, "Name")) == edit["series"]),
+                        None,
+                    )
+                    if target is None:
+                        raise EngineError("edit_target_not_found", "Series was not found.", engine=self.name)
+                    put(
+                        get(target, "line"), "style",
+                        {"solid": "Solid", "dashed": ".1 in. Dash"}[edit["value"]],
+                    )
+                else:
+                    raise EngineError("edit_unsupported", "This edit is not supported.", engine=self.name)
+                call(document, "SaveAs", str(path))
+                call(document, "Export2", str(path.with_suffix(".png")), False, "Defaults=0", True, "png")
+                call(
+                    document, "Export2", str(path.with_suffix(".pdf")),
+                    False, "Defaults=0, EmbedFonts=1", True, "pdfv",
+                )
+            finally:
+                if document is not None:
+                    call(document, "Close", False)
+        native = self.readback(path)
+        if operation == "set_axis_title":
+            actual = native["axes"][edit["axis"]]["title"]
+            expected = edit["value"]
+            manifest_path = path.parent / "manifest.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["expected"][f"{edit['axis']}_title"] = expected
+            _write_json(manifest_path, manifest)
+        else:
+            target = next((plot for plot in native["plots"] if plot["name"] == edit["series"]), None)
+            actual = target["line_style"] if target else None
+            expected = {"solid": "Solid", "dashed": ".1 in. Dash"}[edit["value"]]
+        if actual != expected:
+            raise EngineError("edit_verify_failed", "Native edit did not persist.", engine=self.name)
+        report = self.verify(path.parent)
+        if report["status"] != "ok":
+            raise EngineError(
+                "edit_verify_failed", "Edited GRF failed native verification.", engine=self.name
+            )
+        return {"status": "ok", "engine": self.name, "operation": operation,
+                "actual": actual, "readback": native, "verification": report["status"]}
+
     def render(
         self,
         plan: dict[str, Any],
