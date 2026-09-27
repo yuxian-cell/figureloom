@@ -356,6 +356,10 @@ class OriginEngine:
                 fit_ok = all(
                     (
                         native["present"], native["curve_present"], native["scatter_present"],
+                        native["result"]["model"] == spec.model,
+                        native["result"].get("degree") == spec.degree,
+                        native.get("native_degree") == spec.degree,
+                        spec.model == "linear" or native.get("operation_binding") is not None,
                         native["result"]["result_source"] == "backend_native",
                         native["source_x_column"] == spec.x_column,
                         native["source_y_column"] == spec.y_column,

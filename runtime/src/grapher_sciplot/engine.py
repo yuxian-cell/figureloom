@@ -26,7 +26,7 @@ from editaplot_engine.fit_contract import (
 from editaplot_engine.models import EngineError, RenderResult
 
 from .error_bar import add_y_error, read_y_error
-from .fit import add_linear_fit, read_linear_fit
+from .fit import add_fit, read_fit
 from .smoke import (
     PROGID,
     call,
@@ -385,7 +385,7 @@ class GrapherEngine:
                         continue
                     bar_plot = _optional_get(plot, "Stacked") is not None
                     if not bar_plot:
-                        native_fit = read_linear_fit(plot, document)
+                        native_fit = read_fit(plot, document)
                         if native_fit is not None:
                             fits_readback[str(get(plot, "Name"))] = native_fit
                     symbol_frequency = int(_optional_get(plot, "symbolFreq") or 0)
@@ -587,7 +587,7 @@ class GrapherEngine:
                     if column in y_errors:
                         add_y_error(plot, frame.columns.get_loc(y_errors[column]["column"]) + 1, color=color)
                     if fit_specs:
-                        add_linear_fit(plot, fit_specs[index])
+                        add_fit(plot, fit_specs[index])
                 if is_bar:
                     put(graph, "GroupsAdjacent", True)
                     labels = get(call(get(graph, "Axes"), "Item", 1), "TickLabels")
@@ -823,11 +823,12 @@ class GrapherEngine:
             if "fit" in expected:
                 native_fit = readback.get("fit") or {}
                 fit_result = native_fit.get("result") or {}
+                fit_spec = FitSpec.from_dict(expected["fit"])
+                fit_name = "Linear" if fit_spec.model == "linear" else "Polynomial"
                 fit_legend = any(
-                    legend.get("entries") == [y_columns[0], f"Linear Fit - {y_columns[0]}"]
+                    legend.get("entries") == [y_columns[0], f"{fit_name} Fit - {y_columns[0]}"]
                     for legend in readback.get("legends", [])
                 )
-                fit_spec = FitSpec.from_dict(expected["fit"])
                 native_range = fit_result.get("fit_range")
                 range_ok = (
                     native_fit.get("full_range") is (fit_spec.fit_range is None)
@@ -867,10 +868,13 @@ class GrapherEngine:
                     and native_fit.get("source_x_column_index") == 1
                     and native_fit.get("source_y_column_index") == staging_columns.index(y_columns[0]) + 1
                     and Path(native_fit.get("source_worksheet", "")).resolve() == staging_path
-                    and fit_result.get("model") == "linear"
+                    and fit_result.get("model") == fit_spec.model
+                    and fit_result.get("degree") == fit_spec.degree
+                    and native_fit.get("native_fit_type") == (0 if fit_spec.model == "linear" else 5)
+                    and native_fit.get("native_degree") == fit_spec.degree
                     and fit_result.get("result_source") == "backend_native"
                     and fit_result.get("weight_mode") == "none"
-                    and fit_result.get("n_points", 0) >= 2
+                    and fit_result.get("n_points", 0) >= (3 if fit_spec.model == "polynomial" else 2)
                     and fit_legend
                 )
             if "fits" in expected:

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 from typing import Any
 
 from .models import EngineError
@@ -11,6 +11,8 @@ from .models import EngineError
 FIT_ERRORS = frozenset(
     {
         "unsupported_fit_model",
+        "invalid_fit_degree",
+        "unsupported_polynomial_degree",
         "unsupported_multi_series_fit",
         "unsupported_fit_range",
         "unsupported_fit_range_mode",
@@ -66,12 +68,7 @@ class FitSpec:
     model: str
     x_column: str
     y_column: str
-    parameters: dict[str, ParameterSpec] = field(
-        default_factory=lambda: {
-            "intercept": ParameterSpec(),
-            "slope": ParameterSpec(),
-        }
-    )
+    parameters: dict[str, ParameterSpec] | None = None
     fit_range: tuple[float, float] | None = None
     weight_mode: str = "none"
     weight_column: str | None = None
@@ -79,14 +76,31 @@ class FitSpec:
     result_source: str = "backend_native"
     requested_statistics: tuple[str, ...] = ("r_squared",)
     curve_points: int = 100
+    degree: int | None = None
 
     def __post_init__(self) -> None:
-        if self.model != "linear":
+        if self.model not in {"linear", "polynomial"}:
             raise EngineError("unsupported_fit_model", f"Unsupported fit model: {self.model}")
+        if self.model == "polynomial":
+            if type(self.degree) is not int:
+                raise EngineError("invalid_fit_degree", "Polynomial degree must be an integer")
+            if self.degree != 2:
+                raise EngineError(
+                    "unsupported_polynomial_degree", "Only quadratic polynomial Fit is supported"
+                )
+            if self.weight_mode != "none":
+                raise EngineError("unsupported_fit_weighting", "Weighted polynomial Fit is unsupported")
+            if self.fit_range is not None:
+                raise EngineError("unsupported_fit_range", "Partial-range polynomial Fit is unsupported")
+        elif self.degree is not None:
+            raise EngineError("invalid_fit_degree", "Linear Fit does not use polynomial degree")
         if not self.x_column or not self.y_column or self.x_column == self.y_column:
             raise ValueError("Fit requires distinct nonempty X and Y columns")
-        if set(self.parameters) != {"intercept", "slope"}:
-            raise ValueError("Linear fit parameters must be intercept and slope")
+        parameter_names = ("intercept", "slope") if self.model == "linear" else ("a0", "a1", "a2")
+        if self.parameters is None:
+            object.__setattr__(self, "parameters", {name: ParameterSpec() for name in parameter_names})
+        if set(self.parameters) != set(parameter_names):
+            raise ValueError(f"{self.model} Fit parameters must be {parameter_names}")
         if self.weight_mode not in WEIGHT_MODES:
             raise EngineError("unsupported_fit_weighting", f"Unsupported weight mode: {self.weight_mode}")
         if self.weight_mode == "column" and self.weight_column is None:
@@ -121,7 +135,10 @@ class FitSpec:
             raise ValueError("Fit curve needs at least two points")
 
     def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        payload = asdict(self)
+        if self.degree is None:
+            payload.pop("degree")
+        return payload
 
     @classmethod
     def from_dict(cls, payload: dict[str, Any]) -> FitSpec:
@@ -149,10 +166,17 @@ class FitResult:
     result_source: str
     weight_column: str | None = None
     weight_interpretation: str | None = None
+    degree: int | None = None
 
     def __post_init__(self) -> None:
-        if self.model != "linear" or set(self.parameters) != {"intercept", "slope"}:
-            raise EngineError("fit_result_invalid", "Linear fit result has invalid model or parameters")
+        if self.model == "linear":
+            valid_model = self.degree is None and set(self.parameters) == {"intercept", "slope"}
+        elif self.model == "polynomial":
+            valid_model = self.degree == 2 and set(self.parameters) == {"a0", "a1", "a2"}
+        else:
+            valid_model = False
+        if not valid_model:
+            raise EngineError("fit_result_invalid", "Fit result has invalid model or parameters")
         if "r_squared" not in self.statistics or self.n_points < 2:
             raise EngineError("fit_result_invalid", "Fit result lacks R-squared or enough points")
         if any(not math.isfinite(v) for v in (*self.parameters.values(), *self.statistics.values())):
@@ -179,7 +203,10 @@ class FitResult:
             raise EngineError("fit_result_invalid", "Unweighted Fit has unexpected weight provenance")
 
     def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        payload = asdict(self)
+        if self.degree is None:
+            payload.pop("degree")
+        return payload
 
 
 @dataclass(frozen=True)
@@ -191,14 +218,17 @@ class FitCapabilities:
     r_squared_readback: bool
     partial_range: bool = False
     explicit_weight: bool = False
+    native_polynomial_degree_2: bool = False
 
     def to_dict(self) -> dict[str, bool]:
         return asdict(self)
 
 
 FIT_CAPABILITIES = {
-    "origin": FitCapabilities(True, True, True, True, True, partial_range=True, explicit_weight=True),
-    "grapher": FitCapabilities(True, True, True, True, True, partial_range=True, explicit_weight=False),
+    "origin": FitCapabilities(True, True, True, True, True, partial_range=True, explicit_weight=True,
+                              native_polynomial_degree_2=True),
+    "grapher": FitCapabilities(True, True, True, True, True, partial_range=True, explicit_weight=False,
+                               native_polynomial_degree_2=True),
 }
 
 
@@ -224,8 +254,9 @@ def selected_fit_points(frame: Any, spec: FitSpec) -> Any:
     if spec.fit_range is not None:
         lower, upper = spec.fit_range
         pairs = pairs[pairs[spec.x_column].between(lower, upper, inclusive="both")]
-    if len(pairs) < 2 or pairs[spec.x_column].nunique() < 2:
-        raise EngineError("insufficient_fit_points", "Fit interval needs two distinct valid X values")
+    minimum = 3 if spec.model == "polynomial" else 2
+    if len(pairs) < minimum or pairs[spec.x_column].nunique() < minimum:
+        raise EngineError("insufficient_fit_points", f"Fit needs {minimum} distinct valid X values")
     return pairs
 
 
@@ -267,13 +298,15 @@ def production_linear_fit(plan: dict[str, Any]) -> FitSpec | None:
     render = plan.get("render_spec") or {}
     data = render.get("data") or {}
     if plan.get("template", {}).get("id") != "scatter" or render.get("chart_type") != "xy_scatter":
-        raise EngineError("native_fit_not_supported", "Native linear Fit currently requires XY Scatter")
+        raise EngineError("native_fit_not_supported", "Native single Fit currently requires XY Scatter")
     y_columns = data.get("y")
     if not isinstance(y_columns, list) or len(y_columns) != 1:
         raise EngineError("unsupported_multi_series_fit", "Native linear Fit requires one Y series")
     if spec.x_column != data.get("x") or spec.y_column != y_columns[0]:
         raise EngineError("fit_source_binding_failed", "FitSpec columns differ from the scatter plan")
     errors = data.get("y_errors") or {}
+    if spec.model == "polynomial" and errors:
+        raise EngineError("native_fit_not_supported", "Polynomial Fit with ErrorBar is unsupported")
     if errors and (
         not isinstance(errors, dict)
         or set(errors) != {spec.y_column}
@@ -326,6 +359,8 @@ def production_linear_fits(plan: dict[str, Any]) -> tuple[FitSpec, ...]:
     except (KeyError, TypeError, ValueError) as exc:
         raise EngineError("fit_result_invalid", "Multi-series FitSpec is malformed") from exc
     for column, spec in zip(y_columns, specs, strict=True):
+        if spec.model != "linear":
+            raise EngineError("unsupported_multi_series_fit", "Multi-series polynomial Fit is unsupported")
         if spec.x_column != data.get("x") or spec.y_column != column:
             raise EngineError("fit_source_binding_failed", "FitSpec order must match the XY series")
         if spec.fit_range is not None:

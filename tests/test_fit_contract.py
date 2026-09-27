@@ -29,8 +29,11 @@ def test_fit_spec_roundtrip_and_parameter_identity():
 
 
 def test_fit_spec_rejects_invalid_semantics():
-    with pytest.raises(EngineError, match="Unsupported fit model") as error:
+    with pytest.raises(EngineError) as error:
         FitSpec(model="polynomial", x_column="X", y_column="Y")
+    assert error.value.code == "invalid_fit_degree"
+    with pytest.raises(EngineError) as error:
+        FitSpec(model="cubic_spline", x_column="X", y_column="Y")
     assert error.value.code == "unsupported_fit_model"
     with pytest.raises(EngineError) as error:
         FitSpec(model="linear", x_column="X", y_column="Y", weight_mode="mystery")

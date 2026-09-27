@@ -1,4 +1,4 @@
-"""Native linear Fit capability attached to an existing Grapher XY plot."""
+"""Native Fit capability attached to an existing Grapher XY plot."""
 
 from __future__ import annotations
 
@@ -14,13 +14,15 @@ from editaplot_engine.models import EngineError
 from .smoke import call, get, put
 
 
-def add_linear_fit(plot: Any, spec: FitSpec) -> Any:
+def add_fit(plot: Any, spec: FitSpec) -> Any:
     try:
-        fit = call(plot, "AddFit", 0)  # grfLinearFit, installed Grapher Type Library
+        fit = call(plot, "AddFit", 0 if spec.model == "linear" else 5)
+        if spec.model == "polynomial":
+            put(fit, "Degree", spec.degree)
         put(get(fit, "line"), "width", 0.025)
     except Exception as exc:
         raise EngineError(
-            "fit_create_failed", "Grapher could not add native linear Fit", engine="grapher"
+            "fit_create_failed", f"Grapher could not add native {spec.model} Fit", engine="grapher"
         ) from exc
     if spec.fit_range is not None:
         try:
@@ -43,9 +45,12 @@ def _native_statistics(document: Any, fit: Any) -> str:
         raise EngineError("fit_readback_failed", "Grapher did not insert Fit statistics", engine="grapher")
     shape = call(shapes, "Item", before + 1)
     try:
-        if int(get(shape, "Type")) != 6 or int(get(get(shape, "FitPlot"), "fitType")) != 0:
+        if (
+            int(get(shape, "Type")) != 6
+            or int(get(get(shape, "FitPlot"), "fitType")) != int(get(fit, "fitType"))
+        ):
             raise EngineError(
-                "fit_readback_failed", "Statistics text is not linked to Linear Fit", engine="grapher"
+                "fit_readback_failed", "Statistics text is not linked to native Fit", engine="grapher"
             )
         with tempfile.TemporaryDirectory(prefix="editaplot-fit-") as directory:
             svg = Path(directory) / "fit-statistics.svg"
@@ -84,23 +89,53 @@ def parse_statistics(text: str) -> tuple[float, float, float, int]:
     )
 
 
-def read_linear_fit(plot: Any, document: Any) -> dict[str, Any] | None:
+def parse_polynomial_statistics(text: str) -> tuple[dict[str, float], float, int]:
+    number = r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[Ee][+-]?\d+)?"
+    degree = re.search(r"^Degree = (\d+)$", text, re.MULTILINE)
+    points = re.search(r"Number of data points used = (\d+)", text)
+    coefficients = dict(re.findall(rf"^Degree ([012]) = ({number})$", text, re.MULTILINE))
+    r_squared = re.findall(rf"Coefficient of determination, R-sq'd = ({number})", text)
+    if (
+        not degree or degree.group(1) != "2" or not points
+        or set(coefficients) != {"0", "1", "2"} or len(r_squared) < 3
+    ):
+        raise EngineError(
+            "fit_readback_failed", "Grapher polynomial statistics are incomplete", engine="grapher"
+        )
+    return ({f"a{index}": float(coefficients[str(index)]) for index in range(3)},
+            float(r_squared[-1]), int(points.group(1)))
+
+
+def read_fit(plot: Any, document: Any) -> dict[str, Any] | None:
     fits = get(plot, "Fits")
     if int(get(fits, "Count")) == 0:
         return None
     if int(get(fits, "Count")) != 1:
         raise EngineError("fit_readback_failed", "Expected one native Fit", engine="grapher")
     fit = call(fits, "Item", 1)
-    if int(get(fit, "fitType")) != 0:
-        raise EngineError("fit_readback_failed", "Native Fit is not linear", engine="grapher")
+    fit_type = int(get(fit, "fitType"))
+    if fit_type not in {0, 5}:
+        raise EngineError("fit_readback_failed", "Native Fit model is unsupported", engine="grapher")
     try:
-        slope, intercept, r_squared, n_points = parse_statistics(_native_statistics(document, fit))
+        statistics_text = _native_statistics(document, fit)
+        if fit_type == 0:
+            slope, intercept, r_squared, n_points = parse_statistics(statistics_text)
+            parameters = {"intercept": intercept, "slope": slope}
+            degree = None
+        else:
+            degree = int(get(fit, "Degree"))
+            if degree != 2:
+                raise EngineError(
+                    "fit_readback_failed", "Grapher polynomial degree changed", engine="grapher"
+                )
+            parameters, r_squared, n_points = parse_polynomial_statistics(statistics_text)
         minimum, maximum = float(get(fit, "MinX")), float(get(fit, "MaxX"))
         full_range = bool(get(fit, "UseCurveLimits"))
         fit_range = None if full_range else (minimum, maximum)
         result = FitResult(
-            model="linear",
-            parameters={"intercept": intercept, "slope": slope},
+            model="linear" if fit_type == 0 else "polynomial",
+            degree=degree,
+            parameters=parameters,
             statistics={"r_squared": r_squared},
             n_points=n_points,
             fit_range=fit_range,
@@ -112,6 +147,8 @@ def read_linear_fit(plot: Any, document: Any) -> dict[str, Any] | None:
             "present": True,
             "native_editable": True,
             "object_type": "AutoFitPlot",
+            "native_fit_type": fit_type,
+            "native_degree": degree,
             "name": str(get(fit, "Name")),
             "source_x_column_index": int(get(plot, "xCol")),
             "source_y_column_index": int(get(plot, "yCol")),

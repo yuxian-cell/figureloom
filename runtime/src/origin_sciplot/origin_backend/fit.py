@@ -53,6 +53,31 @@ def _dataset_name(source: Any, column_index: int) -> str:
     return f"{source.get_book().name}_{letters}"
 
 
+class _PolynomialFit:
+    """Small Origin xop adapter; originpro exposes LinearFit but not FitPolynomial."""
+
+    def __init__(self, op: Any) -> None:
+        self.op = op
+        self.tree = "ED_POLYNOMIAL_FIT"
+        op.lt_exec(f"tree {self.tree}; xop execute:=init classname:=FitPolynomial iotrgui:={self.tree};")
+        if (op.lt_tree_to_dict(self.tree) or {}).get("GUI", {}).get("Order") is None:
+            raise EngineError("fit_create_failed", "Origin FitPolynomial is unavailable", engine="origin")
+
+    def _get_tree_name(self) -> str:
+        return self.tree
+
+    def _set(self, property_name: str, value: Any) -> None:
+        self.op.lt_exec(f"{self.tree}.GUI.{property_name}={value};")
+
+    def set_data(self, sheet: Any, x: int, y: int, error: str = "") -> None:
+        self._set("InputData.Range1.X$", sheet.to_col_range(x))
+        self._set("InputData.Range1.Y$", sheet.to_col_range(y))
+
+    def report(self) -> tuple[str, str]:
+        self.op.lt_exec(f"xop execute:=report iotrgui:={self.tree};")
+        return self.op.po.LT_get_str("__REPORT"), self.op.po.LT_get_str("__FITCURVE")
+
+
 def _fit_source(op: Any, source: Any, spec: FitSpec) -> tuple[Any, str | None, tuple[int, int] | None]:
     if spec.weight_mode == "column":
         helper = op.new_sheet("w", lname="EditaPlot Fit Weights")
@@ -85,7 +110,7 @@ def _read_saved_fit(
 ) -> dict[str, Any]:
     report = op.find_sheet("w", report_ref)
     curve = op.find_sheet("w", curve_ref)
-    graph = _main_graph(op) if multi_series else next(op.pages("g"), None)
+    graph = _main_graph(op) if multi_series or spec.model == "polynomial" else next(op.pages("g"), None)
     source, x_index, y_index = _source_sheet(op, spec)
     if report is None or curve is None or graph is None:
         raise EngineError(
@@ -99,24 +124,32 @@ def _read_saved_fit(
         source_y = str(columns[4][0])
         range_text = str(columns[5][0])
         source_weight = str(columns[6][0]) if spec.weight_mode == "column" else None
-        intercept, slope = float(columns[8 + offset][0]), float(columns[8 + offset][1])
+        native_values = columns[8 + offset]
+        parameters = (
+            {"intercept": float(native_values[0]), "slope": float(native_values[1])}
+            if spec.model == "linear" else
+            {f"a{index}": float(native_values[index]) for index in range(3)}
+        )
         n_points, r_squared = int(columns[12 + offset][0]), float(columns[12 + offset][4])
     except (IndexError, TypeError, ValueError) as exc:
         raise EngineError(
             "fit_readback_failed", "Origin native report lacks linear Fit results", engine="origin"
         ) from exc
-    if model != "y = a + b*x" or not all(math.isfinite(v) for v in (intercept, slope, r_squared)):
+    expected_equation = "y = a + b*x" if spec.model == "linear" else "y = Intercept + B1*x^1 + B2*x^2"
+    if model != expected_equation or not all(math.isfinite(v) for v in (*parameters.values(), r_squared)):
         raise EngineError("fit_result_invalid", "Origin native linear Fit result is invalid", engine="origin")
     plot_names = [plot.name for plot in graph[0].plot_list()]
     scatter_present = _dataset_name(source, y_index) in plot_names
     operation_binding = None
-    if multi_series:
+    native_degree = None
+    if multi_series or spec.model == "polynomial":
         if not op.lt_exec(f"op_change ir:={report_ref} tr:=ED_FIT_OPERATION;"):
             raise EngineError("fit_readback_failed", "Origin analysis operation is missing", engine="origin")
         try:
             operation = op.lt_tree_to_dict("ED_FIT_OPERATION", add_attributes=True)
             native_input = operation["GUI"]["InputData"]["Range1"]
             native_uid = int(operation["GUI"]["InputData"]["___Range1"]["PlotObjUID"])
+            native_degree = int(operation["GUI"]["Order"]) if spec.model == "polynomial" else None
             target = next(
                 plot for plot in graph[0].plot_list()
                 if plot.name == _dataset_name(source, y_index)
@@ -136,6 +169,7 @@ def _read_saved_fit(
             f'"{spec.x_column}"' not in operation_binding["x"]
             or f'"{spec.y_column}"' not in operation_binding["y"]
             or native_uid != expected_uid
+            or native_degree != spec.degree
         ):
             raise EngineError(
                 "fit_source_binding_failed", "Origin analysis lock targets the wrong XY plot",
@@ -246,8 +280,8 @@ def _read_saved_fit(
             ) from exc
         if (
             n_points != len(selected)
-            or not math.isclose(slope, expected_slope, rel_tol=1e-6, abs_tol=1e-8)
-            or not math.isclose(intercept, expected_intercept, rel_tol=1e-6, abs_tol=1e-8)
+            or not math.isclose(parameters["slope"], expected_slope, rel_tol=1e-6, abs_tol=1e-8)
+            or not math.isclose(parameters["intercept"], expected_intercept, rel_tol=1e-6, abs_tol=1e-8)
             or not math.isclose(r_squared, expected_r_squared, rel_tol=1e-6, abs_tol=1e-8)
         ):
             raise EngineError(
@@ -255,8 +289,9 @@ def _read_saved_fit(
                 "Origin Fit differs from the specified X/Y/weight data", engine="origin"
             )
     result = FitResult(
-        model="linear",
-        parameters={"intercept": intercept, "slope": slope},
+        model=spec.model,
+        degree=native_degree,
+        parameters=parameters,
         statistics={"r_squared": r_squared},
         n_points=n_points,
         fit_range=native_range,
@@ -269,7 +304,8 @@ def _read_saved_fit(
     return {
         "present": True,
         "native_editable": True,
-        "object_type": "FitLinear analysis",
+        "object_type": "FitLinear analysis" if spec.model == "linear" else "FitPolynomial analysis",
+        "native_degree": native_degree,
         "report_sheet": report_ref,
         "curve_sheet": curve_ref,
         "curve_present": True,
@@ -329,10 +365,12 @@ def apply_linear_fit(
             )
         try:
             fit_source, fit_source_ref, rows = _fit_source(op, source, spec)
-            fit = op.LinearFit()
+            fit = op.LinearFit() if spec.model == "linear" else _PolynomialFit(op)
             fit_x, fit_y = (0, 1) if fit_source_ref is not None else (x_index, y_index)
             fit.set_data(fit_source, fit_x, fit_y, spec.weight_column or "")
-            if allow_existing:
+            if spec.model == "polynomial":
+                fit._set("Order", spec.degree)
+            if allow_existing or spec.model == "polynomial":
                 target = next(
                     plot for plot in graph[0].plot_list()
                     if plot.name == _dataset_name(source, y_index)
@@ -373,7 +411,7 @@ def apply_linear_fit(
             curve = op.find_sheet("w", curve_ref)
             if curve is None:
                 raise RuntimeError("Origin Fit curve worksheet is missing")
-            if not allow_existing:
+            if not allow_existing and spec.model == "linear":
                 graph[0].add_plot(curve, 1, 0, type="l")
             graph[0].rescale()
             if error_column is not None:
@@ -392,7 +430,7 @@ def apply_linear_fit(
             raise
         except Exception as exc:
             raise EngineError(
-                "fit_execution_failed", "Origin native LinearFit failed", engine="origin"
+                "fit_execution_failed", f"Origin native {spec.model} Fit failed", engine="origin"
             ) from exc
         op.new(asksave=False)
         if not op.open(str(opju), asksave=False):
