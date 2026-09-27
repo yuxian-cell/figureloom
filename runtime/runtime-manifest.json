@@ -60,8 +60,8 @@
     },
     {
       "path": "src/grapher_sciplot/engine.py",
-      "size_bytes": 45248,
-      "sha256": "e2e8ca75192fc87672adffcec92f827a2cf87d6328e7bcb6be27f7c37103da65"
+      "size_bytes": 45297,
+      "sha256": "72c2be36ab3989ef874637bc689d19c457ff906c808d7c8ba04ba1612943ca86"
     },
     {
       "path": "src/grapher_sciplot/error_bar.py",

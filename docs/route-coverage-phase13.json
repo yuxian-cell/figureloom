@@ -1,0 +1,1901 @@
+{
+  "schema_version": "1.0",
+  "source": "TemplateRegistry.public implemented manifests",
+  "route_count": 41,
+  "category_counts": {
+    "A": 7,
+    "B": 14,
+    "C": 20
+  },
+  "grapher_supported_count": 7,
+  "raw_coverage": 0.17073170731707318,
+  "mvp_high_priority_routes": [
+    "bar",
+    "cv",
+    "eis",
+    "line_error",
+    "lsv",
+    "pl",
+    "scatter",
+    "trend",
+    "uv_vis",
+    "xas"
+  ],
+  "mvp_high_priority_coverage": 0.7,
+  "batch_1": [
+    "cv",
+    "lsv",
+    "xas"
+  ],
+  "routes": [
+    {
+      "route_id": "bar",
+      "template_id": "bar",
+      "family": "general_statistical",
+      "origin_renderer": "scientific_renderer",
+      "workflow": "scientific_table",
+      "category": "A",
+      "required_capabilities": [
+        "bar",
+        "symmetric_y_error"
+      ],
+      "required_semantics": [
+        "plot_mode:default",
+        "independent_symmetric_y_error_columns"
+      ],
+      "examples": [
+        {
+          "id": "basic_error",
+          "fixture": "runtime/templates/bar/example_standard.csv",
+          "plot_kind": "bar_error",
+          "plot_mode": "default",
+          "series_count": 2,
+          "error_series_count": 2,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": false
+        }
+      ],
+      "current_tests": [
+        "tests/test_editaplot.py",
+        "tests/test_grapher_bar.py",
+        "tests/test_grapher_engine_integration.py",
+        "tests/test_origin_compatibility_reports.py",
+        "tests/test_origin_execution_context.py",
+        "tests/test_public_template_alignment.py",
+        "tests/test_reference_adaptation.py",
+        "tests/test_reference_style.py",
+        "tests/test_semantic_analysis.py",
+        "tests/test_template_capabilities.py",
+        "tests/test_worker_done_payload.py"
+      ],
+      "origin_support": "supported",
+      "grapher_status": "supported",
+      "native_editable": true,
+      "save_reopen": true,
+      "readback": true,
+      "verify": true,
+      "gui_checked": true,
+      "gui_representative": null,
+      "migration_group": null
+    },
+    {
+      "route_id": "bland_altman",
+      "template_id": "bland_altman",
+      "family": "medical_ai_evidence",
+      "origin_renderer": "scientific_renderer",
+      "workflow": "scientific_table",
+      "category": "B",
+      "required_capabilities": [
+        "bland_altman"
+      ],
+      "required_semantics": [
+        "plot_mode:precomputed_limits"
+      ],
+      "examples": [
+        {
+          "id": "measurement_agreement",
+          "fixture": "runtime/templates/bland_altman/example_standard.csv",
+          "plot_kind": "bland_altman",
+          "plot_mode": "precomputed_limits",
+          "series_count": 1,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": false
+        }
+      ],
+      "current_tests": [
+        "tests/test_editaplot.py",
+        "tests/test_public_template_alignment.py"
+      ],
+      "origin_support": "supported",
+      "grapher_status": "not_implemented",
+      "native_editable": false,
+      "save_reopen": false,
+      "readback": false,
+      "verify": false,
+      "gui_checked": false,
+      "gui_representative": null,
+      "migration_group": null
+    },
+    {
+      "route_id": "bubble",
+      "template_id": "bubble",
+      "family": "general_multivariate",
+      "origin_renderer": "evidence_renderer",
+      "workflow": "scientific_table",
+      "category": "C",
+      "required_capabilities": [
+        "bubble"
+      ],
+      "required_semantics": [
+        "plot_mode:indexed_size"
+      ],
+      "examples": [
+        {
+          "id": "basic",
+          "fixture": "runtime/templates/bubble/example_standard.csv",
+          "plot_kind": "bubble",
+          "plot_mode": "indexed_size",
+          "series_count": 1,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": false
+        }
+      ],
+      "current_tests": [
+        "tests/test_editaplot.py",
+        "tests/test_public_template_alignment.py"
+      ],
+      "origin_support": "supported",
+      "grapher_status": "new_family_required",
+      "native_editable": false,
+      "save_reopen": false,
+      "readback": false,
+      "verify": false,
+      "gui_checked": false,
+      "gui_representative": null,
+      "migration_group": null
+    },
+    {
+      "route_id": "calibration_curve",
+      "template_id": "calibration_curve",
+      "family": "medical_ai_evidence",
+      "origin_renderer": "scientific_renderer",
+      "workflow": "scientific_table",
+      "category": "B",
+      "required_capabilities": [
+        "calibration_curve"
+      ],
+      "required_semantics": [
+        "plot_mode:precomputed_bins"
+      ],
+      "examples": [
+        {
+          "id": "external_calibration",
+          "fixture": "runtime/templates/calibration_curve/example_standard.csv",
+          "plot_kind": "calibration_curve",
+          "plot_mode": "precomputed_bins",
+          "series_count": 1,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": false
+        }
+      ],
+      "current_tests": [
+        "tests/test_editaplot.py",
+        "tests/test_public_template_alignment.py"
+      ],
+      "origin_support": "supported",
+      "grapher_status": "not_implemented",
+      "native_editable": false,
+      "save_reopen": false,
+      "readback": false,
+      "verify": false,
+      "gui_checked": false,
+      "gui_representative": null,
+      "migration_group": null
+    },
+    {
+      "route_id": "circular_network",
+      "template_id": "circular_network",
+      "family": "general_relationship",
+      "origin_renderer": "network_renderer",
+      "workflow": "scientific_table",
+      "category": "C",
+      "required_capabilities": [
+        "circular_network"
+      ],
+      "required_semantics": [
+        "plot_mode:temporal_directed_weighted"
+      ],
+      "examples": [
+        {
+          "id": "two_periods",
+          "fixture": "runtime/templates/circular_network/example_standard.csv",
+          "plot_kind": "circular_network",
+          "plot_mode": "temporal_directed_weighted",
+          "series_count": 1,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": false
+        }
+      ],
+      "current_tests": [
+        "tests/test_circular_network_preview_core.py",
+        "tests/test_circular_network_workflow.py",
+        "tests/test_editaplot.py",
+        "tests/test_network_renderer_plan.py",
+        "tests/test_progress_protocol.py",
+        "tests/test_public_template_alignment.py",
+        "tests/test_template_capabilities.py",
+        "tests/test_worker_done_payload.py"
+      ],
+      "origin_support": "supported",
+      "grapher_status": "new_family_required",
+      "native_editable": false,
+      "save_reopen": false,
+      "readback": false,
+      "verify": false,
+      "gui_checked": false,
+      "gui_representative": null,
+      "migration_group": null
+    },
+    {
+      "route_id": "confusion_matrix",
+      "template_id": "confusion_matrix",
+      "family": "medical_ai_evidence",
+      "origin_renderer": "categorical_renderer",
+      "workflow": "scientific_table",
+      "category": "C",
+      "required_capabilities": [
+        "heatmap"
+      ],
+      "required_semantics": [
+        "plot_mode:default"
+      ],
+      "examples": [
+        {
+          "id": "three_class_counts",
+          "fixture": "runtime/templates/confusion_matrix/example_standard.csv",
+          "plot_kind": "heatmap",
+          "plot_mode": "default",
+          "series_count": 3,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": false
+        }
+      ],
+      "current_tests": [
+        "tests/test_editaplot.py",
+        "tests/test_public_template_alignment.py",
+        "tests/test_template_capabilities.py"
+      ],
+      "origin_support": "supported",
+      "grapher_status": "new_family_required",
+      "native_editable": false,
+      "save_reopen": false,
+      "readback": false,
+      "verify": false,
+      "gui_checked": false,
+      "gui_representative": null,
+      "migration_group": null
+    },
+    {
+      "route_id": "cv",
+      "template_id": "cv",
+      "family": "electrochemistry",
+      "origin_renderer": "scientific_renderer",
+      "workflow": "scientific_table",
+      "category": "A",
+      "required_capabilities": [
+        "xy_line"
+      ],
+      "required_semantics": [
+        "plot_mode:default"
+      ],
+      "examples": [
+        {
+          "id": "standard",
+          "fixture": "runtime/templates/cv/example_standard.csv",
+          "plot_kind": "line",
+          "plot_mode": "default",
+          "series_count": 2,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": false
+        }
+      ],
+      "current_tests": [
+        "tests/test_public_template_alignment.py",
+        "tests/test_route_coverage_phase13.py"
+      ],
+      "origin_support": "supported",
+      "grapher_status": "supported",
+      "native_editable": true,
+      "save_reopen": true,
+      "readback": true,
+      "verify": true,
+      "gui_checked": false,
+      "gui_representative": "phase10_xy_multiline",
+      "migration_group": "batch_1"
+    },
+    {
+      "route_id": "decision_curve",
+      "template_id": "decision_curve",
+      "family": "medical_ai_evidence",
+      "origin_renderer": "scientific_renderer",
+      "workflow": "scientific_table",
+      "category": "B",
+      "required_capabilities": [
+        "decision_curve"
+      ],
+      "required_semantics": [
+        "plot_mode:precomputed_net_benefit"
+      ],
+      "examples": [
+        {
+          "id": "external_validation_dca",
+          "fixture": "runtime/templates/decision_curve/example_standard.csv",
+          "plot_kind": "decision_curve",
+          "plot_mode": "precomputed_net_benefit",
+          "series_count": 4,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": false
+        }
+      ],
+      "current_tests": [
+        "tests/test_editaplot.py",
+        "tests/test_public_template_alignment.py"
+      ],
+      "origin_support": "supported",
+      "grapher_status": "not_implemented",
+      "native_editable": false,
+      "save_reopen": false,
+      "readback": false,
+      "verify": false,
+      "gui_checked": false,
+      "gui_representative": null,
+      "migration_group": null
+    },
+    {
+      "route_id": "density_ridgeline3d",
+      "template_id": "density_ridgeline3d",
+      "family": "general_distribution",
+      "origin_renderer": "density_ridgeline3d_renderer",
+      "workflow": "scientific_table",
+      "category": "C",
+      "required_capabilities": [
+        "density_ridgeline3d"
+      ],
+      "required_semantics": [
+        "plot_mode:ordered_dual_profile_focus"
+      ],
+      "examples": [
+        {
+          "id": "four_follow_up_conditions",
+          "fixture": "runtime/templates/density_ridgeline3d/example_standard.csv",
+          "plot_kind": "density_ridgeline3d",
+          "plot_mode": "ordered_dual_profile_focus",
+          "series_count": 2,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": false
+        }
+      ],
+      "current_tests": [
+        "tests/test_density_ridgeline3d_renderer.py",
+        "tests/test_density_ridgeline3d_showcase.py",
+        "tests/test_density_ridgeline3d_template.py",
+        "tests/test_density_ridgeline3d_workflow.py",
+        "tests/test_public_template_alignment.py",
+        "tests/test_reference_style.py",
+        "tests/test_template_capabilities.py"
+      ],
+      "origin_support": "supported",
+      "grapher_status": "new_family_required",
+      "native_editable": false,
+      "save_reopen": false,
+      "readback": false,
+      "verify": false,
+      "gui_checked": false,
+      "gui_representative": null,
+      "migration_group": null
+    },
+    {
+      "route_id": "diagnostic_curve",
+      "template_id": "diagnostic_curve",
+      "family": "medical_ai_evidence",
+      "origin_renderer": "scientific_renderer",
+      "workflow": "scientific_table",
+      "category": "B",
+      "required_capabilities": [
+        "diagnostic_curve"
+      ],
+      "required_semantics": [
+        "plot_mode:pr",
+        "plot_mode:roc"
+      ],
+      "examples": [
+        {
+          "id": "roc_external_validation",
+          "fixture": "runtime/templates/diagnostic_curve/example_standard.csv",
+          "plot_kind": "diagnostic_curve",
+          "plot_mode": "roc",
+          "series_count": 3,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": false
+        },
+        {
+          "id": "pr_external_validation",
+          "fixture": "runtime/templates/diagnostic_curve/example_pr.csv",
+          "plot_kind": "diagnostic_curve",
+          "plot_mode": "pr",
+          "series_count": 2,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": false
+        }
+      ],
+      "current_tests": [
+        "tests/test_editaplot.py",
+        "tests/test_public_template_alignment.py"
+      ],
+      "origin_support": "supported",
+      "grapher_status": "not_implemented",
+      "native_editable": false,
+      "save_reopen": false,
+      "readback": false,
+      "verify": false,
+      "gui_checked": false,
+      "gui_representative": null,
+      "migration_group": null
+    },
+    {
+      "route_id": "dsc",
+      "template_id": "dsc",
+      "family": "thermal_analysis",
+      "origin_renderer": "scientific_renderer",
+      "workflow": "scientific_table",
+      "category": "B",
+      "required_capabilities": [
+        "dsc"
+      ],
+      "required_semantics": [
+        "plot_mode:overlay"
+      ],
+      "examples": [
+        {
+          "id": "multi_sample",
+          "fixture": "runtime/templates/dsc/example_standard.csv",
+          "plot_kind": "dsc",
+          "plot_mode": "overlay",
+          "series_count": 3,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": false
+        }
+      ],
+      "current_tests": [
+        "tests/test_material_spectroscopy.py",
+        "tests/test_public_template_alignment.py"
+      ],
+      "origin_support": "supported",
+      "grapher_status": "not_implemented",
+      "native_editable": false,
+      "save_reopen": false,
+      "readback": false,
+      "verify": false,
+      "gui_checked": false,
+      "gui_representative": null,
+      "migration_group": null
+    },
+    {
+      "route_id": "eis",
+      "template_id": "eis",
+      "family": "electrochemistry",
+      "origin_renderer": "scientific_renderer",
+      "workflow": "scientific_table",
+      "category": "B",
+      "required_capabilities": [
+        "nyquist"
+      ],
+      "required_semantics": [
+        "plot_mode:nyquist"
+      ],
+      "examples": [
+        {
+          "id": "nyquist",
+          "fixture": "runtime/templates/eis/example_standard.csv",
+          "plot_kind": "nyquist",
+          "plot_mode": "nyquist",
+          "series_count": 1,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": false
+        }
+      ],
+      "current_tests": [
+        "tests/test_public_template_alignment.py"
+      ],
+      "origin_support": "supported",
+      "grapher_status": "not_implemented",
+      "native_editable": false,
+      "save_reopen": false,
+      "readback": false,
+      "verify": false,
+      "gui_checked": false,
+      "gui_representative": null,
+      "migration_group": null
+    },
+    {
+      "route_id": "forest",
+      "template_id": "forest",
+      "family": "general_effect",
+      "origin_renderer": "evidence_renderer",
+      "workflow": "scientific_table",
+      "category": "C",
+      "required_capabilities": [
+        "forest"
+      ],
+      "required_semantics": [
+        "plot_mode:interval"
+      ],
+      "examples": [
+        {
+          "id": "basic",
+          "fixture": "runtime/templates/forest/example_standard.csv",
+          "plot_kind": "forest",
+          "plot_mode": "interval",
+          "series_count": 1,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": false
+        }
+      ],
+      "current_tests": [
+        "tests/test_editaplot.py",
+        "tests/test_public_template_alignment.py"
+      ],
+      "origin_support": "supported",
+      "grapher_status": "new_family_required",
+      "native_editable": false,
+      "save_reopen": false,
+      "readback": false,
+      "verify": false,
+      "gui_checked": false,
+      "gui_representative": null,
+      "migration_group": null
+    },
+    {
+      "route_id": "ftir",
+      "template_id": "ftir",
+      "family": "spectroscopy",
+      "origin_renderer": "scientific_renderer",
+      "workflow": "scientific_table",
+      "category": "B",
+      "required_capabilities": [
+        "ftir",
+        "descending_x_axis"
+      ],
+      "required_semantics": [
+        "plot_mode:overlay",
+        "descending_x_axis"
+      ],
+      "examples": [
+        {
+          "id": "temperature_series",
+          "fixture": "runtime/templates/ftir/example_standard.csv",
+          "plot_kind": "ftir",
+          "plot_mode": "overlay",
+          "series_count": 6,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": true,
+          "inset": false
+        }
+      ],
+      "current_tests": [
+        "tests/test_material_spectroscopy.py",
+        "tests/test_public_template_alignment.py"
+      ],
+      "origin_support": "supported",
+      "grapher_status": "not_implemented",
+      "native_editable": false,
+      "save_reopen": false,
+      "readback": false,
+      "verify": false,
+      "gui_checked": false,
+      "gui_representative": null,
+      "migration_group": null
+    },
+    {
+      "route_id": "grouped_box",
+      "template_id": "grouped_box",
+      "family": "statistical_evidence",
+      "origin_renderer": "evidence_renderer",
+      "workflow": "scientific_table",
+      "category": "C",
+      "required_capabilities": [
+        "grouped_box"
+      ],
+      "required_semantics": [
+        "plot_mode:wide_category_group_raw"
+      ],
+      "examples": [
+        {
+          "id": "grouped_raw_box",
+          "fixture": "runtime/templates/grouped_box/example_standard.csv",
+          "plot_kind": "grouped_box",
+          "plot_mode": "wide_category_group_raw",
+          "series_count": 8,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": false
+        }
+      ],
+      "current_tests": [
+        "tests/test_editaplot.py",
+        "tests/test_public_template_alignment.py",
+        "tests/test_reference_adaptation.py",
+        "tests/test_template_capabilities.py"
+      ],
+      "origin_support": "supported",
+      "grapher_status": "new_family_required",
+      "native_editable": false,
+      "save_reopen": false,
+      "readback": false,
+      "verify": false,
+      "gui_checked": false,
+      "gui_representative": null,
+      "migration_group": null
+    },
+    {
+      "route_id": "heatmap",
+      "template_id": "heatmap",
+      "family": "general_matrix",
+      "origin_renderer": "categorical_renderer",
+      "workflow": "scientific_table",
+      "category": "C",
+      "required_capabilities": [
+        "heatmap"
+      ],
+      "required_semantics": [
+        "plot_mode:default"
+      ],
+      "examples": [
+        {
+          "id": "results_matrix",
+          "fixture": "runtime/templates/heatmap/example_standard.csv",
+          "plot_kind": "heatmap",
+          "plot_mode": "default",
+          "series_count": 4,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": false
+        }
+      ],
+      "current_tests": [
+        "tests/test_editaplot.py",
+        "tests/test_heatmap_density.py",
+        "tests/test_public_release_gate.py",
+        "tests/test_public_template_alignment.py",
+        "tests/test_reference_adaptation.py",
+        "tests/test_route_coverage_phase13.py",
+        "tests/test_template_capabilities.py",
+        "tests/test_worker_done_payload.py"
+      ],
+      "origin_support": "supported",
+      "grapher_status": "new_family_required",
+      "native_editable": false,
+      "save_reopen": false,
+      "readback": false,
+      "verify": false,
+      "gui_checked": false,
+      "gui_representative": null,
+      "migration_group": null
+    },
+    {
+      "route_id": "histogram",
+      "template_id": "histogram",
+      "family": "general_distribution",
+      "origin_renderer": "evidence_renderer",
+      "workflow": "scientific_table",
+      "category": "C",
+      "required_capabilities": [
+        "histogram"
+      ],
+      "required_semantics": [
+        "plot_mode:wide_raw"
+      ],
+      "examples": [
+        {
+          "id": "basic",
+          "fixture": "runtime/templates/histogram/example_standard.csv",
+          "plot_kind": "histogram",
+          "plot_mode": "wide_raw",
+          "series_count": 1,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": false
+        }
+      ],
+      "current_tests": [
+        "tests/test_editaplot.py",
+        "tests/test_public_template_alignment.py"
+      ],
+      "origin_support": "supported",
+      "grapher_status": "new_family_required",
+      "native_editable": false,
+      "save_reopen": false,
+      "readback": false,
+      "verify": false,
+      "gui_checked": false,
+      "gui_representative": null,
+      "migration_group": null
+    },
+    {
+      "route_id": "horizontal_bar",
+      "template_id": "horizontal_bar",
+      "family": "general_comparison",
+      "origin_renderer": "categorical_renderer",
+      "workflow": "scientific_table",
+      "category": "B",
+      "required_capabilities": [
+        "horizontal_bar",
+        "symmetric_y_error"
+      ],
+      "required_semantics": [
+        "plot_mode:default",
+        "independent_symmetric_y_error_columns"
+      ],
+      "examples": [
+        {
+          "id": "ablation_error",
+          "fixture": "runtime/templates/horizontal_bar/example_standard.csv",
+          "plot_kind": "horizontal_bar",
+          "plot_mode": "default",
+          "series_count": 1,
+          "error_series_count": 1,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": false
+        }
+      ],
+      "current_tests": [
+        "tests/test_editaplot.py",
+        "tests/test_public_template_alignment.py"
+      ],
+      "origin_support": "supported",
+      "grapher_status": "not_implemented",
+      "native_editable": false,
+      "save_reopen": false,
+      "readback": false,
+      "verify": false,
+      "gui_checked": false,
+      "gui_representative": null,
+      "migration_group": null
+    },
+    {
+      "route_id": "line_error",
+      "template_id": "line_error",
+      "family": "general_statistical",
+      "origin_renderer": "scientific_renderer",
+      "workflow": "scientific_table",
+      "category": "A",
+      "required_capabilities": [
+        "xy_line",
+        "symmetric_y_error"
+      ],
+      "required_semantics": [
+        "plot_mode:default",
+        "independent_symmetric_y_error_columns"
+      ],
+      "examples": [
+        {
+          "id": "basic",
+          "fixture": "runtime/templates/line_error/example_standard.csv",
+          "plot_kind": "line_error",
+          "plot_mode": "default",
+          "series_count": 2,
+          "error_series_count": 2,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": false
+        },
+        {
+          "id": "chinese",
+          "fixture": "runtime/templates/line_error/example_chinese.csv",
+          "plot_kind": "line_error",
+          "plot_mode": "default",
+          "series_count": 3,
+          "error_series_count": 3,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": false
+        }
+      ],
+      "current_tests": [
+        "tests/test_editaplot.py",
+        "tests/test_grapher_engine_integration.py",
+        "tests/test_grapher_error.py",
+        "tests/test_public_template_alignment.py",
+        "tests/test_reference_style.py",
+        "tests/test_template_capabilities.py"
+      ],
+      "origin_support": "supported",
+      "grapher_status": "supported",
+      "native_editable": true,
+      "save_reopen": true,
+      "readback": true,
+      "verify": true,
+      "gui_checked": true,
+      "gui_representative": null,
+      "migration_group": null
+    },
+    {
+      "route_id": "lsv",
+      "template_id": "lsv",
+      "family": "electrochemistry",
+      "origin_renderer": "scientific_renderer",
+      "workflow": "scientific_table",
+      "category": "A",
+      "required_capabilities": [
+        "xy_line"
+      ],
+      "required_semantics": [
+        "plot_mode:default"
+      ],
+      "examples": [
+        {
+          "id": "standard",
+          "fixture": "runtime/templates/lsv/example_standard.csv",
+          "plot_kind": "line",
+          "plot_mode": "default",
+          "series_count": 2,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": false
+        }
+      ],
+      "current_tests": [
+        "tests/test_public_template_alignment.py",
+        "tests/test_route_coverage_phase13.py"
+      ],
+      "origin_support": "supported",
+      "grapher_status": "supported",
+      "native_editable": true,
+      "save_reopen": true,
+      "readback": true,
+      "verify": true,
+      "gui_checked": false,
+      "gui_representative": "phase10_xy_multiline",
+      "migration_group": "batch_1"
+    },
+    {
+      "route_id": "nmr",
+      "template_id": "nmr",
+      "family": "spectroscopy",
+      "origin_renderer": "scientific_renderer",
+      "workflow": "scientific_table",
+      "category": "B",
+      "required_capabilities": [
+        "nmr",
+        "descending_x_axis"
+      ],
+      "required_semantics": [
+        "plot_mode:overlay",
+        "descending_x_axis"
+      ],
+      "examples": [
+        {
+          "id": "comparison",
+          "fixture": "runtime/templates/nmr/example_standard.csv",
+          "plot_kind": "nmr",
+          "plot_mode": "overlay",
+          "series_count": 2,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": true,
+          "inset": false
+        }
+      ],
+      "current_tests": [
+        "tests/test_material_spectroscopy.py",
+        "tests/test_public_template_alignment.py"
+      ],
+      "origin_support": "supported",
+      "grapher_status": "not_implemented",
+      "native_editable": false,
+      "save_reopen": false,
+      "readback": false,
+      "verify": false,
+      "gui_checked": false,
+      "gui_representative": null,
+      "migration_group": null
+    },
+    {
+      "route_id": "paired_trajectory",
+      "template_id": "paired_trajectory",
+      "family": "medical_ai_evidence",
+      "origin_renderer": "scientific_renderer",
+      "workflow": "scientific_table",
+      "category": "B",
+      "required_capabilities": [
+        "paired_trajectory"
+      ],
+      "required_semantics": [
+        "plot_mode:default"
+      ],
+      "examples": [
+        {
+          "id": "longitudinal_metric",
+          "fixture": "runtime/templates/paired_trajectory/example_standard.csv",
+          "plot_kind": "paired_trajectory",
+          "plot_mode": "default",
+          "series_count": 14,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": false
+        }
+      ],
+      "current_tests": [
+        "tests/test_editaplot.py",
+        "tests/test_public_template_alignment.py"
+      ],
+      "origin_support": "supported",
+      "grapher_status": "not_implemented",
+      "native_editable": false,
+      "save_reopen": false,
+      "readback": false,
+      "verify": false,
+      "gui_checked": false,
+      "gui_representative": null,
+      "migration_group": null
+    },
+    {
+      "route_id": "percent_stacked_bar",
+      "template_id": "percent_stacked_bar",
+      "family": "general_composition",
+      "origin_renderer": "categorical_renderer",
+      "workflow": "scientific_table",
+      "category": "B",
+      "required_capabilities": [
+        "percent_stacked_bar"
+      ],
+      "required_semantics": [
+        "plot_mode:default"
+      ],
+      "examples": [
+        {
+          "id": "percent_composition",
+          "fixture": "runtime/templates/percent_stacked_bar/example_standard.csv",
+          "plot_kind": "percent_stacked_bar",
+          "plot_mode": "default",
+          "series_count": 3,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": false
+        }
+      ],
+      "current_tests": [
+        "tests/test_public_template_alignment.py",
+        "tests/test_semantic_analysis.py"
+      ],
+      "origin_support": "supported",
+      "grapher_status": "not_implemented",
+      "native_editable": false,
+      "save_reopen": false,
+      "readback": false,
+      "verify": false,
+      "gui_checked": false,
+      "gui_representative": null,
+      "migration_group": null
+    },
+    {
+      "route_id": "pie",
+      "template_id": "pie",
+      "family": "general_composition",
+      "origin_renderer": "categorical_renderer",
+      "workflow": "scientific_table",
+      "category": "C",
+      "required_capabilities": [
+        "pie"
+      ],
+      "required_semantics": [
+        "plot_mode:default"
+      ],
+      "examples": [
+        {
+          "id": "five_parts",
+          "fixture": "runtime/templates/pie/example_standard.csv",
+          "plot_kind": "pie",
+          "plot_mode": "default",
+          "series_count": 1,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": false
+        }
+      ],
+      "current_tests": [
+        "tests/test_public_template_alignment.py"
+      ],
+      "origin_support": "supported",
+      "grapher_status": "new_family_required",
+      "native_editable": false,
+      "save_reopen": false,
+      "readback": false,
+      "verify": false,
+      "gui_checked": false,
+      "gui_representative": null,
+      "migration_group": null
+    },
+    {
+      "route_id": "pl",
+      "template_id": "pl",
+      "family": "spectroscopy",
+      "origin_renderer": "scientific_renderer",
+      "workflow": "scientific_table",
+      "category": "B",
+      "required_capabilities": [
+        "pl_decay",
+        "pl_spectrum"
+      ],
+      "required_semantics": [
+        "plot_mode:steady_state",
+        "plot_mode:trpl"
+      ],
+      "examples": [
+        {
+          "id": "trpl_decay",
+          "fixture": "runtime/templates/pl/example_standard.csv",
+          "plot_kind": "pl_decay",
+          "plot_mode": "trpl",
+          "series_count": 6,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "log10",
+          "descending_x": false,
+          "inset": false
+        },
+        {
+          "id": "temperature_series",
+          "fixture": "runtime/templates/pl/example_temperature_series.csv",
+          "plot_kind": "pl_spectrum",
+          "plot_mode": "steady_state",
+          "series_count": 6,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": false
+        }
+      ],
+      "current_tests": [
+        "tests/test_editaplot.py",
+        "tests/test_material_spectroscopy.py",
+        "tests/test_public_template_alignment.py",
+        "tests/test_template_capabilities.py"
+      ],
+      "origin_support": "supported",
+      "grapher_status": "not_implemented",
+      "native_editable": false,
+      "save_reopen": false,
+      "readback": false,
+      "verify": false,
+      "gui_checked": false,
+      "gui_representative": null,
+      "migration_group": null
+    },
+    {
+      "route_id": "radar",
+      "template_id": "radar",
+      "family": "general_multivariate",
+      "origin_renderer": "categorical_renderer",
+      "workflow": "scientific_table",
+      "category": "C",
+      "required_capabilities": [
+        "radar"
+      ],
+      "required_semantics": [
+        "plot_mode:default"
+      ],
+      "examples": [
+        {
+          "id": "method_comparison",
+          "fixture": "runtime/templates/radar/example_standard.csv",
+          "plot_kind": "radar",
+          "plot_mode": "default",
+          "series_count": 3,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": false
+        }
+      ],
+      "current_tests": [
+        "tests/test_editaplot.py",
+        "tests/test_public_template_alignment.py"
+      ],
+      "origin_support": "supported",
+      "grapher_status": "new_family_required",
+      "native_editable": false,
+      "save_reopen": false,
+      "readback": false,
+      "verify": false,
+      "gui_checked": false,
+      "gui_representative": null,
+      "migration_group": null
+    },
+    {
+      "route_id": "raincloud",
+      "template_id": "raincloud",
+      "family": "medical_ai_evidence",
+      "origin_renderer": "evidence_renderer",
+      "workflow": "scientific_table",
+      "category": "C",
+      "required_capabilities": [
+        "raincloud"
+      ],
+      "required_semantics": [
+        "plot_mode:wide_raw"
+      ],
+      "examples": [
+        {
+          "id": "model-comparison",
+          "fixture": "runtime/templates/raincloud/example_standard.csv",
+          "plot_kind": "raincloud",
+          "plot_mode": "wide_raw",
+          "series_count": 3,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": false
+        }
+      ],
+      "current_tests": [
+        "tests/test_editaplot.py",
+        "tests/test_public_template_alignment.py"
+      ],
+      "origin_support": "supported",
+      "grapher_status": "new_family_required",
+      "native_editable": false,
+      "save_reopen": false,
+      "readback": false,
+      "verify": false,
+      "gui_checked": false,
+      "gui_representative": null,
+      "migration_group": null
+    },
+    {
+      "route_id": "raw_summary",
+      "template_id": "raw_summary",
+      "family": "general_distribution",
+      "origin_renderer": "evidence_renderer",
+      "workflow": "scientific_table",
+      "category": "C",
+      "required_capabilities": [
+        "raw_summary"
+      ],
+      "required_semantics": [
+        "plot_mode:wide_raw"
+      ],
+      "examples": [
+        {
+          "id": "basic",
+          "fixture": "runtime/templates/raw_summary/example_standard.csv",
+          "plot_kind": "raw_summary",
+          "plot_mode": "wide_raw",
+          "series_count": 3,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": false
+        }
+      ],
+      "current_tests": [
+        "tests/test_editaplot.py",
+        "tests/test_public_template_alignment.py"
+      ],
+      "origin_support": "supported",
+      "grapher_status": "new_family_required",
+      "native_editable": false,
+      "save_reopen": false,
+      "readback": false,
+      "verify": false,
+      "gui_checked": false,
+      "gui_representative": null,
+      "migration_group": null
+    },
+    {
+      "route_id": "sankey",
+      "template_id": "sankey",
+      "family": "general_flow",
+      "origin_renderer": "categorical_renderer",
+      "workflow": "scientific_table",
+      "category": "C",
+      "required_capabilities": [
+        "sankey"
+      ],
+      "required_semantics": [
+        "plot_mode:default"
+      ],
+      "examples": [
+        {
+          "id": "four_stage",
+          "fixture": "runtime/templates/sankey/example_standard.csv",
+          "plot_kind": "sankey",
+          "plot_mode": "default",
+          "series_count": 1,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": false
+        }
+      ],
+      "current_tests": [
+        "tests/test_circular_network_preview_core.py",
+        "tests/test_editaplot.py",
+        "tests/test_public_template_alignment.py",
+        "tests/test_template_capabilities.py"
+      ],
+      "origin_support": "supported",
+      "grapher_status": "new_family_required",
+      "native_editable": false,
+      "save_reopen": false,
+      "readback": false,
+      "verify": false,
+      "gui_checked": false,
+      "gui_representative": null,
+      "migration_group": null
+    },
+    {
+      "route_id": "scatter",
+      "template_id": "scatter",
+      "family": "general_relationship",
+      "origin_renderer": "scientific_renderer",
+      "workflow": "scientific_table",
+      "category": "A",
+      "required_capabilities": [
+        "xy_scatter"
+      ],
+      "required_semantics": [
+        "plot_mode:default"
+      ],
+      "examples": [
+        {
+          "id": "basic",
+          "fixture": "runtime/templates/scatter/example_standard.csv",
+          "plot_kind": "scatter",
+          "plot_mode": "default",
+          "series_count": 2,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": false
+        },
+        {
+          "id": "dense",
+          "fixture": "runtime/templates/scatter/example_dense.csv",
+          "plot_kind": "scatter",
+          "plot_mode": "default",
+          "series_count": 3,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": false
+        }
+      ],
+      "current_tests": [
+        "tests/test_editaplot.py",
+        "tests/test_engines.py",
+        "tests/test_fit_integration.py",
+        "tests/test_fit_polynomial.py",
+        "tests/test_fit_production.py",
+        "tests/test_grapher_engine_integration.py",
+        "tests/test_grapher_error.py",
+        "tests/test_origin_compatibility_reports.py",
+        "tests/test_public_template_alignment.py",
+        "tests/test_template_capabilities.py"
+      ],
+      "origin_support": "supported",
+      "grapher_status": "supported",
+      "native_editable": true,
+      "save_reopen": true,
+      "readback": true,
+      "verify": true,
+      "gui_checked": true,
+      "gui_representative": null,
+      "migration_group": null
+    },
+    {
+      "route_id": "shap_dashboard",
+      "template_id": "shap_dashboard",
+      "family": "medical_ai_evidence",
+      "origin_renderer": "evidence_renderer",
+      "workflow": "scientific_table",
+      "category": "C",
+      "required_capabilities": [
+        "shap_summary"
+      ],
+      "required_semantics": [
+        "plot_mode:dashboard_blue_red"
+      ],
+      "examples": [
+        {
+          "id": "grouped-features",
+          "fixture": "runtime/templates/shap_dashboard/example_standard.csv",
+          "plot_kind": "shap_summary",
+          "plot_mode": "dashboard_blue_red",
+          "series_count": 1,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": false
+        }
+      ],
+      "current_tests": [
+        "tests/test_public_template_alignment.py",
+        "tests/test_shap_dashboard.py"
+      ],
+      "origin_support": "supported",
+      "grapher_status": "new_family_required",
+      "native_editable": false,
+      "save_reopen": false,
+      "readback": false,
+      "verify": false,
+      "gui_checked": false,
+      "gui_representative": null,
+      "migration_group": null
+    },
+    {
+      "route_id": "shap_summary",
+      "template_id": "shap_summary",
+      "family": "medical_ai_evidence",
+      "origin_renderer": "evidence_renderer",
+      "workflow": "scientific_table",
+      "category": "C",
+      "required_capabilities": [
+        "shap_summary"
+      ],
+      "required_semantics": [
+        "plot_mode:beeswarm_mean_abs"
+      ],
+      "examples": [
+        {
+          "id": "imaging-features",
+          "fixture": "runtime/templates/shap_summary/example_standard.csv",
+          "plot_kind": "shap_summary",
+          "plot_mode": "beeswarm_mean_abs",
+          "series_count": 1,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": false
+        }
+      ],
+      "current_tests": [
+        "tests/test_editaplot.py",
+        "tests/test_origin_compatibility_reports.py",
+        "tests/test_public_template_alignment.py",
+        "tests/test_reference_adaptation.py",
+        "tests/test_shap_dashboard.py",
+        "tests/test_shap_summary_preview_renderer.py",
+        "tests/test_shap_summary_semantics.py",
+        "tests/test_shap_summary_workflow.py",
+        "tests/test_template_capabilities.py"
+      ],
+      "origin_support": "supported",
+      "grapher_status": "new_family_required",
+      "native_editable": false,
+      "save_reopen": false,
+      "readback": false,
+      "verify": false,
+      "gui_checked": false,
+      "gui_representative": null,
+      "migration_group": null
+    },
+    {
+      "route_id": "stacked_bar",
+      "template_id": "stacked_bar",
+      "family": "general_composition",
+      "origin_renderer": "categorical_renderer",
+      "workflow": "scientific_table",
+      "category": "B",
+      "required_capabilities": [
+        "stacked_bar"
+      ],
+      "required_semantics": [
+        "plot_mode:default"
+      ],
+      "examples": [
+        {
+          "id": "composition",
+          "fixture": "runtime/templates/stacked_bar/example_standard.csv",
+          "plot_kind": "stacked_bar",
+          "plot_mode": "default",
+          "series_count": 4,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": false
+        }
+      ],
+      "current_tests": [
+        "tests/test_origin_compatibility_reports.py",
+        "tests/test_public_template_alignment.py"
+      ],
+      "origin_support": "supported",
+      "grapher_status": "not_implemented",
+      "native_editable": false,
+      "save_reopen": false,
+      "readback": false,
+      "verify": false,
+      "gui_checked": false,
+      "gui_representative": null,
+      "migration_group": null
+    },
+    {
+      "route_id": "trajectory3d",
+      "template_id": "trajectory3d",
+      "family": "electrochemistry",
+      "origin_renderer": "trajectory3d_renderer",
+      "workflow": "scientific_table",
+      "category": "C",
+      "required_capabilities": [
+        "trajectory3d"
+      ],
+      "required_semantics": [
+        "plot_mode:multi_condition_nyquist"
+      ],
+      "examples": [
+        {
+          "id": "three_conditions",
+          "fixture": "runtime/templates/trajectory3d/example_standard.csv",
+          "plot_kind": "trajectory3d",
+          "plot_mode": "multi_condition_nyquist",
+          "series_count": 3,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": false
+        }
+      ],
+      "current_tests": [
+        "tests/test_density_ridgeline3d_renderer.py",
+        "tests/test_editaplot.py",
+        "tests/test_public_template_alignment.py",
+        "tests/test_template_capabilities.py"
+      ],
+      "origin_support": "supported",
+      "grapher_status": "new_family_required",
+      "native_editable": false,
+      "save_reopen": false,
+      "readback": false,
+      "verify": false,
+      "gui_checked": false,
+      "gui_representative": null,
+      "migration_group": null
+    },
+    {
+      "route_id": "trend",
+      "template_id": "trend",
+      "family": "general_trend",
+      "origin_renderer": "scientific_renderer",
+      "workflow": "scientific_table",
+      "category": "A",
+      "required_capabilities": [
+        "xy_line"
+      ],
+      "required_semantics": [
+        "plot_mode:default"
+      ],
+      "examples": [
+        {
+          "id": "method_progression",
+          "fixture": "runtime/templates/trend/example_standard.csv",
+          "plot_kind": "line",
+          "plot_mode": "default",
+          "series_count": 3,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": false
+        }
+      ],
+      "current_tests": [
+        "tests/test_editaplot.py",
+        "tests/test_engines.py",
+        "tests/test_fit_multi.py",
+        "tests/test_grapher_engine_integration.py",
+        "tests/test_grapher_error.py",
+        "tests/test_public_release_gate.py",
+        "tests/test_public_template_alignment.py",
+        "tests/test_star_trend.py"
+      ],
+      "origin_support": "supported",
+      "grapher_status": "supported",
+      "native_editable": true,
+      "save_reopen": true,
+      "readback": true,
+      "verify": true,
+      "gui_checked": true,
+      "gui_representative": null,
+      "migration_group": null
+    },
+    {
+      "route_id": "uv_vis",
+      "template_id": "uv_vis",
+      "family": "spectroscopy",
+      "origin_renderer": "scientific_renderer",
+      "workflow": "scientific_table",
+      "category": "C",
+      "required_capabilities": [
+        "uv_vis",
+        "inset_layer"
+      ],
+      "required_semantics": [
+        "plot_mode:uv_vis",
+        "plot_mode:uv_vis_with_tauc"
+      ],
+      "examples": [
+        {
+          "id": "absorbance_tauc",
+          "fixture": "runtime/templates/uv_vis/example_standard.csv",
+          "plot_kind": "uv_vis",
+          "plot_mode": "uv_vis_with_tauc",
+          "series_count": 1,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": true
+        },
+        {
+          "id": "multi_spectrum",
+          "fixture": "runtime/templates/uv_vis/example_multi_spectrum.csv",
+          "plot_kind": "uv_vis",
+          "plot_mode": "uv_vis",
+          "series_count": 3,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": false
+        }
+      ],
+      "current_tests": [
+        "tests/test_editaplot.py",
+        "tests/test_material_spectroscopy.py",
+        "tests/test_origin_compatibility_reports.py",
+        "tests/test_public_template_alignment.py",
+        "tests/test_template_capabilities.py"
+      ],
+      "origin_support": "supported",
+      "grapher_status": "new_family_required",
+      "native_editable": false,
+      "save_reopen": false,
+      "readback": false,
+      "verify": false,
+      "gui_checked": false,
+      "gui_representative": null,
+      "migration_group": null
+    },
+    {
+      "route_id": "violin",
+      "template_id": "violin",
+      "family": "general_distribution",
+      "origin_renderer": "evidence_renderer",
+      "workflow": "scientific_table",
+      "category": "C",
+      "required_capabilities": [
+        "violin"
+      ],
+      "required_semantics": [
+        "plot_mode:wide_raw"
+      ],
+      "examples": [
+        {
+          "id": "basic",
+          "fixture": "runtime/templates/violin/example_standard.csv",
+          "plot_kind": "violin",
+          "plot_mode": "wide_raw",
+          "series_count": 3,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": false
+        }
+      ],
+      "current_tests": [
+        "tests/test_editaplot.py",
+        "tests/test_public_template_alignment.py",
+        "tests/test_template_capabilities.py",
+        "tests/test_worker_done_payload.py"
+      ],
+      "origin_support": "supported",
+      "grapher_status": "new_family_required",
+      "native_editable": false,
+      "save_reopen": false,
+      "readback": false,
+      "verify": false,
+      "gui_checked": false,
+      "gui_representative": null,
+      "migration_group": null
+    },
+    {
+      "route_id": "xas",
+      "template_id": "xas",
+      "family": "spectroscopy",
+      "origin_renderer": "scientific_renderer",
+      "workflow": "scientific_table",
+      "category": "A",
+      "required_capabilities": [
+        "xy_line"
+      ],
+      "required_semantics": [
+        "plot_mode:default"
+      ],
+      "examples": [
+        {
+          "id": "standard",
+          "fixture": "runtime/templates/xas/example_standard.csv",
+          "plot_kind": "line",
+          "plot_mode": "default",
+          "series_count": 2,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": false
+        }
+      ],
+      "current_tests": [
+        "tests/test_public_template_alignment.py",
+        "tests/test_route_coverage_phase13.py"
+      ],
+      "origin_support": "supported",
+      "grapher_status": "supported",
+      "native_editable": true,
+      "save_reopen": true,
+      "readback": true,
+      "verify": true,
+      "gui_checked": false,
+      "gui_representative": "phase10_xy_multiline",
+      "migration_group": "batch_1"
+    },
+    {
+      "route_id": "xps",
+      "template_id": "xps",
+      "family": "spectroscopy",
+      "origin_renderer": "xps_adaptive | xps_c1s_fit",
+      "workflow": "xps",
+      "category": "C",
+      "required_capabilities": [
+        "xps_native_analysis"
+      ],
+      "required_semantics": [],
+      "examples": [
+        {
+          "id": "adaptive_fit",
+          "fixture": "runtime/templates/xps/../xps_adaptive/example_standard.csv"
+        },
+        {
+          "id": "fixed_c1s",
+          "fixture": "runtime/templates/xps/../xps_c1s_fit/example_standard.csv"
+        }
+      ],
+      "current_tests": [
+        "tests/test_editaplot.py",
+        "tests/test_origin_compatibility_reports.py",
+        "tests/test_public_release_gate.py",
+        "tests/test_public_template_alignment.py",
+        "tests/test_reference_adaptation.py",
+        "tests/test_reference_style.py",
+        "tests/test_semantic_analysis.py",
+        "tests/test_template_capabilities.py",
+        "tests/test_xps_visual_style_cli.py",
+        "tests/test_xps_visual_style_contract.py"
+      ],
+      "origin_support": "supported",
+      "grapher_status": "new_family_required",
+      "native_editable": false,
+      "save_reopen": false,
+      "readback": false,
+      "verify": false,
+      "gui_checked": false,
+      "gui_representative": null,
+      "migration_group": null
+    },
+    {
+      "route_id": "xps_compare",
+      "template_id": "xps_compare",
+      "family": "spectroscopy",
+      "origin_renderer": "scientific_renderer",
+      "workflow": "scientific_table",
+      "category": "B",
+      "required_capabilities": [
+        "xps_compare",
+        "descending_x_axis"
+      ],
+      "required_semantics": [
+        "plot_mode:overlay",
+        "descending_x_axis"
+      ],
+      "examples": [
+        {
+          "id": "multi_spectrum",
+          "fixture": "runtime/templates/xps_compare/example_standard.csv",
+          "plot_kind": "xps_compare",
+          "plot_mode": "overlay",
+          "series_count": 3,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": true,
+          "inset": false
+        }
+      ],
+      "current_tests": [
+        "tests/test_editaplot.py",
+        "tests/test_material_spectroscopy.py",
+        "tests/test_public_template_alignment.py"
+      ],
+      "origin_support": "supported",
+      "grapher_status": "not_implemented",
+      "native_editable": false,
+      "save_reopen": false,
+      "readback": false,
+      "verify": false,
+      "gui_checked": false,
+      "gui_representative": null,
+      "migration_group": null
+    },
+    {
+      "route_id": "xrd",
+      "template_id": "xrd",
+      "family": "spectroscopy",
+      "origin_renderer": "scientific_renderer",
+      "workflow": "scientific_table",
+      "category": "C",
+      "required_capabilities": [
+        "rietveld_refinement",
+        "stacked_line"
+      ],
+      "required_semantics": [
+        "plot_mode:ordinary_scan",
+        "plot_mode:rietveld_refinement"
+      ],
+      "examples": [
+        {
+          "id": "standard",
+          "fixture": "runtime/templates/xrd/example_standard.csv",
+          "plot_kind": "stacked_line",
+          "plot_mode": "ordinary_scan",
+          "series_count": 3,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": false
+        },
+        {
+          "id": "gsas-powder",
+          "fixture": "runtime/templates/xrd/example_gsas_powder.csv",
+          "plot_kind": "rietveld_refinement",
+          "plot_mode": "rietveld_refinement",
+          "series_count": 3,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": false
+        },
+        {
+          "id": "gsas-publication",
+          "fixture": "runtime/templates/xrd/example_gsas_publication.csv",
+          "plot_kind": "rietveld_refinement",
+          "plot_mode": "rietveld_refinement",
+          "series_count": 4,
+          "error_series_count": 0,
+          "x_scale": "linear",
+          "y_scale": "linear",
+          "descending_x": false,
+          "inset": false
+        }
+      ],
+      "current_tests": [
+        "tests/test_editaplot.py",
+        "tests/test_public_template_alignment.py",
+        "tests/test_reference_adaptation.py",
+        "tests/test_reference_style.py",
+        "tests/test_reference_workflow_core.py",
+        "tests/test_semantic_analysis.py",
+        "tests/test_semantic_contract.py",
+        "tests/test_semantic_contract_parsing.py",
+        "tests/test_semantic_workflow_core.py",
+        "tests/test_xps_visual_style_cli.py",
+        "tests/test_xrd_rietveld_renderer.py",
+        "tests/test_xrd_rietveld_workflow.py",
+        "tests/test_xrd_semantics.py"
+      ],
+      "origin_support": "supported",
+      "grapher_status": "new_family_required",
+      "native_editable": false,
+      "save_reopen": false,
+      "readback": false,
+      "verify": false,
+      "gui_checked": false,
+      "gui_representative": null,
+      "migration_group": null
+    }
+  ],
+  "capability_limitations": [
+    {
+      "route_id": "scatter#explicit_weighted_linear_fit",
+      "origin_status": "supported",
+      "grapher_status": "unsupported_backend_capability",
+      "error_code": "unsupported_fit_weighting"
+    }
+  ]
+}

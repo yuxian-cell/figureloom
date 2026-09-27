@@ -40,6 +40,7 @@ from .smoke import (
 )
 
 _DEFAULT_COLORS = ("#1F6F78", "#C86B3C", "#6A5D98", "#5E8D4E")
+SUPPORTED_TEMPLATE_ROUTES = ("scatter", "trend", "line_error", "bar", "cv", "lsv", "xas")
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
@@ -229,12 +230,12 @@ class GrapherEngine:
     def _prepare(plan: dict[str, Any]) -> tuple[dict[str, Any], pd.DataFrame]:
         render_spec = plan.get("render_spec")
         route = plan["template"]["id"]
-        if route not in {"scatter", "trend", "line_error", "bar"} or not isinstance(render_spec, dict):
+        if route not in SUPPORTED_TEMPLATE_ROUTES or not isinstance(render_spec, dict):
             raise EngineError(
                 "grapher_route_unsupported",
-                "Grapher supports scatter, trend, line_error, and bar routes.",
+                "Grapher does not support this template route.",
                 engine="grapher",
-                supported_templates=["scatter", "trend", "line_error", "bar"],
+                supported_templates=list(SUPPORTED_TEMPLATE_ROUTES),
             )
         if plan.get("reference_adaptation") is not None or plan.get("reference_style") is not None:
             raise EngineError(
