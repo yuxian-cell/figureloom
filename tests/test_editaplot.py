@@ -2372,7 +2372,7 @@ def test_runtime_dependency_lock_is_exact_and_bundled_with_skill() -> None:
     assert {spec for _module, spec in RUNTIME_DEPENDENCIES}.issubset(set(pinned))
 
 
-def test_public_asset_provenance_is_complete_and_synthetic() -> None:
+def test_public_asset_provenance_is_complete_and_attributed() -> None:
     provenance = json.loads(
         (PRODUCT_ROOT / "assets" / "provenance-manifest.json").read_text(encoding="utf-8")
     )
@@ -2392,13 +2392,20 @@ def test_public_asset_provenance_is_complete_and_synthetic() -> None:
             PRODUCT_ROOT / "assets" / "palettes",
             PRODUCT_ROOT / "assets" / "support",
             PRODUCT_ROOT / "skill" / "editaplot" / "assets" / "palettes",
+            PRODUCT_ROOT / "docs" / "quickstart-data",
+            PRODUCT_ROOT / "tests" / "fixtures",
         )
         for path in root.rglob("*")
-        if path.is_file() and path.suffix.lower() in {".csv", ".png"}
+        if path.is_file() and path.suffix.lower() in {".csv", ".png", ".xlsx"}
     }
 
     assert provenance["asset_count"] == len(records) == len(public_assets)
     assert set(records) == set(public_assets)
+    concrete = [item for item in records.values() if item["kind"] == "derived_public_uci_concrete_statistics"]
+    assert len(concrete) == 2
+    for item in concrete:
+        assert item["source_dataset"]["doi"] == "10.24432/C5PK67"
+        assert item["source_dataset"]["license"] == "CC-BY-4.0"
     for relative, path in public_assets.items():
         record = records[relative]
         assert record["synthetic_or_generated"] is True

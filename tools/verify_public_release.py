@@ -763,7 +763,10 @@ class ReleaseAudit:
                 continue
             relative = record["path"].replace("\\", "/")
             pure = PurePosixPath(relative)
-            if pure.is_absolute() or ".." in pure.parts or pure.suffix.casefold() not in {".csv", ".png"}:
+            if (
+                pure.is_absolute() or ".." in pure.parts
+                or pure.suffix.casefold() not in {".csv", ".png", ".xlsx"}
+            ):
                 self.fail("asset_provenance_path_unsafe", "Asset path is unsafe or unsupported.", relative)
                 continue
             if relative in by_path:
@@ -780,7 +783,7 @@ class ReleaseAudit:
         actual = {
             relative: self.root / relative
             for relative in self.audited_paths
-            if PurePosixPath(relative).suffix.casefold() in {".csv", ".png"}
+            if PurePosixPath(relative).suffix.casefold() in {".csv", ".png", ".xlsx"}
         }
         if set(by_path) != set(actual):
             missing = sorted(set(actual) - set(by_path))
@@ -807,6 +810,17 @@ class ReleaseAudit:
                         f"Asset classification must be {expected_kind!r}.",
                         relative,
                     )
+                if expected_kind == "derived_public_uci_concrete_statistics":
+                    source = record.get("source_dataset", {})
+                    if not isinstance(source, dict) or any(
+                        source.get(key) != value for key, value in {
+                            "creator": "I-Cheng Yeh", "doi": "10.24432/C5PK67", "license": "CC-BY-4.0",
+                        }.items()
+                    ):
+                        self.fail(
+                            "asset_source_attribution_missing",
+                            "Concrete source attribution is missing.", relative,
+                        )
             if (
                 spec.get("require_synthetic_or_generated")
                 and record.get("synthetic_or_generated") is not True
@@ -877,6 +891,17 @@ def _expected_asset_kind(relative: str) -> str | None:
         return "synthetic_public_example"
     if relative.startswith("runtime/templates/"):
         return "synthetic_runtime_fixture"
+    if relative in {
+        "tests/fixtures/correlation_heatmap/concrete_correlation.csv",
+        "tests/fixtures/correlation_heatmap/concrete_pvalues.csv",
+    }:
+        return "derived_public_uci_concrete_statistics"
+    if relative.startswith("docs/quickstart-data/"):
+        return "synthetic_quickstart_fixture"
+    if relative == "tests/fixtures/correlation_heatmap/demo_correlation.csv" or relative.startswith(
+        ("tests/fixtures/grapher_bar/", "tests/fixtures/grapher_error/", "tests/fixtures/phase14/")
+    ):
+        return "synthetic_native_integration_fixture"
     return None
 
 

@@ -14,7 +14,7 @@
   <p><a href="README.en.md">English</a> · 中文为主要说明语言</p>
 </div>
 
-我把 EditaPlot 做成了一个面向 Codex 的 Windows 本地科研绘图 Skill。它会检查数据、推荐图形、确认列语义，再调用 Origin 或 Grapher 的原生对象生成可继续编辑的项目并验证结果。Origin 输出 OPJU、PNG、PDF、TIF；Grapher 在已验证路线上输出 GRF、PNG、PDF。v0.1 的独立 CLI 使用方法见 [Quickstart](docs/quickstart.md)，能力边界见 [发布说明](docs/release-v0.1.md)。
+我把 EditaPlot 做成了一个面向 Codex 的 Windows 本地科研绘图 Skill。它会检查数据、推荐图形、确认列语义，再调用 Origin 或 Grapher 的原生对象生成可继续编辑的项目并验证结果。Origin 输出 OPJU、PNG、PDF、TIF；Grapher 在已验证路线上输出 GRF、PNG、PDF。v0.2.0 新增经过双后端验证的 Correlation Heatmap；独立 CLI/API 使用方法见 [Quickstart](docs/quickstart.md)，能力边界见 [发布说明](docs/release-v0.2.md)。
 
 我不希望它只是一套“替换数字”的静态模板，也不会让 Python 预览图冒充 Origin 成图。科学含义和最终选择始终由你决定；遇到把握不足的数据，EditaPlot 会把不确定的列单独列出来请你确认，不会擅自补列、拟合或推断结论。
 

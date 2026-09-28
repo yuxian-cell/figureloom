@@ -1,4 +1,4 @@
-# EditaPlot v0.1 quickstart (Windows)
+# EditaPlot v0.2.0 quickstart (Windows)
 
 Use a physical Windows 10/11 x64 computer with OriginPro 2024 and/or Golden Software Grapher 27 installed. Run these commands in PowerShell from the repository root. Each render creates a native editable project and verifies it after reopening. The example inputs are never modified.
 
@@ -67,9 +67,95 @@ than shrinking text. Full labels are retained; X-label rotation is selected from
 above 10 labels still receive a density warning. Inspect the native project at
 the intended physical output size before publication. Phase 17 real-data GUI
 acceptance passed, including the final Origin Whole Page reopen spot-check;
-version remains 0.1.0. Origin applies Whole Page before saving without resizing
+version is now 0.2.0. Origin applies Whole Page before saving without resizing
 the physical page. See
 [layout evidence and limitations](correlation-heatmap-phase17.md).
+
+### Supplied matrix, supplied p-values, or raw Pearson (API)
+
+The current CLI accepts a frozen `--correlation-spec-json`; it does not directly
+calculate raw Pearson or load a separate p-value CSV. This Python API example
+prepares the explicit spec, then uses the same preview/confirmation/native
+render workflow. Run from the repository root with the installed runtime.
+Choose a new output directory for every run; use `engine="origin"` for OPJU.
+
+```python
+import sys
+from pathlib import Path
+import pandas as pd
+sys.path.insert(0, "skill/editaplot/scripts")
+from editaplot_engine.correlation_heatmap import CorrelationHeatmapSpec
+from editaplot_engine.workflow import preview, render_confirmed
+
+matrix_file = Path("tests/fixtures/correlation_heatmap/concrete_correlation.csv")
+matrix = pd.read_csv(matrix_file, index_col=0, float_precision="round_trip")
+assert list(matrix.index) == list(matrix.columns)
+
+def draw(source, matrix, pvalues, output):
+    spec = CorrelationHeatmapSpec(
+        list(matrix.columns), matrix.to_numpy().tolist(),
+        None if pvalues is None else pvalues.to_numpy().tolist(),
+        significance_enabled=pvalues is not None, title="Concrete correlation",
+    )
+    preview(source, output, engine_name="grapher", template_id="heatmap",
+            correlation_heatmap_spec=spec.to_dict(), engine_home=Path("runtime"))
+    # Review workflow-preview.json and its confirmation gate before this call.
+    return render_confirmed(Path(output) / "workflow-preview.json", confirmed=True,
+                            claim="Explicit Concrete correlation matrix and p-value semantics")
+
+# A: matrix only — no stars or inferred p-values.
+draw(matrix_file, matrix, None, "runs/correlation-matrix-01")
+
+# B: explicit supplied p-values, in exactly the same label order.
+pvalues = pd.read_csv("tests/fixtures/correlation_heatmap/concrete_pvalues.csv",
+                     index_col=0, float_precision="round_trip")
+assert list(pvalues.index) == list(matrix.index)
+assert list(pvalues.columns) == list(matrix.columns)
+draw(matrix_file, matrix, pvalues, "runs/correlation-pvalues-01")
+```
+
+For **C: raw observations**, additionally provide SciPy (the validated analysis
+version is 1.14.1). This is explicit data preparation; the native backend renders
+the derived matrix. The complete Concrete fixture uses all 1030 finite numeric
+rows. This example rejects invalid data instead of silently dropping rows.
+Set `EDITAPLOT_CONCRETE_RAW` to your local raw CSV path and retain the derived
+files/provenance.
+
+```python
+import hashlib
+import json
+import os
+import numpy as np
+from scipy.stats import pearsonr
+
+raw_file = Path(os.environ["EDITAPLOT_CONCRETE_RAW"])
+raw = pd.read_csv(raw_file)
+values = raw.to_numpy(dtype=float)
+assert len(values) >= 3 and np.isfinite(values).all()
+r, p = np.eye(len(raw.columns)), np.zeros((len(raw.columns), len(raw.columns)))
+for i in range(len(raw.columns)):
+    for j in range(i):
+        result = pearsonr(values[:, i], values[:, j], alternative="two-sided")
+        r[i, j] = r[j, i] = result.statistic
+        p[i, j] = p[j, i] = result.pvalue
+prepared = Path("runs/pearson-input-01")
+prepared.mkdir(parents=True, exist_ok=False)
+matrix = pd.DataFrame(r, index=raw.columns, columns=raw.columns)
+pvalues = pd.DataFrame(p, index=raw.columns, columns=raw.columns)
+matrix_file = prepared / "correlation.csv"
+matrix.to_csv(matrix_file, index_label="Variable")
+pvalues.to_csv(prepared / "pvalues.csv", index_label="Variable")
+(prepared / "provenance.json").write_text(json.dumps({
+    "raw_source": str(raw_file), "sha256": hashlib.sha256(raw_file.read_bytes()).hexdigest(),
+    "n_points": len(raw), "excluded_rows": 0, "method": "Pearson",
+    "alternative": "two-sided", "multiple_comparison_correction": "none",
+}), encoding="utf-8")
+draw(matrix_file, matrix, pvalues, "runs/correlation-raw-01")
+```
+
+P-values are explicit inputs in A/B and explicitly computed in C; no correction
+is applied. Keep Grapher's GRF and `correlation_cells.csv` together. See
+[v0.2.0 release notes](release-v0.2.md) for backend differences and limitations.
 
 ## Problems and records
 

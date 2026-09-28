@@ -1,4 +1,4 @@
-"""Build a deterministic provenance inventory for every public CSV and PNG."""
+"""Build a deterministic provenance inventory for public CSV, PNG and XLSX fixtures."""
 
 from __future__ import annotations
 
@@ -78,6 +78,17 @@ def _classification(relative: str) -> str:
         return "synthetic_public_example"
     if relative.startswith("runtime/templates/"):
         return "synthetic_runtime_fixture"
+    if relative in {
+        "tests/fixtures/correlation_heatmap/concrete_correlation.csv",
+        "tests/fixtures/correlation_heatmap/concrete_pvalues.csv",
+    }:
+        return "derived_public_uci_concrete_statistics"
+    if relative.startswith("docs/quickstart-data/"):
+        return "synthetic_quickstart_fixture"
+    if relative == "tests/fixtures/correlation_heatmap/demo_correlation.csv" or relative.startswith(
+        ("tests/fixtures/grapher_bar/", "tests/fixtures/grapher_error/", "tests/fixtures/phase14/")
+    ):
+        return "synthetic_native_integration_fixture"
     raise RuntimeError(f"Unclassified public asset: {relative}")
 
 
@@ -96,7 +107,9 @@ def main() -> int:
         capture_output=True,
     )
     tracked = completed.stdout.decode("utf-8").split("\x00")
-    relative_assets = sorted(item for item in tracked if Path(item).suffix.lower() in {".csv", ".png"})
+    relative_assets = sorted(
+        item for item in tracked if Path(item).suffix.lower() in {".csv", ".png", ".xlsx"}
+    )
     records = []
     for relative in relative_assets:
         path = root / relative
@@ -111,6 +124,16 @@ def main() -> int:
         if relative == "assets/support/wechat-tip.png":
             record["public_release_basis"] = "author_explicitly_approved_support_destination"
             record["contains_payment_identifier"] = True
+        if record["kind"] == "derived_public_uci_concrete_statistics":
+            record["public_release_basis"] = (
+                "CC-BY-4.0 attributed derived statistics, not synthetic measurements"
+            )
+            record["source_dataset"] = {
+                "title": "Concrete Compressive Strength", "creator": "I-Cheng Yeh",
+                "doi": "10.24432/C5PK67", "license": "CC-BY-4.0",
+                "url": "https://archive.ics.uci.edu/dataset/165/concrete+compressive+strength",
+                "transformation": "Pearson / two-sided unadjusted p-values; raw table not bundled",
+            }
         if path.suffix.lower() == ".png":
             record["png_text"] = _png_text(path)
         records.append(record)
@@ -128,10 +151,11 @@ def main() -> int:
         },
         "human_review": {
             "decision": "approved_for_public_source_release",
-            "reviewed_on": "2026-07-30",
+            "reviewed_on": "2026-09-28",
             "scope": (
-                "all listed CSV and PNG assets; synthetic/generated status, PHI, labels, "
-                "metadata, payment-identifier intent, and redistribution boundary"
+                "retained historical asset review plus user-authorized v0.2 fixture inventory; "
+                "CSV/PNG/XLSX classification, PHI, labels, metadata, support-payment intent, "
+                "and attributed CC-BY-4.0 Concrete derived-statistics redistribution"
             ),
         },
         "asset_count": len(records),

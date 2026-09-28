@@ -10,12 +10,17 @@ redistribution boundaries.
 The manifest also binds the inventory builder and gallery fixture generator by SHA-256; changing
 either script requires regenerating and manually reviewing the manifest.
 
-The promoted release inventory retains 47 verified PNG assets across 40 public plotting routes. The public
-page displays 45 cases. The two non-displayed heatmap PNGs remain only as regression and audit
+The current gallery manifest retains 50 verified cases across 41 public plotting routes. The public
+page displays 48 cases. The two non-displayed heatmap PNGs remain only as regression and audit
 history; they are not alternate public showcase entries.
 
-- Every distributed CSV is synthetic. It is not experimental, patient, clinical, or production
-  data and must not be interpreted as a scientific result.
+- Teaching and native integration CSV/XLSX fixtures are synthetic. The two
+  `tests/fixtures/correlation_heatmap/concrete_*.csv` matrices are an explicit
+  exception: derived Pearson/two-sided unadjusted p-value statistics from the
+  public UCI Concrete dataset, not synthetic measurements. Attribution: Yeh, I.
+  (1998), *Concrete Compressive Strength*, https://doi.org/10.24432/C5PK67,
+  CC BY 4.0. The original 1030-row table is not bundled. Changes preserve the
+  original variable identities and generate statistical matrices.
 - The two GSAS/GSAS-II XRD fixtures are project-authored teaching tables. They contain no patient,
   clinical, instrument-account, or third-party experimental records.
 - Gallery PNG files were exported by the verified local editable-figure workflow from those
@@ -44,5 +49,7 @@ history; they are not alternate public showcase entries.
   journal specification, affiliation, or endorsement.
 
 [`assets/provenance-manifest.json`](assets/provenance-manifest.json) freezes the SHA-256, size,
-classification, synthetic-data status, and PNG text metadata for every tracked CSV and PNG. Rebuild
+classification, synthetic/generated status, source attribution, and PNG text metadata
+for every tracked CSV, PNG and XLSX. The v0.2 fixture inventory update was authorized
+on 2026-09-28; the earlier asset review remains historical evidence. Rebuild
 it with `tools/build_asset_provenance.py` and review the diff before each release.

@@ -3,7 +3,7 @@
   "release_policy": "synthetic teaching data and original/generated assets only",
   "inventory_generator": {
     "path": "tools/build_asset_provenance.py",
-    "sha256": "2aba4382dc1411f19f9d0aea95ba7d4cd4167103dd48de49a9d00156e11db2be"
+    "sha256": "f2968b93500e74f98eb92587ce7d8f2e047a79b4283b0c74b03d898a251e559d"
   },
   "gallery_fixture_generator": {
     "path": "tools/generate_showcase_data.py",
@@ -11,10 +11,10 @@
   },
   "human_review": {
     "decision": "approved_for_public_source_release",
-    "reviewed_on": "2026-07-30",
-    "scope": "all listed CSV and PNG assets; synthetic/generated status, PHI, labels, metadata, payment-identifier intent, and redistribution boundary"
+    "reviewed_on": "2026-09-28",
+    "scope": "retained historical asset review plus user-authorized v0.2 fixture inventory; CSV/PNG/XLSX classification, PHI, labels, metadata, support-payment intent, and attributed CC-BY-4.0 Concrete derived-statistics redistribution"
   },
-  "asset_count": 235,
+  "asset_count": 252,
   "assets": [
     {
       "path": "assets/gallery/bar-error-groups.png",
@@ -1134,6 +1134,30 @@
       "public_release_basis": "author_explicitly_approved_support_destination",
       "contains_payment_identifier": true,
       "png_text": {}
+    },
+    {
+      "path": "docs/quickstart-data/error.xlsx",
+      "kind": "synthetic_quickstart_fixture",
+      "size_bytes": 5027,
+      "sha256": "235bc95c4d5568416305daa2a1d8245824177540752f1f7c8cd3e26f465ed082",
+      "synthetic_or_generated": true,
+      "contains_phi": false
+    },
+    {
+      "path": "docs/quickstart-data/fit.csv",
+      "kind": "synthetic_quickstart_fixture",
+      "size_bytes": 35,
+      "sha256": "a6158dabca226d953b939714c304d6641e7132cbd835eb39e1eeae2e18763155",
+      "synthetic_or_generated": true,
+      "contains_phi": false
+    },
+    {
+      "path": "docs/quickstart-data/multiseries.csv",
+      "kind": "synthetic_quickstart_fixture",
+      "size_bytes": 72,
+      "sha256": "f7a4b1d7ab8c44ad755949776e313e11cddfebdf902501737aeda351f1865261",
+      "synthetic_or_generated": true,
+      "contains_phi": false
     },
     {
       "path": "examples/ambiguous_xy.csv",
@@ -2526,6 +2550,136 @@
       "synthetic_or_generated": true,
       "contains_phi": false,
       "png_text": {}
+    },
+    {
+      "path": "tests/fixtures/correlation_heatmap/concrete_correlation.csv",
+      "kind": "derived_public_uci_concrete_statistics",
+      "size_bytes": 1589,
+      "sha256": "b01057d53f4db5006c272085ee5ab45c4f3d45da405f911a019167b5226ba3a1",
+      "synthetic_or_generated": true,
+      "contains_phi": false,
+      "public_release_basis": "CC-BY-4.0 attributed derived statistics, not synthetic measurements",
+      "source_dataset": {
+        "title": "Concrete Compressive Strength",
+        "creator": "I-Cheng Yeh",
+        "doi": "10.24432/C5PK67",
+        "license": "CC-BY-4.0",
+        "url": "https://archive.ics.uci.edu/dataset/165/concrete+compressive+strength",
+        "transformation": "Pearson / two-sided unadjusted p-values; raw table not bundled"
+      }
+    },
+    {
+      "path": "tests/fixtures/correlation_heatmap/concrete_pvalues.csv",
+      "kind": "derived_public_uci_concrete_statistics",
+      "size_bytes": 1697,
+      "sha256": "638d9f18148470021a8a296f686c318f315d8359a1cae17c1f59362c0db194ef",
+      "synthetic_or_generated": true,
+      "contains_phi": false,
+      "public_release_basis": "CC-BY-4.0 attributed derived statistics, not synthetic measurements",
+      "source_dataset": {
+        "title": "Concrete Compressive Strength",
+        "creator": "I-Cheng Yeh",
+        "doi": "10.24432/C5PK67",
+        "license": "CC-BY-4.0",
+        "url": "https://archive.ics.uci.edu/dataset/165/concrete+compressive+strength",
+        "transformation": "Pearson / two-sided unadjusted p-values; raw table not bundled"
+      }
+    },
+    {
+      "path": "tests/fixtures/correlation_heatmap/demo_correlation.csv",
+      "kind": "synthetic_native_integration_fixture",
+      "size_bytes": 1041,
+      "sha256": "78cdbd8b9fa0749272ac7c20964a0f4dd466c4d73f8669312b4feff7ce0a4225",
+      "synthetic_or_generated": true,
+      "contains_phi": false
+    },
+    {
+      "path": "tests/fixtures/grapher_bar/grouped.csv",
+      "kind": "synthetic_native_integration_fixture",
+      "size_bytes": 56,
+      "sha256": "6765bc536f0b7152321eee6fbb109ccdd7910239dc33357c4f1b3894a9997730",
+      "synthetic_or_generated": true,
+      "contains_phi": false
+    },
+    {
+      "path": "tests/fixtures/grapher_bar/grouped_error.csv",
+      "kind": "synthetic_native_integration_fixture",
+      "size_bytes": 112,
+      "sha256": "6aab83b60d36563afc8e8243b11d48c952c78875847e22ae5b3acf37bca5ebbe",
+      "synthetic_or_generated": true,
+      "contains_phi": false
+    },
+    {
+      "path": "tests/fixtures/grapher_bar/simple.csv",
+      "kind": "synthetic_native_integration_fixture",
+      "size_bytes": 34,
+      "sha256": "47bc0b1a14f58932a68fe933108fbb252f3cb962653bb6f8228da0709cd42e1b",
+      "synthetic_or_generated": true,
+      "contains_phi": false
+    },
+    {
+      "path": "tests/fixtures/grapher_bar/simple_error.csv",
+      "kind": "synthetic_native_integration_fixture",
+      "size_bytes": 61,
+      "sha256": "98e2838ffd3818c0fde05552bd28cce2b85328d8d98c3a5d2392eafb58bff3f9",
+      "synthetic_or_generated": true,
+      "contains_phi": false
+    },
+    {
+      "path": "tests/fixtures/grapher_error/line_multi.csv",
+      "kind": "synthetic_native_integration_fixture",
+      "size_bytes": 127,
+      "sha256": "d1fc4dd5fde939b63964acb42fb9fc40401aba31d016106a3588cbb0cf9d18b4",
+      "synthetic_or_generated": true,
+      "contains_phi": false
+    },
+    {
+      "path": "tests/fixtures/grapher_error/line_single.csv",
+      "kind": "synthetic_native_integration_fixture",
+      "size_bytes": 69,
+      "sha256": "f41f47d66e327fe2b748caf4468fd2c0a660d2f65b3453dfcd8795e3a4ffefe3",
+      "synthetic_or_generated": true,
+      "contains_phi": false
+    },
+    {
+      "path": "tests/fixtures/grapher_error/missing_error.csv",
+      "kind": "synthetic_native_integration_fixture",
+      "size_bytes": 38,
+      "sha256": "2e6ae5e2204d4c660dc3e29a83bcbe3976504b607ae41d345a41ea0ded25f53c",
+      "synthetic_or_generated": true,
+      "contains_phi": false
+    },
+    {
+      "path": "tests/fixtures/grapher_error/no_error.csv",
+      "kind": "synthetic_native_integration_fixture",
+      "size_bytes": 38,
+      "sha256": "2e6ae5e2204d4c660dc3e29a83bcbe3976504b607ae41d345a41ea0ded25f53c",
+      "synthetic_or_generated": true,
+      "contains_phi": false
+    },
+    {
+      "path": "tests/fixtures/phase14/experiment_fit.csv",
+      "kind": "synthetic_native_integration_fixture",
+      "size_bytes": 49,
+      "sha256": "16166948c685894064615a392952caee8eafb8da62eacec15aef217a32cbb9ee",
+      "synthetic_or_generated": true,
+      "contains_phi": false
+    },
+    {
+      "path": "tests/fixtures/phase14/experiment_multiseries.csv",
+      "kind": "synthetic_native_integration_fixture",
+      "size_bytes": 70,
+      "sha256": "c3920e1a5ff38c07fa3d42faf34a384788e08b54b411c12470cd85b6db2ca05e",
+      "synthetic_or_generated": true,
+      "contains_phi": false
+    },
+    {
+      "path": "tests/fixtures/phase14/experiment_weighted.csv",
+      "kind": "synthetic_native_integration_fixture",
+      "size_bytes": 43,
+      "sha256": "bf632241dbe0c2c44264486b512383f1e293dc6de0ff4264d256dbb9ce0d936f",
+      "synthetic_or_generated": true,
+      "contains_phi": false
     }
   ]
 }

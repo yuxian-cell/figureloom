@@ -2463,7 +2463,9 @@ def _validate_correlation_heatmap_plan(plan: dict[str, Any]) -> None:
         from editaplot_engine.correlation_layout import layouts
 
         if "correlation_layout" in plan and plan["correlation_layout"] != layouts(spec):
-            raise EditaPlotError("heatmap_layout_mismatch", "Frozen correlation layout differs from its spec.")
+            raise EditaPlotError(
+                "heatmap_layout_mismatch", "Frozen correlation layout differs from its spec."
+            )
     except EngineError as exc:
         raise EditaPlotError(exc.code, str(exc)) from exc
 

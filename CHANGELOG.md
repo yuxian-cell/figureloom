@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-09-28 — v0.2.0: production Correlation Heatmap
+
+- Added supplied correlation matrices with optional explicit p-values, and the
+  validated raw Pearson/two-sided p-value preparation workflow (no correction).
+- Origin renders native Matrix Heatmap with 256-level mapping and spectrum;
+  Grapher renders native Class Scatter with 21 discrete classes and linked legend.
+- Added editable value/star annotations and labels, deterministic physical layout
+  frozen in RenderPlan, and Origin Whole Page viewport persistence before save.
+- UCI Concrete 1030×9: all six input/backend combinations and representative GUI
+  checks passed. Save/reopen/readback/verify and source integrity are retained.
+- Legacy Grapher coverage remains 7/41; no generic heatmap, clustering or new
+  Heatmap EditPlan. See [release notes](docs/release-v0.2.md) for backend differences,
+  validation and remaining limitations.
+
 ## 2026-09-07 — SHAP dashboard with editable nested contribution rings
 
 - Added `shap_dashboard`: aligned importance bars with mean/percentage labels, a separate SHAP

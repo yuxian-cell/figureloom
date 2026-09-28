@@ -14,7 +14,7 @@
   <p><a href="README.md">中文说明</a> · Chinese is the primary documentation language</p>
 </div>
 
-EditaPlot is a local Windows Codex Skill that inspects data, recommends charts, confirms column semantics, and creates verified native editable figures in Origin or Grapher. Origin exports OPJU, PNG, PDF and TIF; verified Grapher routes export GRF, PNG and PDF. See the v0.1 [Quickstart](docs/quickstart.md) and [release notes](docs/release-v0.1.md) for the standalone CLI and current limits.
+EditaPlot is a local Windows Codex Skill that inspects data, recommends charts, confirms column semantics, and creates verified native editable figures in Origin or Grapher. Origin exports OPJU, PNG, PDF and TIF; verified Grapher routes export GRF, PNG and PDF. v0.2.0 adds the verified dual-backend Correlation Heatmap. See [Quickstart](docs/quickstart.md) and [release notes](docs/release-v0.2.md) for the CLI/API and current limits.
 
 I did not want this to become a collection of rigid “replace the numbers” templates, and a Python preview is never passed off as an Origin result. You keep control of the scientific meaning and final choices. When the input is ambiguous, EditaPlot lists the unresolved columns and asks you before drawing instead of inventing columns, fits, or conclusions.
 

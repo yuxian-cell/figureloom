@@ -31,7 +31,7 @@ def test_concrete_native_layout(tmp_path, engine, case):
         ROOT / "tests/fixtures/correlation_heatmap/concrete_pvalues.csv",
     ]
     if case == "raw":
-        source = Path(os.environ.get("EDITAPLOT_CONCRETE_RAW", "E:/prism/concrete_raw.csv"))
+        source = Path(os.environ.get("EDITAPLOT_CONCRETE_RAW", "concrete_raw.csv"))
         if not source.is_file():
             pytest.skip("Local UCI Concrete raw acceptance source not provided")
         sources.append(source)

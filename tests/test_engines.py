@@ -52,7 +52,7 @@ def test_grapher_doctor_does_not_activate_com(monkeypatch: pytest.MonkeyPatch) -
         "detect",
         lambda: {
             "progid": "Grapher.Application",
-            "executable": "C:/Grapher.exe",
+            "executable": "Grapher.exe",
             "version": "27.1.296.0",
         },
     )

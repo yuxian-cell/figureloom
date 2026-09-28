@@ -51,6 +51,28 @@ Grapher 27.1.296 can fail with a COM access conflict when many native tests run 
 
 ## Batch 1 result
 
+### v0.2.0 correlation capability (separate from legacy 7/41 coverage)
+
+`CorrelationHeatmapSpec` is a shared scientific semantic within the existing
+Heatmap template; the legacy inventory denominator remains 41, not 42.
+
+| Capability | Origin | Grapher |
+| --- | --- | --- |
+| Native correlation heatmap | Matrix Heatmap | Class Scatter with square cells |
+| Mapping | Continuous/native 256-level | 21 explicit discrete classes |
+| Linked native key | Spectrum/color scale | Class Symbol Legend |
+| Save/reopen/readback/verify | Supported | Supported |
+| Adaptive physical layout / editable text | Supported | Supported |
+| Whole Page saved viewing state | Applied before OPJU save; GUI accepted | Not an Origin viewport contract |
+| Generic Grapher heatmap / continuous custom gradient | Not a shared promise | Not production validated |
+| Native explicit weighted Linear Fit | Supported | Unsupported |
+
+Correlation input is an explicit matrix and optional p-values. Raw Pearson
+uses a separate, explicit data-preparation step, not an invented CLI flag.
+Keep Grapher's `correlation_cells.csv` beside the GRF. No clustering, triangular
+mode or Heatmap AI EditPlan was added. See [v0.2.0 release notes](release-v0.2.md)
+and [Quickstart](quickstart.md) for scope and actual API syntax.
+
 All three routes reuse Grapher's existing XY Line renderer, series loop, legend, axis styling, native save/export, readback and verify. No renderer was copied. Each uses the same scientific RenderPlan as Origin. The Grapher production dispatch changed only its supported template list.
 
 | Route | Origin baseline | Grapher mapping | Native Grapher result | Explicit test |

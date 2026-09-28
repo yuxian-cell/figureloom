@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 import pythoncom
 
 
 def main() -> None:
-    library = pythoncom.LoadTypeLib(str(Path(r"C:\Program Files\Golden Software\Grapher\Grapher.tlb")))
+    library = pythoncom.LoadTypeLib(str(
+        Path(os.environ["ProgramFiles"]) / "Golden Software/Grapher/Grapher.tlb"
+    ))
     types = []
     for index in range(library.GetTypeInfoCount()):
         info = library.GetTypeInfo(index)

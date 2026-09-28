@@ -22,6 +22,20 @@ def _png_chunk(kind: bytes, payload: bytes) -> bytes:
     return struct.pack(">I", len(payload)) + kind + payload + struct.pack(">I", zlib.crc32(kind + payload))
 
 
+def test_release_fixture_classification_preserves_real_data_attribution():
+    from build_asset_provenance import _classification
+
+    for path, expected in (
+        ("tests/fixtures/correlation_heatmap/concrete_correlation.csv",
+         "derived_public_uci_concrete_statistics"),
+        ("tests/fixtures/correlation_heatmap/concrete_pvalues.csv", "derived_public_uci_concrete_statistics"),
+        ("docs/quickstart-data/error.xlsx", "synthetic_quickstart_fixture"),
+        ("tests/fixtures/grapher_bar/simple.csv", "synthetic_native_integration_fixture"),
+    ):
+        assert _classification(path) == _expected_asset_kind(path) == expected
+    assert _expected_asset_kind("tests/fixtures/private/patient.csv") is None
+
+
 def test_png_audit_rejects_trailing_payload(tmp_path: Path) -> None:
     path = tmp_path / "trailing.png"
     path.write_bytes(ONE_PIXEL_PNG + b"private trailing payload")
