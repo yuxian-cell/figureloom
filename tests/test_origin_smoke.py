@@ -51,7 +51,7 @@ class FakeEnvironment:
             "python_version": "3.10.11",
             "python_architecture_bits": 64,
             "connection_mode": "new_isolated",
-            "session_ownership": "editaplot",
+            "session_ownership": "figureloom",
         }
 
 

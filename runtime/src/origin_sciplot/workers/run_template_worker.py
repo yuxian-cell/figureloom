@@ -155,7 +155,7 @@ def _run_origin_draw_export_verify(
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Run an EditaPlot template")
+    parser = argparse.ArgumentParser(description="Run an FigureLoom template")
     parser.add_argument("--template-id", default="auto")
     parser.add_argument("--input-csv", "--input-file", dest="input_csv", required=True)
     parser.add_argument("--output-dir")

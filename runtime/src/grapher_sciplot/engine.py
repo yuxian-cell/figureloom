@@ -1,4 +1,4 @@
-"""Native Grapher XY scatter and line routes for EditaPlot RenderPlans."""
+"""Native Grapher XY scatter and line routes for FigureLoom RenderPlans."""
 
 from __future__ import annotations
 
@@ -18,13 +18,13 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
-from editaplot_engine.fit_contract import (
+from figureloom_engine.fit_contract import (
     FIT_CAPABILITIES,
     FitSpec,
     production_linear_fits,
     selected_fit_points,
 )
-from editaplot_engine.models import EngineError, RenderResult
+from figureloom_engine.models import EngineError, RenderResult
 
 from .error_bar import add_y_error, read_y_error
 from .fit import add_fit, read_fit
@@ -54,7 +54,7 @@ def _sha256(path: Path) -> str:
 
 def _default_output_dir(source: Path) -> Path:
     label = re.sub(r'[<>:"/\\|?*\x00-\x1f]+', "_", source.stem).strip(" ._") or "data"
-    return source.parent / f"{label}_EditaPlot_{datetime.now():%Y%m%d_%H%M%S}"
+    return source.parent / f"{label}_FigureLoom_{datetime.now():%Y%m%d_%H%M%S}"
 
 
 def _claim_output(path: Path) -> Path:
@@ -66,7 +66,7 @@ def _claim_output(path: Path) -> Path:
         return candidate
     raise EngineError(
         "output_directory_name_exhausted",
-        "EditaPlot could not allocate a unique delivery-folder name.",
+        "FigureLoom could not allocate a unique delivery-folder name.",
         engine="grapher",
     )
 
@@ -197,7 +197,7 @@ class GrapherEngine:
 
     def doctor(self, *, engine_home: str | Path | None = None) -> dict[str, Any]:
         del engine_home
-        from editaplot_engine.correlation_heatmap import HEATMAP_CAPABILITIES
+        from figureloom_engine.correlation_heatmap import HEATMAP_CAPABILITIES
         try:
             detection = self.detect()
             automation_available = importlib.util.find_spec("pythoncom") is not None
@@ -499,7 +499,7 @@ class GrapherEngine:
                 document = None
 
     def readback(self, artifact: str | Path) -> dict[str, Any]:
-        from editaplot_engine.correlation_runtime import is_correlation_project, readback
+        from figureloom_engine.correlation_runtime import is_correlation_project, readback
 
         if is_correlation_project(Path(artifact)):
             return readback(self.name, Path(artifact).resolve())
@@ -587,11 +587,11 @@ class GrapherEngine:
         close_application: bool = False,
     ) -> RenderResult:
         del engine_home, python_executable, close_application
-        import editaplot_core
+        import figureloom_core
 
-        editaplot_core.validate_plan(plan)
+        figureloom_core.validate_plan(plan)
         if plan.get("correlation_heatmap") is not None:
-            from editaplot_engine.correlation_runtime import render
+            from figureloom_engine.correlation_runtime import render
 
             return render(self.name, plan, plan_file, output_dir)
         fit_specs = production_linear_fits(plan)
@@ -694,7 +694,7 @@ class GrapherEngine:
                 axes = get(graph, "Axes")
                 put(get(call(axes, "Item", 1), "title"), "text", axes_spec["x"]["title"])
                 put(get(call(axes, "Item", 2), "title"), "text", axes_spec["y"]["title"])
-                title = str(plan["figure_contract"].get("core_conclusion") or "EditaPlot")
+                title = str(plan["figure_contract"].get("core_conclusion") or "FigureLoom")
                 put(graph, "LinkTitleToObjectName", False)
                 put(get(graph, "title"), "text", title)
                 call(document, "SaveAs", str(grf))
@@ -772,7 +772,7 @@ class GrapherEngine:
         return result
 
     def verify(self, output_dir: str | Path) -> dict[str, Any]:
-        from editaplot_engine.correlation_runtime import is_correlation_project, verify
+        from figureloom_engine.correlation_runtime import is_correlation_project, verify
 
         if is_correlation_project(Path(output_dir) / "result.grf"):
             return verify(self.name, Path(output_dir).resolve())

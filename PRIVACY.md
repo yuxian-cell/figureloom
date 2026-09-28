@@ -1,9 +1,9 @@
 # Privacy
 
-- EditaPlot's bundled Python runtime and Origin automation process the selected scientific files on
+- FigureLoom's bundled Python runtime and Origin automation process the selected scientific files on
   the Windows computer and do not initiate a network upload of those files.
 - A file that the user explicitly attaches or makes available to Codex is handled under the data,
-  retention, and organization policies of that Codex account or host. EditaPlot cannot replace or
+  retention, and organization policies of that Codex account or host. FigureLoom cannot replace or
   override those policies.
 - The repository's Star trend stores only a UTC date and the aggregate Star total returned by the
   repository metadata endpoint. It does not request or retain usernames, account IDs, lists, or

@@ -119,7 +119,7 @@ def test_document_contains_only_technical_compatibility_information() -> None:
 def test_document_has_clean_commonmark_structure() -> None:
     lines = _content().splitlines()
 
-    assert lines[0] == "# EditaPlot 的 Origin 2021–2026b 兼容说明"
+    assert lines[0] == "# FigureLoom 的 Origin 2021–2026b 兼容说明"
     assert sum(line.startswith("# ") for line in lines) == 1
     assert all(line == line.rstrip() for line in lines)
     assert "\t" not in "\n".join(lines)

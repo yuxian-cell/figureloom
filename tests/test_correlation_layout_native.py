@@ -10,12 +10,12 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-for path in (ROOT / "runtime/src", ROOT / "skill/editaplot/scripts", ROOT / "tests"):
+for path in (ROOT / "runtime/src", ROOT / "skill/figureloom/scripts", ROOT / "tests"):
     sys.path.insert(0, str(path))
 
-from editaplot_engine.correlation_heatmap import CorrelationHeatmapSpec, verify_readback  # noqa: E402
-from editaplot_engine.correlation_layout import plan_layout, verify_layout  # noqa: E402
-from editaplot_engine.workflow import preview, render_confirmed  # noqa: E402
+from figureloom_engine.correlation_heatmap import CorrelationHeatmapSpec, verify_readback  # noqa: E402
+from figureloom_engine.correlation_layout import plan_layout, verify_layout  # noqa: E402
+from figureloom_engine.workflow import preview, render_confirmed  # noqa: E402
 from test_correlation_layout import concrete  # noqa: E402
 
 
@@ -31,7 +31,7 @@ def test_concrete_native_layout(tmp_path, engine, case):
         ROOT / "tests/fixtures/correlation_heatmap/concrete_pvalues.csv",
     ]
     if case == "raw":
-        source = Path(os.environ.get("EDITAPLOT_CONCRETE_RAW", "concrete_raw.csv"))
+        source = Path(os.environ.get("FIGURELOOM_CONCRETE_RAW", "concrete_raw.csv"))
         if not source.is_file():
             pytest.skip("Local UCI Concrete raw acceptance source not provided")
         sources.append(source)

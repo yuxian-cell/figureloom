@@ -143,7 +143,7 @@ def require_interactive_origin_context(
         )
     if detected.is_windows and detected.status == "unknown":
         raise OriginEnvironmentError(
-            "EditaPlot could not verify the Windows account used for Origin; "
+            "FigureLoom could not verify the Windows account used for Origin; "
             "stop before Automation and retry from a normal signed-in user context.",
             code="origin_execution_context_unknown",
             stage="validate_execution_context",

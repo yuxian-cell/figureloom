@@ -11,11 +11,11 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-for path in (ROOT / "runtime" / "src", ROOT / "skill" / "editaplot" / "scripts"):
+for path in (ROOT / "runtime" / "src", ROOT / "skill" / "figureloom" / "scripts"):
     sys.path.insert(0, str(path))
 
-from editaplot_engine.correlation_heatmap import CorrelationHeatmapSpec, verify_readback  # noqa: E402
-from editaplot_engine.workflow import preview, render_confirmed  # noqa: E402
+from figureloom_engine.correlation_heatmap import CorrelationHeatmapSpec, verify_readback  # noqa: E402
+from figureloom_engine.workflow import preview, render_confirmed  # noqa: E402
 
 
 def fixture(tmp_path: Path, size: int = 8, *, pvalues: bool = True):
@@ -134,10 +134,10 @@ def _verify_native_mutation(tmp_path, engine, spec, path):
 
 @pytest.mark.origin
 def test_origin_native_correlation_heatmap(tmp_path):
-    import editaplot_core
+    import figureloom_core
 
     pytest.importorskip("originpro")
-    if not editaplot_core.discover_origin_application()["launch_registration_detected"]:
+    if not figureloom_core.discover_origin_application()["launch_registration_detected"]:
         pytest.skip("Origin is unavailable")
     _native_workflow(tmp_path, "origin")
 

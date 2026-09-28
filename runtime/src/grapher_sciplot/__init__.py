@@ -1,1 +1,1 @@
-"""Golden Software Grapher automation experiments for EditaPlot."""
+"""Golden Software Grapher automation experiments for FigureLoom."""

@@ -24,7 +24,7 @@ from . import progress_protocol as proto
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Run the EditaPlot Origin smoke test")
+    parser = argparse.ArgumentParser(description="Run the FigureLoom Origin smoke test")
     parser.add_argument("--output-dir", required=True)
     parser.set_defaults(keep_origin_open=False)
     parser.add_argument("--keep-origin-open", dest="keep_origin_open", action="store_true")

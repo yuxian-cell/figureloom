@@ -5,7 +5,7 @@ explicit direct-weight Linear Fit. Grapher 27.1.296 does not expose that
 native capability. Cross-backend parity is **not available**; this is a
 backend capability limitation, not a failed test or an implementation bug.
 The engine-neutral RenderPlan retains the FitSpec weighting semantics.
-`FIT_CAPABILITIES` in `editaplot_engine.fit_contract` reports `native_linear`,
+`FIT_CAPABILITIES` in `figureloom_engine.fit_contract` reports `native_linear`,
 `partial_range`, and `explicit_weight`; both engine `doctor` reports include
 this Fit capability snapshot. Grapher rejects an explicit weighted FitSpec
 before COM activation with `unsupported_fit_weighting`, `engine=grapher`,

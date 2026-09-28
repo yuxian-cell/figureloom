@@ -107,7 +107,7 @@ def test_invalid_versions_are_rejected(value: float | str) -> None:
 def test_connection_and_ownership_enums_have_stable_wire_values() -> None:
     assert ConnectionMode.NEW_ISOLATED.value == "new_isolated"
     assert ConnectionMode.ATTACH_EXISTING.value == "attach_existing"
-    assert SessionOwnership.EDITAPLOT.value == "editaplot"
+    assert SessionOwnership.FIGURELOOM.value == "figureloom"
     assert SessionOwnership.USER.value == "user"
 
 

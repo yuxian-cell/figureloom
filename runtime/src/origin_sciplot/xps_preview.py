@@ -658,7 +658,7 @@ def render_xps_preview_png(preparation: XpsPreparation) -> bytes:
             dpi=160,
             facecolor="white",
             edgecolor="none",
-            metadata={"Software": "EditaPlot"},
+            metadata={"Software": "FigureLoom"},
         )
         return output.getvalue()
     finally:

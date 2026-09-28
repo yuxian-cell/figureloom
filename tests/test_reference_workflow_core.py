@@ -8,12 +8,12 @@ import pytest
 from PIL import Image
 
 PRODUCT_ROOT = Path(__file__).resolve().parents[1]
-SCRIPTS = PRODUCT_ROOT / "skill" / "editaplot" / "scripts"
+SCRIPTS = PRODUCT_ROOT / "skill" / "figureloom" / "scripts"
 RUNTIME = PRODUCT_ROOT / "runtime"
 sys.path.insert(0, str(SCRIPTS))
 
-from editaplot_core import (  # noqa: E402
-    EditaPlotError,
+from figureloom_core import (  # noqa: E402
+    FigureLoomError,
     build_plan,
     build_worker_command,
     inspect_reference,
@@ -217,7 +217,7 @@ def test_reference_confirmation_is_bound_to_the_exact_image(tmp_path: Path) -> N
     Image.new("RGB", (21, 20), "white").save(image)
     semantics = understand_data(source, template_id="xrd", engine_home=RUNTIME)
 
-    with pytest.raises(EditaPlotError) as caught:
+    with pytest.raises(FigureLoomError) as caught:
         build_plan(
             source,
             template_id="xrd",

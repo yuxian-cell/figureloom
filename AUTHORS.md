@@ -6,3 +6,5 @@ The initial project is maintained through the
 Copyright in individual contributions remains with the respective contributors. Git history is the
 authoritative contribution record. Contributions accepted into this repository are licensed under
 Apache-2.0 as described in [CONTRIBUTING.md](CONTRIBUTING.md).
+
+FigureLoom public repository maintenance: [`yuxian-cell`](https://github.com/yuxian-cell).

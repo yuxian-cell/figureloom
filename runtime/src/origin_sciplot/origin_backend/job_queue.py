@@ -33,14 +33,14 @@ class OriginJobLease:
 
 
 def default_origin_job_lock_path() -> Path:
-    """Return one stable lock path shared by EditaPlot clones for this user."""
+    """Return one stable lock path shared by FigureLoom clones for this user."""
 
     local_app_data = os.environ.get("LOCALAPPDATA")
     if local_app_data:
         root = Path(local_app_data)
     else:
         root = Path(tempfile.gettempdir())
-    return root / "EditaPlot" / "locks" / "origin-automation-v1.lock"
+    return root / "FigureLoom" / "locks" / "origin-automation-v1.lock"
 
 
 def _prepare_lock_file(lock_path: Path) -> BinaryIO:
@@ -72,7 +72,7 @@ class _WindowsMutex:
         from ctypes import wintypes
 
         digest = hashlib.sha256(namespace_key.encode("utf-8")).hexdigest()[:24]
-        name = rf"Local\EditaPlot.OriginAutomation.v1.{digest}"
+        name = rf"Local\FigureLoom.OriginAutomation.v1.{digest}"
         kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
         kernel32.CreateMutexW.argtypes = (
             ctypes.c_void_p,
@@ -205,7 +205,7 @@ def origin_job_slot(
             elapsed = time.monotonic() - started
             if elapsed >= max_wait_seconds:
                 raise OriginEnvironmentError(
-                    "Waiting for another EditaPlot Origin job exceeded 30 minutes; "
+                    "Waiting for another FigureLoom Origin job exceeded 30 minutes; "
                     "this waiting job stopped without interrupting the active job.",
                     code="origin_job_queue_timeout",
                     stage="wait_origin_job_slot",
@@ -237,7 +237,7 @@ def origin_job_slot(
                 cleanup_error = exc
         if cleanup_error is not None and not body_failed:
             raise OriginEnvironmentError(
-                "EditaPlot could not release its Origin job slot cleanly.",
+                "FigureLoom could not release its Origin job slot cleanly.",
                 code="origin_job_queue_cleanup_failed",
                 stage="release_origin_job_slot",
             ) from cleanup_error

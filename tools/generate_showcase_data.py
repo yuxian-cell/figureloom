@@ -1,4 +1,4 @@
-"""Generate deterministic, neutral teaching tables for the EditaPlot gallery."""
+"""Generate deterministic, neutral teaching tables for the FigureLoom gallery."""
 
 from __future__ import annotations
 

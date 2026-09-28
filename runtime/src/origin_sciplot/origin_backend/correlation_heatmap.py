@@ -7,9 +7,9 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-from editaplot_engine.correlation_heatmap import CorrelationHeatmapSpec, diverging_rgb
-from editaplot_engine.correlation_layout import plan_layout
-from editaplot_engine.models import EngineError
+from figureloom_engine.correlation_heatmap import CorrelationHeatmapSpec, diverging_rgb
+from figureloom_engine.correlation_layout import plan_layout
+from figureloom_engine.models import EngineError
 
 from .base_style_contract import FixedOriginStyle
 from .categorical_renderer import _set_page_size

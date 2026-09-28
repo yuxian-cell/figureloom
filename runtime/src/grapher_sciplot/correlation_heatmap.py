@@ -7,13 +7,13 @@ import math
 from pathlib import Path
 from typing import Any
 
-from editaplot_engine.correlation_heatmap import CorrelationHeatmapSpec, grapher_classes
-from editaplot_engine.correlation_layout import plan_layout
-from editaplot_engine.models import EngineError
+from figureloom_engine.correlation_heatmap import CorrelationHeatmapSpec, grapher_classes
+from figureloom_engine.correlation_layout import plan_layout
+from figureloom_engine.models import EngineError
 
 from .smoke import call, get, put, require_file
 
-GRAPH_NAME = "EditaPlot Correlation Heatmap"
+GRAPH_NAME = "FigureLoom Correlation Heatmap"
 
 
 def _rgb(value: tuple[int, int, int]) -> int:

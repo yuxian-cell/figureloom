@@ -12,12 +12,12 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 RUNTIME = ROOT / "runtime"
 RUNTIME_SRC = RUNTIME / "src"
-SKILL_SCRIPTS = ROOT / "skill" / "editaplot" / "scripts"
+SKILL_SCRIPTS = ROOT / "skill" / "figureloom" / "scripts"
 for path in (RUNTIME_SRC, SKILL_SCRIPTS):
     if str(path) not in sys.path:
         sys.path.insert(0, str(path))
 
-from editaplot_core import (  # noqa: E402
+from figureloom_core import (  # noqa: E402
     AUTO_SCORE_THRESHOLD,
     VERIFIED_TEMPLATE_IDS,
     _score_candidate,

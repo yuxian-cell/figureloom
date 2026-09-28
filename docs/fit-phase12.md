@@ -43,7 +43,7 @@ Representative normalized readback, omitting unrelated presentation fields:
 }
 ```
 
-Both `origin_fit_verify_report.json` and `grapher_verify_report.json` in those output directories have `status="ok"`. The user inspected both saved projects in the native GUIs and reported acceptance, then closed the applications. Grapher's Degree control allowed 1–3 but did not accept a value above 3; this does not affect the supported degree-2 contract. No claim is made that EditaPlot supports degrees 1 or 3.
+Both `origin_fit_verify_report.json` and `grapher_verify_report.json` in those output directories have `status="ok"`. The user inspected both saved projects in the native GUIs and reported acceptance, then closed the applications. Grapher's Degree control allowed 1–3 but did not accept a value above 3; this does not affect the supported degree-2 contract. No claim is made that FigureLoom supports degrees 1 or 3.
 
 Representative verify summaries from the saved artifacts:
 
@@ -69,4 +69,4 @@ Representative verify summaries from the saved artifacts:
 | Grapher native cases in separate Python processes | 17 passed, 0 failed |
 | Grapher native suite in one Python process | FAILED: COM access violation after several cases; accepted limitation, not counted as pass |
 
-Capability matrix: Origin and Grapher both support native Linear Fit, partial-range Linear Fit and native quadratic Polynomial Fit. Origin supports explicit weighted Linear Fit; Grapher does not. Degree 3, weighted polynomial, partial-range polynomial, multi-series polynomial, and other models remain unsupported by EditaPlot.
+Capability matrix: Origin and Grapher both support native Linear Fit, partial-range Linear Fit and native quadratic Polynomial Fit. Origin supports explicit weighted Linear Fit; Grapher does not. Degree 3, weighted polynomial, partial-range polynomial, multi-series polynomial, and other models remain unsupported by FigureLoom.

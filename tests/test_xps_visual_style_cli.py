@@ -10,13 +10,13 @@ import pytest
 from PIL import Image
 
 PRODUCT_ROOT = Path(__file__).resolve().parents[1]
-SCRIPTS = PRODUCT_ROOT / "skill" / "editaplot" / "scripts"
+SCRIPTS = PRODUCT_ROOT / "skill" / "figureloom" / "scripts"
 RUNTIME = PRODUCT_ROOT / "runtime"
 sys.path.insert(0, str(SCRIPTS))
 
-import editaplot as editaplot_cli  # noqa: E402
-from editaplot_core import (  # noqa: E402
-    EditaPlotError,
+import figureloom as figureloom_cli  # noqa: E402
+from figureloom_core import (  # noqa: E402
+    FigureLoomError,
     build_plan,
     build_worker_command,
     inspect_reference,
@@ -85,7 +85,7 @@ def _plan_xps_via_cli(tmp_path: Path) -> dict[str, object]:
     _write_json(style_path, _exact_style_request())
     _write_json(confirmation_path, _semantic_confirmation(XPS_SOURCE, "xps"))
 
-    exit_code = editaplot_cli.main(
+    exit_code = figureloom_cli.main(
         [
             "plan",
             str(XPS_SOURCE),
@@ -318,7 +318,7 @@ def test_internal_visual_style_tampering_is_rejected_before_origin(
         raise AssertionError(tamper)
     _rehash_plan(plan)
 
-    with pytest.raises(EditaPlotError) as caught:
+    with pytest.raises(FigureLoomError) as caught:
         build_worker_command(plan, engine_home=RUNTIME)
 
     assert caught.value.code == expected_code
@@ -328,7 +328,7 @@ def test_outer_plan_hash_tampering_is_rejected_before_origin() -> None:
     plan = copy.deepcopy(_valid_exact_plan())
     plan["figure_contract"]["core_conclusion"] = "tampered claim"
 
-    with pytest.raises(EditaPlotError) as caught:
+    with pytest.raises(FigureLoomError) as caught:
         build_worker_command(plan, engine_home=RUNTIME)
 
     assert caught.value.code == "plan_hash_mismatch"
@@ -344,7 +344,7 @@ def test_legacy_palette_flag_conflict_with_visual_palette_is_clear(
     _write_json(style_path, {"palette_id": "navy_cyan_gold"})
     _write_json(confirmation_path, _semantic_confirmation(XPS_SOURCE, "xps"))
 
-    exit_code = editaplot_cli.main(
+    exit_code = figureloom_cli.main(
         [
             "plan",
             str(XPS_SOURCE),
@@ -375,7 +375,7 @@ def test_legacy_palette_flag_conflict_with_visual_palette_is_clear(
 
 
 def test_non_xps_template_rejects_exact_visual_style() -> None:
-    with pytest.raises(EditaPlotError) as caught:
+    with pytest.raises(FigureLoomError) as caught:
         build_plan(
             XRD_SOURCE,
             template_id="xrd",

@@ -8,12 +8,12 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-for candidate in (ROOT / "skill/editaplot/scripts", ROOT / "runtime/src"):
+for candidate in (ROOT / "skill/figureloom/scripts", ROOT / "runtime/src"):
     if str(candidate) not in sys.path:
         sys.path.insert(0, str(candidate))
 
-import editaplot_core as core  # noqa: E402
-from editaplot_engine.models import EngineError  # noqa: E402
+import figureloom_core as core  # noqa: E402
+from figureloom_engine.models import EngineError  # noqa: E402
 from grapher_sciplot import error_bar  # noqa: E402
 from grapher_sciplot.engine import GrapherEngine  # noqa: E402
 from origin_sciplot.scientific_workflow import ScientificWorkflowError, _pair_errors  # noqa: E402

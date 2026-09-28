@@ -206,7 +206,7 @@ def _validated_mean_absolute_values(
             raise ShapCompositeError(
                 "shap_mean_abs_mismatch",
                 f"Provided Mean |SHAP| for {feature!r} does not match the supplied SHAP rows; "
-                "correct the summary column or omit it so EditaPlot can derive it transparently.",
+                "correct the summary column or omit it so FigureLoom can derive it transparently.",
                 column=mean_abs_column,
             )
     return "provided", provided

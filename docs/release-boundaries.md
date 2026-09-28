@@ -1,6 +1,6 @@
 # 发布、隐私与许可边界
 
-> 本页记录 EditaPlot 自 2026-07-21 首次开源以来的当前公开边界与长期约束，不构成法律意见。
+> 本页记录 FigureLoom 自 2026-07-21 首次开源以来的当前公开边界与长期约束，不构成法律意见。
 
 ## 公开版是完整产品
 
@@ -59,28 +59,28 @@ OPJU/PDF/TIF 若以后作为 Release 附件公开，必须另行确认再分发�
 6. 解析 PNG chunk、CRC、结尾、EXIF 与压缩文本，拒绝尾随载荷和敏感元数据；
 7. 限制单文件与仓库体积，并拒绝日志、缓存、环境目录和未审查输出。
 
-因此，旧 GitHub 历史、私人作者邮箱和早期品牌也不会成为公开分支的祖先；首次公开分支从经过审核的单一根提交开始。
+当前工作树执行上述严格审计。此次公开发布沿用既有 Git 历史：用户已确认允许历史中的两处本机数据路径公开；当前源码已改用中性路径或显式环境变量。该决定不放宽当前工作树的凭据、路径与资产审计规则。
 
 ## 已确定的开源路线
 
-- 主品牌、仓库名与 Skill ID：`EditaPlot` / `editaplot`，不把第三方商标作为产品品牌。
+- 主品牌、仓库名与 Skill ID：`FigureLoom` / `figureloom`，不把第三方商标作为产品品牌。
 - 项目自有代码、文档、合成数据与原创资产：Apache-2.0。
 - 完整 Skill 与清理后的 runtime 一并公开；不捆绑第三方应用或 Python wheel。
 - 软件可免费使用、修改和再分发。维护者可另行提供咨询、定制、安装协助和支持，但这些服务不削减 Apache-2.0 权利，也不代客户运行托管或远程自动化。
 
 ## Origin 技术兼容边界
 
-- 只调用用户电脑上已经安装的 Origin/OriginPro；默认自动启动 EditaPlot 独占的本机实例，
+- 只调用用户电脑上已经安装的 Origin/OriginPro；默认自动启动 FigureLoom 独占的本机实例，
   不要求用户预先打开窗口，也不分发 Origin 应用。用户已经打开的交互窗口不是默认连接目标。
 - 不把 Origin Automation Server 暴露到公共网络，不提供云端绘图或 service-bureau 服务。
 - “兼容 Origin”只描述互操作性，不表示 OriginLab 认可、赞助或提供本项目。
 - 环境自动修复只安装项目级 Python 依赖，不安装或修改 Origin；Doctor 只读发现，真实 smoke
   仅在用户请求绘图时启动专用实例并验证本机 Automation。
 - 普通 render 不指定 `--output-dir`：正式结果保存在源 CSV/TXT/XLS/XLSX 所在目录中新建的
-  `<source_stem>_EditaPlot_<timestamp>` 同级文件夹。只有用户明确要求时才能改用其他位置。
+  `<source_stem>_FigureLoom_<timestamp>` 同级文件夹。只有用户明确要求时才能改用其他位置。
 
 OriginLab 的 [External Python 文档](https://docs.originlab.com/externalpython/)说明了本机 Windows、
-Origin 版本和 Automation 的技术要求。EditaPlot 当前以 Origin/OriginPro 2021–2026b 为兼容
+Origin 版本和 Automation 的技术要求。FigureLoom 当前以 Origin/OriginPro 2021–2026b 为兼容
 目标，2020b 及更早版本不在当前外部路线支持范围；端到端完整验证基线仍是 2024b（10.15），
 也是目前唯一可称为完整实机基线的版本。其他目标版本先按本机握手、真实 smoke 和模板能力报告，
 只有生成完整可编辑产物、对象反读和视觉 QA 后才标记为已验证。

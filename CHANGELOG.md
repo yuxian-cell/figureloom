@@ -2,6 +2,9 @@
 
 ## 2026-09-28 — v0.2.0: production Correlation Heatmap
 
+- User-authorized FigureLoom rebrand: canonical repository `yuxian-cell/figureloom`, package `figureloom`, launcher `figureloom.cmd`, Skill `skill/figureloom`, Python modules `figureloom_core` / `figureloom_engine`, and `FIGURELOOM_*` configuration names. Version remains 0.2.0; scientific calculations and native plotting logic are unchanged.
+- Previous launcher/package/configuration names are replaced rather than aliased. Existing native OPJU/GRF files remain editable in their applications; this change does not claim automatic migration of previously frozen plans or sessions.
+
 - Added supplied correlation matrices with optional explicit p-values, and the
   validated raw Pearson/two-sided p-value preparation workflow (no correction).
 - Origin renders native Matrix Heatmap with 256-level mapping and spectrum;
@@ -33,7 +36,7 @@
   `origin-smoke` or `render` command only after the corresponding Codex local-execution request is
   approved. Approval is not guaranteed, and the supported route does not use a separate manual
   PowerShell window, administrator rights, DCOM/registry edits, or a sandbox bypass.
-- Serialized the active Origin section of current EditaPlot smoke/render workers within one
+- Serialized the active Origin section of current FigureLoom smoke/render workers within one
   signed-in Windows session while keeping data inspection and planning concurrent. Waiting workers
   emit `origin_job_queue` progress, do not promise strict FIFO ordering, and stop only themselves
   after the 30-minute queue limit without interrupting the active holder.
@@ -109,7 +112,7 @@
 - Added the public `density_ridgeline3d` route for a frozen six-role mixed-wide table: condition ID,
   real unit-bearing condition position, unit-bearing density X, paired upstream solid/dashed density,
   and exactly one supplied focal X per condition.
-- Kept the scientific boundary explicit: EditaPlot does not run KDE, smooth or normalize the
+- Kept the scientific boundary explicit: FigureLoom does not run KDE, smooth or normalize the
   profiles, infer peaks/intersections/thresholds, or move the supplied focal marker away from Z=0.
 - Completed the Origin 2024b / 10.15 gate with editable OPJU, PNG/PDF/TIF, OpenGL 3D object readback,
   immutable-source verification, and hash-bound human visual QA.
@@ -192,9 +195,9 @@
 
 - Added a Windows launcher that discovers a compatible 64-bit CPython 3.10–3.12 even when the
   user's default `python` command is missing, stale, or points to an unsupported version.
-- Added idempotent `editaplot.cmd setup`: it installs or updates the Skill, records the complete
+- Added idempotent `figureloom.cmd setup`: it installs or updates the Skill, records the complete
   bundled runtime, prepares an audited project-local environment, and runs a post-setup doctor.
-- Added guarded migration for complete pre-bootstrap EditaPlot installations; unrelated or
+- Added guarded migration for complete pre-bootstrap FigureLoom installations; unrelated or
   incomplete non-empty directories remain protected from overwrite.
 - Strengthened doctor with a single Python compatibility policy and read-only Origin Automation
   discovery. Origin readiness is technical only: render performs the actual connection attempt,
@@ -206,20 +209,20 @@
 - Added a compact GitHub Star badge and privacy-first daily trend. The updater reads only GitHub's
   aggregate `stargazers_count`, stores date plus total count, and never requests account identities
   or personal Star timestamps.
-- Changed the default render destination to a unique `<source_stem>_EditaPlot_<time>` folder beside
+- Changed the default render destination to a unique `<source_stem>_FigureLoom_<time>` folder beside
   the original table, with the approved RenderPlan copied into the complete artifact set.
 - Extended public CI coverage to CPython 3.10, 3.11, and 3.12 while preserving the existing
   `windows-python-310` protected-branch check.
 
 ## 2026-07-21 — Initial open-source release
 
-- Adopted the neutral public brand **EditaPlot**, repository slug `editaplot`, and Skill ID
-  `editaplot`; released project-owned work under Apache-2.0.
+- Adopted the neutral public brand **FigureLoom**, repository slug `figureloom`, and Skill ID
+  `figureloom`; released project-owned work under Apache-2.0.
 - Added 10 machine-checkable scientific palettes, an eight-palette Chinese launch selector,
   advanced-risk metadata, palette compatibility gates, and RenderPlan/worker palette freezing.
 - Added doctor repair tiers and project-local Python dependency repair without installing or
   modifying Origin.
-- Bundled a minimal self-contained EditaPlot rendering runtime with a SHA-256 manifest.
+- Bundled a minimal self-contained FigureLoom rendering runtime with a SHA-256 manifest.
 - Added bilingual README/quick starts, prompts, privacy/security/support/release boundaries, a
   version-specific dependency inventory, and a GitHub-safe gallery of 37 reviewed Origin PNG examples.
 - Added explicit public-versus-commercial release gates for irreversible GitHub disclosure,

@@ -81,7 +81,7 @@ def fetch_star_count(
     endpoint = f"{API_ROOT}/{owner}/{name}"
     headers = {
         "Accept": "application/vnd.github+json",
-        "User-Agent": "EditaPlot-anonymous-star-trend",
+        "User-Agent": "FigureLoom-anonymous-star-trend",
         "X-GitHub-Api-Version": "2022-11-28",
     }
     if token:
@@ -222,7 +222,7 @@ def render_svg(repository: str, snapshots: Sequence[dict[str, Any]]) -> str:
     latest = points[-1]
     lines = [
         '<svg xmlns="http://www.w3.org/2000/svg" width="760" height="280" viewBox="0 0 760 280" role="img">',
-        "  <title>EditaPlot GitHub Star trend</title>",
+        "  <title>FigureLoom GitHub Star trend</title>",
         (
             "  <desc>Anonymous daily aggregate Star totals for "
             f"{escaped_repository}; no account-level data.</desc>"
@@ -309,7 +309,7 @@ def _write_if_changed(path: Path, content: str) -> bool:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--repository", default="hang-jin/editaplot")
+    parser.add_argument("--repository", default="yuxian-cell/figureloom")
     parser.add_argument("--data", type=Path, default=Path("assets/star-trend/stars.json"))
     parser.add_argument("--svg", type=Path, default=Path("assets/star-trend/stars.svg"))
     parser.add_argument(

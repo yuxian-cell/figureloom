@@ -9,13 +9,13 @@ from pathlib import Path
 import pytest
 
 PRODUCT_ROOT = Path(__file__).resolve().parents[1]
-SCRIPTS = PRODUCT_ROOT / "skill" / "editaplot" / "scripts"
+SCRIPTS = PRODUCT_ROOT / "skill" / "figureloom" / "scripts"
 RUNTIME = PRODUCT_ROOT / "runtime"
 sys.path.insert(0, str(SCRIPTS))
 
-import editaplot as editaplot_cli  # noqa: E402
-from editaplot_core import (  # noqa: E402
-    EditaPlotError,
+import figureloom as figureloom_cli  # noqa: E402
+from figureloom_core import (  # noqa: E402
+    FigureLoomError,
     build_plan,
     start_session,
     understand_data,
@@ -47,7 +47,7 @@ def test_beginner_start_includes_column_dispositions_and_element_confirmation() 
 def test_plan_requires_hash_bound_semantic_confirmation() -> None:
     source = RUNTIME / "templates" / "xrd" / "example_standard.csv"
 
-    with pytest.raises(EditaPlotError) as missing:
+    with pytest.raises(FigureLoomError) as missing:
         build_plan(
             source,
             template_id="xrd",
@@ -62,7 +62,7 @@ def test_plan_requires_hash_bound_semantic_confirmation() -> None:
         understanding["confirmation_gate"]["confirmation_payload_template"]
     )
     confirmation["proposal_hash"] = "0" * 64
-    with pytest.raises(EditaPlotError) as stale:
+    with pytest.raises(FigureLoomError) as stale:
         build_plan(
             source,
             template_id="xrd",
@@ -137,7 +137,7 @@ def test_plan_validation_strictly_rejects_unknown_semantic_fields() -> None:
         ).encode("utf-8")
     ).hexdigest()
 
-    with pytest.raises(EditaPlotError) as caught:
+    with pytest.raises(FigureLoomError) as caught:
         validate_plan(tampered)
 
     assert caught.value.code == "semantic_payload_unknown_fields"
@@ -150,7 +150,7 @@ def test_understand_cli_writes_agent_facing_confirmation_payload(
     source = RUNTIME / "templates" / "xrd" / "example_standard.csv"
     output = tmp_path / "understanding.json"
 
-    returncode = editaplot_cli.main(
+    returncode = figureloom_cli.main(
         [
             "understand",
             str(source),

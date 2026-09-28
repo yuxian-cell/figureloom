@@ -46,7 +46,7 @@ XPS_C1S_RUNNER = (
 
 def _load_xps_adaptive_runner() -> ModuleType:
     spec = importlib.util.spec_from_file_location(
-        "_editaplot_test_xps_adaptive_runner",
+        "_figureloom_test_xps_adaptive_runner",
         XPS_ADAPTIVE_RUNNER,
     )
     if spec is None or spec.loader is None:
@@ -61,7 +61,7 @@ XPS_ADAPTIVE = _load_xps_adaptive_runner()
 
 def _load_xps_c1s_runner() -> ModuleType:
     spec = importlib.util.spec_from_file_location(
-        "_editaplot_test_xps_c1s_runner",
+        "_figureloom_test_xps_c1s_runner",
         XPS_C1S_RUNNER,
     )
     if spec is None or spec.loader is None:

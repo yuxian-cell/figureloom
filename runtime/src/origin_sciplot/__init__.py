@@ -1,4 +1,4 @@
-"""EditaPlot Desktop MVP package."""
+"""FigureLoom Desktop MVP package."""
 
 from __future__ import annotations
 

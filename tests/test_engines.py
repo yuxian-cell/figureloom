@@ -9,14 +9,14 @@ from types import SimpleNamespace
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-for candidate in (ROOT / "skill" / "editaplot" / "scripts", ROOT / "runtime" / "src"):
+for candidate in (ROOT / "skill" / "figureloom" / "scripts", ROOT / "runtime" / "src"):
     if str(candidate) not in sys.path:
         sys.path.insert(0, str(candidate))
 
-import editaplot as cli  # noqa: E402
-import editaplot_core as core  # noqa: E402
-from editaplot_engine import DEFAULT_ENGINE, EngineError, get_engine  # noqa: E402
-from editaplot_engine.origin import OriginEngine  # noqa: E402
+import figureloom as cli  # noqa: E402
+import figureloom_core as core  # noqa: E402
+from figureloom_engine import DEFAULT_ENGINE, EngineError, get_engine  # noqa: E402
+from figureloom_engine.origin import OriginEngine  # noqa: E402
 from grapher_sciplot.engine import GrapherEngine, _plot_mode, _visual_mode  # noqa: E402
 from grapher_sciplot.smoke import SmokeFailure  # noqa: E402
 

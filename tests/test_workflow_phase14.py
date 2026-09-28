@@ -12,12 +12,12 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-for path in (ROOT / "runtime" / "src", ROOT / "skill" / "editaplot" / "scripts"):
+for path in (ROOT / "runtime" / "src", ROOT / "skill" / "figureloom" / "scripts"):
     if str(path) not in sys.path:
         sys.path.insert(0, str(path))
 
-from editaplot_engine.models import EngineError  # noqa: E402
-from editaplot_engine.workflow import (  # noqa: E402
+from figureloom_engine.models import EngineError  # noqa: E402
+from figureloom_engine.workflow import (  # noqa: E402
     edit_session,
     normalize_edit,
     parse_edit_phrase,
@@ -26,7 +26,7 @@ from editaplot_engine.workflow import (  # noqa: E402
 )
 
 FIXTURES = ROOT / "tests" / "fixtures" / "phase14"
-CLI = ROOT / "skill" / "editaplot" / "scripts" / "editaplot.py"
+CLI = ROOT / "skill" / "figureloom" / "scripts" / "figureloom.py"
 
 
 def _cli(*args: str, success: bool = True) -> subprocess.CompletedProcess[str]:
@@ -186,7 +186,7 @@ def test_csv_grapher_render_resume_and_native_series_edit(tmp_path: Path) -> Non
 @pytest.mark.origin
 @pytest.mark.skipif(os.name != "nt", reason="Origin automation requires Windows")
 def test_xlsx_origin_render_resume_and_native_axis_edit(tmp_path: Path) -> None:
-    import editaplot_core as core
+    import figureloom_core as core
     from openpyxl import Workbook
 
     if not core.discover_origin_application()["launch_registration_detected"]:
@@ -217,7 +217,7 @@ def test_xlsx_origin_render_resume_and_native_axis_edit(tmp_path: Path) -> None:
 @pytest.mark.origin
 @pytest.mark.skipif(os.name != "nt", reason="Both native engines require Windows")
 def test_same_confirmed_plan_runs_on_both_engines(tmp_path: Path) -> None:
-    import editaplot_core as core
+    import figureloom_core as core
     from grapher_sciplot.smoke import SmokeFailure, discover
 
     if not core.discover_origin_application()["launch_registration_detected"]:

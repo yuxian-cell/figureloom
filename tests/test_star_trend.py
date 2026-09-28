@@ -40,8 +40,8 @@ def test_fetch_uses_only_repository_metadata_endpoint() -> None:
         calls.append((request.full_url, request.get_method(), timeout))
         return _FakeResponse(request.full_url, {"stargazers_count": 31, "ignored": "discarded"})
 
-    assert trend.fetch_star_count("hang-jin/editaplot", opener=open_request) == 31
-    assert calls == [("https://api.github.com/repos/hang-jin/editaplot", "GET", 20.0)]
+    assert trend.fetch_star_count("yuxian-cell/figureloom", opener=open_request) == 31
+    assert calls == [("https://api.github.com/repos/yuxian-cell/figureloom", "GET", 20.0)]
 
 
 def test_fetch_rejects_redirects_and_invalid_counts() -> None:
@@ -50,14 +50,14 @@ def test_fetch_rejects_redirects_and_invalid_counts() -> None:
         return _FakeResponse("https://example.invalid/elsewhere", {"stargazers_count": 31})
 
     with pytest.raises(trend.StarTrendError, match="redirect"):
-        trend.fetch_star_count("hang-jin/editaplot", opener=redirect_request)
+        trend.fetch_star_count("yuxian-cell/figureloom", opener=redirect_request)
 
     def invalid_request(request: Any, *, timeout: float) -> _FakeResponse:
         del timeout
         return _FakeResponse(request.full_url, {"stargazers_count": True})
 
     with pytest.raises(trend.StarTrendError, match="non-negative integer"):
-        trend.fetch_star_count("hang-jin/editaplot", opener=invalid_request)
+        trend.fetch_star_count("yuxian-cell/figureloom", opener=invalid_request)
 
 
 @pytest.mark.parametrize("repository", ("../..", "owner/..", "-owner/repo", "owner/repo/name"))
@@ -83,7 +83,7 @@ def test_daily_snapshot_is_unique_and_same_day_is_replaced() -> None:
 
 def test_single_snapshot_svg_is_a_real_point_without_a_fake_line() -> None:
     svg = trend.render_svg(
-        "hang-jin/editaplot",
+        "yuxian-cell/figureloom",
         [{"date": "2026-07-22", "stars": 31}],
     )
 
@@ -97,7 +97,7 @@ def test_single_snapshot_svg_is_a_real_point_without_a_fake_line() -> None:
 
 def test_future_snapshots_form_one_line_through_all_daily_points() -> None:
     svg = trend.render_svg(
-        "hang-jin/editaplot",
+        "yuxian-cell/figureloom",
         [
             {"date": "2026-07-22", "stars": 31},
             {"date": "2026-07-23", "stars": 33},
@@ -112,7 +112,7 @@ def test_future_snapshots_form_one_line_through_all_daily_points() -> None:
 
 def test_x_positions_preserve_real_gaps_between_daily_snapshots() -> None:
     svg = trend.render_svg(
-        "hang-jin/editaplot",
+        "yuxian-cell/figureloom",
         [
             {"date": "2026-07-22", "stars": 31},
             {"date": "2026-07-23", "stars": 32},
@@ -132,11 +132,11 @@ def test_initial_public_assets_are_deterministic_and_aggregate_only() -> None:
 
     assert set(payload) == {"schema_version", "repository", "snapshots"}
     assert payload["schema_version"] == 1
-    assert payload["repository"] == "hang-jin/editaplot"
-    assert payload["snapshots"][0] == {"date": "2026-07-22", "stars": 31}
+    assert payload["repository"] == "yuxian-cell/figureloom"
+    assert payload["snapshots"][0] == {"date": "2026-09-28", "stars": 0}
     assert len(payload["snapshots"]) >= 1
     assert all(set(item) == {"date", "stars"} for item in payload["snapshots"])
-    assert trend.load_payload(data_path, "hang-jin/editaplot") == payload
+    assert trend.load_payload(data_path, "yuxian-cell/figureloom") == payload
     assert svg_path.read_text(encoding="utf-8") == trend.render_svg(
         payload["repository"], payload["snapshots"]
     )

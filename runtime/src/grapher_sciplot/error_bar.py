@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from editaplot_engine.models import EngineError
+from figureloom_engine.models import EngineError
 
 from .smoke import get, put
 

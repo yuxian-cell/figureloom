@@ -11,9 +11,9 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "runtime" / "src"))
-sys.path.insert(0, str(ROOT / "skill" / "editaplot" / "scripts"))
+sys.path.insert(0, str(ROOT / "skill" / "figureloom" / "scripts"))
 
-import editaplot as cli  # noqa: E402
+import figureloom as cli  # noqa: E402
 from grapher_sciplot import smoke  # noqa: E402
 
 
@@ -121,7 +121,7 @@ def test_real_grapher_smoke(tmp_path: Path) -> None:
     completed = subprocess.run(  # noqa: S603 - fixed local CLI and test-created output
         [
             sys.executable,
-            str(ROOT / "skill" / "editaplot" / "scripts" / "editaplot.py"),
+            str(ROOT / "skill" / "figureloom" / "scripts" / "figureloom.py"),
             "grapher-smoke",
             "--output-dir",
             str(tmp_path / "中文"),

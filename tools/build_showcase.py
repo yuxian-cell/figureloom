@@ -1,4 +1,4 @@
-"""Build the verified EditaPlot gallery with the public CLI and a callable local Origin."""
+"""Build the verified FigureLoom gallery with the public CLI and a callable local Origin."""
 
 # ruff: noqa: E501, S603
 
@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-CLI = ROOT / "skill" / "editaplot" / "scripts" / "editaplot.py"
+CLI = ROOT / "skill" / "figureloom" / "scripts" / "figureloom.py"
 DATA = ROOT / "examples" / "gallery"
 GALLERY = ROOT / "showcase" / "gallery"
 

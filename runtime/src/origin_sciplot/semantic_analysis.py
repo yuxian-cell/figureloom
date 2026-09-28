@@ -1,4 +1,4 @@
-"""Project a prepared EditaPlot route into a user-confirmable semantic contract.
+"""Project a prepared FigureLoom route into a user-confirmable semantic contract.
 
 This bridge deliberately operates on an already audited preparation.  It does
 not inspect values, fit models, infer phases, or mutate the source table.  Its
@@ -636,7 +636,7 @@ def _scientific_proposal(prepared: Any) -> SemanticProposal:
         domain_family=template_id,
         domain_mode=str(getattr(spec, "plot_mode", getattr(spec, "plot_kind", "default"))),
         domain_confidence=float(prepared.confidence),
-        source_adapter_hint=f"editaplot_{prepared.template_id}",
+        source_adapter_hint=f"figureloom_{prepared.template_id}",
         data_items=data_items,
         derived_items=tuple(derived_items),
         figure_elements=tuple(elements),
@@ -732,7 +732,7 @@ def _xps_proposal(prepared: Any) -> SemanticProposal:
         domain_family="xps",
         domain_mode=str(payload.detection.mode),
         domain_confidence=float(prepared.confidence),
-        source_adapter_hint="editaplot_xps",
+        source_adapter_hint="figureloom_xps",
         data_items=tuple(data_items),
         derived_items=derived_items,
         figure_elements=tuple(elements),

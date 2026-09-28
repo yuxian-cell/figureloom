@@ -102,9 +102,9 @@ def test_git_blob_audit_distinguishes_lf_from_crlf() -> None:
 
 
 def test_public_readmes_use_aggregate_star_badge_and_anonymous_trend() -> None:
-    badge = "https://img.shields.io/github/stars/hang-jin/editaplot?style=social"
-    trend = "https://raw.githubusercontent.com/hang-jin/editaplot/metrics/assets/star-trend/stars.svg"
-    repository_link = '<a href="https://github.com/hang-jin/editaplot">'
+    badge = "https://img.shields.io/github/stars/yuxian-cell/figureloom?style=social"
+    trend = "https://raw.githubusercontent.com/yuxian-cell/figureloom/metrics/assets/star-trend/stars.svg"
+    repository_link = '<a href="https://github.com/yuxian-cell/figureloom">'
     forbidden = ("/stargazers", "api.star-history.com")
 
     for name in ("README.md", "README.en.md"):
@@ -197,15 +197,15 @@ def test_public_guidance_has_no_legacy_origin_status_gate() -> None:
             "docs/release-boundaries.md",
             "docs/gallery.md",
             "docs/gallery.en.md",
-            "skill/editaplot/SKILL.md",
-            "skill/editaplot/agents/openai.yaml",
-            "skill/editaplot/references/runtime.md",
-            "skill/editaplot/references/origin-safety.md",
+            "skill/figureloom/SKILL.md",
+            "skill/figureloom/agents/openai.yaml",
+            "skill/figureloom/references/runtime.md",
+            "skill/figureloom/references/origin-safety.md",
             "tools/build_showcase.py",
             "tools/sync_public_gallery.py",
         )
     ]
-    fixed_paths.extend((PRODUCT_ROOT / "skill" / "editaplot" / "scripts").glob("*.py"))
+    fixed_paths.extend((PRODUCT_ROOT / "skill" / "figureloom" / "scripts").glob("*.py"))
     forbidden = (
         "--confirm-origin-started",
         "requires_manual_origin_start_confirmation",

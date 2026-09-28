@@ -15,11 +15,11 @@ from origin_sciplot.workers.run_template_worker import (  # noqa: E402
     _record_template_compatibility,
 )
 
-SCRIPTS = Path(__file__).resolve().parents[1] / "skill" / "editaplot" / "scripts"
+SCRIPTS = Path(__file__).resolve().parents[1] / "skill" / "figureloom" / "scripts"
 if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
-from editaplot_core import build_plan, understand_data  # noqa: E402
+from figureloom_core import build_plan, understand_data  # noqa: E402
 
 
 def _semantic_confirmation(source: Path, template_id: str, runtime: Path) -> dict[str, object]:

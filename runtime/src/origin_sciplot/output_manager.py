@@ -27,13 +27,13 @@ def output_preparation_error(error: OSError) -> OutputDirectoryError:
     if isinstance(error, PermissionError):
         return OutputDirectoryError(
             "output_directory_write_permission_denied",
-            "EditaPlot could not write its delivery folder beside the source file. "
+            "FigureLoom could not write its delivery folder beside the source file. "
             "Grant Codex write access to the source file's parent folder, or explicitly "
             "choose another writable output folder.",
         )
     return OutputDirectoryError(
         "output_directory_create_failed",
-        "EditaPlot could not prepare the delivery folder. Check free disk space, path "
+        "FigureLoom could not prepare the delivery folder. Check free disk space, path "
         "length, cloud-sync or security-software locks, and folder write access; then retry.",
     )
 
@@ -68,7 +68,7 @@ def _claim_unique_output_dir(path: Path) -> Path:
         return candidate
     raise OutputDirectoryError(
         "output_directory_name_exhausted",
-        "EditaPlot could not allocate a unique delivery-folder name. "
+        "FigureLoom could not allocate a unique delivery-folder name. "
         "Choose another output location or retry with a later timestamp.",
     )
 
@@ -78,7 +78,7 @@ def default_output_dir(input_csv: str | Path, template_id: str, now: datetime | 
     timestamp = (now or datetime.now()).strftime("%Y%m%d_%H%M%S")
     source = Path(input_csv).resolve()
     label = safe_filename(source.stem, fallback="data")
-    return source.parent / f"{label}_EditaPlot_{timestamp}"
+    return source.parent / f"{label}_FigureLoom_{timestamp}"
 
 
 def create_run_output(
@@ -105,7 +105,7 @@ def create_run_output(
 
         readme_output = target_dir / "README_output.txt"
         readme_output.write_text(
-            "EditaPlot output folder\n"
+            "FigureLoom output folder\n"
             "Files here are a reproducible copy of the input, approved render plan (when invoked "
             "through the Skill), template manifest, schema, validation report, environment report, "
             "editable OPJU, and exported images.\n",

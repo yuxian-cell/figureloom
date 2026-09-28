@@ -146,7 +146,7 @@ class CsvDropLineEdit(QLineEdit):
 class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
-        self.setWindowTitle(f"EditaPlot v{__version__}")
+        self.setWindowTitle(f"FigureLoom v{__version__}")
         self.resize(1360, 900)
         self.setMinimumSize(880, 640)
         self.registry = TemplateRegistry()
@@ -1241,8 +1241,8 @@ class MainWindow(QMainWindow):
     def _show_about(self) -> None:
         QMessageBox.information(
             self,
-            "关于 EditaPlot",
-            f"EditaPlot v{__version__}\n"
+            "关于 FigureLoom",
+            f"FigureLoom v{__version__}\n"
             "面向 XPS、XRD、PL、UV–Vis、统计与医学证据图，自动识别数据并生成数据预览与 Origin 可编辑图。",
         )
 
@@ -1378,7 +1378,7 @@ class MainWindow(QMainWindow):
             self._set_status("失败", "Error")
             self._append_log(
                 "[error] worker_start_failed：无法启动绘图任务。"
-                "请重新运行环境检查，并确认 Windows 安全软件没有阻止 EditaPlot。"
+                "请重新运行环境检查，并确认 Windows 安全软件没有阻止 FigureLoom。"
             )
             self.statusBar().showMessage("绘图任务未能启动；请运行环境检查后重试")
         elif error == QProcess.Crashed:

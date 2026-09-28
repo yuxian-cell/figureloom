@@ -11,13 +11,13 @@ from matplotlib.patches import FancyArrowPatch, PathPatch
 
 PRODUCT_ROOT = Path(__file__).resolve().parents[1]
 RUNTIME = PRODUCT_ROOT / "runtime"
-SCRIPTS = PRODUCT_ROOT / "skill" / "editaplot" / "scripts"
+SCRIPTS = PRODUCT_ROOT / "skill" / "figureloom" / "scripts"
 SOURCE = RUNTIME / "templates" / "circular_network" / "example_standard.csv"
 
 sys.path.insert(0, str(RUNTIME / "src"))
 sys.path.insert(0, str(SCRIPTS))
 
-import editaplot_core as core  # noqa: E402
+import figureloom_core as core  # noqa: E402
 from origin_sciplot.circular_network_layout import (  # noqa: E402
     NETWORK_EDGE_TRANSPARENCY_PERCENT,
     NETWORK_NODE_GROUP_COLORS,

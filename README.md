@@ -1,6 +1,6 @@
 <div align="center">
-  <img src="runtime/src/origin_sciplot/resources/app_icon.png" width="96" alt="EditaPlot 图标">
-  <h1>EditaPlot · 艾迪图</h1>
+  <img src="runtime/src/origin_sciplot/resources/app_icon.png" width="96" alt="FigureLoom 图标">
+  <h1>FigureLoom</h1>
   <p><strong>AI 驱动的可编辑科研绘图工作流</strong><br>AI-guided editable scientific figures</p>
   <p>
     <img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-4c6ef5">
@@ -9,20 +9,20 @@
     <img alt="Codex Skill" src="https://img.shields.io/badge/Codex-Skill-7c3aed">
     <img alt="Origin 2021–2026b compatibility target" src="https://img.shields.io/badge/Origin-2021%E2%80%932026b%20target-2563eb">
     <img alt="Fully verified with Origin 2024b" src="https://img.shields.io/badge/fully%20verified-2024b-0f766e">
-    <a href="https://github.com/hang-jin/editaplot"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/hang-jin/editaplot?style=social"></a>
+    <a href="https://github.com/yuxian-cell/figureloom"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/yuxian-cell/figureloom?style=social"></a>
   </p>
   <p><a href="README.en.md">English</a> · 中文为主要说明语言</p>
 </div>
 
-我把 EditaPlot 做成了一个面向 Codex 的 Windows 本地科研绘图 Skill。它会检查数据、推荐图形、确认列语义，再调用 Origin 或 Grapher 的原生对象生成可继续编辑的项目并验证结果。Origin 输出 OPJU、PNG、PDF、TIF；Grapher 在已验证路线上输出 GRF、PNG、PDF。v0.2.0 新增经过双后端验证的 Correlation Heatmap；独立 CLI/API 使用方法见 [Quickstart](docs/quickstart.md)，能力边界见 [发布说明](docs/release-v0.2.md)。
+我把 FigureLoom 做成了一个面向 Codex 的 Windows 本地科研绘图 Skill。它会检查数据、推荐图形、确认列语义，再调用 Origin 或 Grapher 的原生对象生成可继续编辑的项目并验证结果。Origin 输出 OPJU、PNG、PDF、TIF；Grapher 在已验证路线上输出 GRF、PNG、PDF。v0.2.0 新增经过双后端验证的 Correlation Heatmap；独立 CLI/API 使用方法见 [Quickstart](docs/quickstart.md)，能力边界见 [发布说明](docs/release-v0.2.md)。
 
-我不希望它只是一套“替换数字”的静态模板，也不会让 Python 预览图冒充 Origin 成图。科学含义和最终选择始终由你决定；遇到把握不足的数据，EditaPlot 会把不确定的列单独列出来请你确认，不会擅自补列、拟合或推断结论。
+我不希望它只是一套“替换数字”的静态模板，也不会让 Python 预览图冒充 Origin 成图。科学含义和最终选择始终由你决定；遇到把握不足的数据，FigureLoom 会把不确定的列单独列出来请你确认，不会擅自补列、拟合或推断结论。
 
 > [!WARNING]
 > **我目前只完成了 Windows 10/11 x64 实体电脑上的完整验证。** 因此 V1 暂未提供 macOS（Intel 与 Apple Silicon）、Linux、WSL、Wine/CrossOver、Parallels 或其他虚拟机版本。如果你使用 Mac，这一版暂时还不能完成 Origin 全流程；当前请换用 Windows 实体电脑，后续支持情况以 release 说明为准。
 
 > [!IMPORTANT]
-> 我已按 [Apache License 2.0](LICENSE) 开源 EditaPlot。当前兼容目标是 Origin/OriginPro 2021–2026b；你不必提前打开它，EditaPlot 会在绘图前自动启动一个专用实例。我不会替你安装或修改 Origin。
+> 我已按 [Apache License 2.0](LICENSE) 开源 FigureLoom。当前兼容目标是 Origin/OriginPro 2021–2026b；你不必提前打开它，FigureLoom 会在绘图前自动启动一个专用实例。我不会替你安装或修改 Origin。
 
 ## 一眼看懂
 
@@ -60,7 +60,7 @@ flowchart LR
 
 ### GSAS / GSAS-II XRD Rietveld 示例
 
-我已为普通 XRD、GSAS-II Powder CSV 和 Publication CSV 加入专门的理解规则。以精修表为例，EditaPlot 可以把 Observed 识别为实测点、Calculated 识别为计算线，并按文件实际提供的内容加入 Background、Difference 和具备明确身份的 Phase 刻线；`weight`、`Q`、`Used`、`diff/sigma`、`Axis-limits` 等列会保留为辅助或控制数据，不会被误画成强度曲线。
+我已为普通 XRD、GSAS-II Powder CSV 和 Publication CSV 加入专门的理解规则。以精修表为例，FigureLoom 可以把 Observed 识别为实测点、Calculated 识别为计算线，并按文件实际提供的内容加入 Background、Difference 和具备明确身份的 Phase 刻线；`weight`、`Q`、`Used`、`diff/sigma`、`Axis-limits` 等列会保留为辅助或控制数据，不会被误画成强度曲线。
 
 Publication CSV 中已经带显示位置的 `Diff` 会按源值直接绘制，不会再次偏移。我也不会自动计算背景、差值、Rwp、χ²，或替你识别物相和峰归属。仓库内提供了 [`example_gsas_powder.csv`](runtime/templates/xrd/example_gsas_powder.csv) 与 [`example_gsas_publication.csv`](runtime/templates/xrd/example_gsas_publication.csv)，可以先拿它们熟悉格式。
 
@@ -85,10 +85,10 @@ XPS 想精确改样式时，我建议你直接这样说：“Raw 用 `#173F5F`�
 
 ## Star 趋势
 
-这是我从开源首日开始记录的 GitHub Star 总数。首个快照是一个真实的 31 Stars 起点；后续每日快照会自然连成折线。
+这是我从开源首日开始记录的 GitHub Star 总数。快照从当前 FigureLoom 仓库开始记录，不继承其他仓库的 Star 数；后续每日快照会自然连成折线。
 
 <div align="center">
-  <a href="https://github.com/hang-jin/editaplot"><img src="https://raw.githubusercontent.com/hang-jin/editaplot/metrics/assets/star-trend/stars.svg" width="760" alt="EditaPlot GitHub Star 趋势"></a>
+  <a href="https://github.com/yuxian-cell/figureloom"><img src="https://raw.githubusercontent.com/yuxian-cell/figureloom/metrics/assets/star-trend/stars.svg" width="760" alt="FigureLoom GitHub Star 趋势"></a>
 </div>
 
 我只保存“日期 + 仓库 Star 总数”，不读取或保存用户名、账号 ID、个人加星时间或名单。
@@ -122,7 +122,7 @@ SHAP 路线只读取你在上游已经计算好的逐样本长表，最少需要
 每个特征至少 3 个观测，可从 [1,440 行合成数据样例](examples/gallery/shap_dashboard.csv) 开始。
 我不会训练模型或计算 SHAP；重要性、占比和显示变换会先列明公式并请你确认。
 
-直接说：“请用 `$editaplot` 的 SHAP 分栏与双层环图，配色选紫绿金，保留所有数据。”
+直接说：“请用 `$figureloom` 的 SHAP 分栏与双层环图，配色选紫绿金，保留所有数据。”
 三种配色对应 `dashboard_blue_red`（蓝白酒红）、`dashboard_viridis`（紫绿金）和
 `dashboard_red_blue`（红黄蓝），由 Codex 写入列映射的 `plot_mode`。
 
@@ -183,23 +183,23 @@ Codex 先报告“当前停在哪一阶段”和该阶段已经耗时多久，�
 正式绘图本身不应依赖持续联网；网络主要出现在首次下载、更新和安装锁定依赖时。阶段没有变化时，不要让 Codex 无限制重试、反复重装环境或扩大系统权限。
 瞬时启动故障会在半启动实例清理成功后自动再试一次；清理失败或第二次启动仍失败都会停止。后续
 经用户同意再试时，要用新的空白同级输出目录保留首次诊断，绝不会静默接管已经打开的用户项目。
-如果最初的启动和随后清理都失败，EditaPlot 会同时保留两组脱敏信息：最初启动的短错误代码/阶段，
+如果最初的启动和随后清理都失败，FigureLoom 会同时保留两组脱敏信息：最初启动的短错误代码/阶段，
 以及清理步骤的短错误代码/阶段。它们帮助我区分“为什么没启动”和“为什么没清理完”，不会包含
 Windows 账户名、本地路径或原始 COM 报错全文，也不会因此继续自动重试。
 
 你可以同时打开多个 Codex 任务做数据理解、选图和制定方案；这些非 Origin 工作可以并行进行。
-真正进入 EditaPlot 的 `origin-smoke` 或 `render` 后，同一 Windows 登录会话一次只运行一个
+真正进入 FigureLoom 的 `origin-smoke` 或 `render` 后，同一 Windows 登录会话一次只运行一个
 Origin 自动化阶段，其余任务自动等待。等待事件名为 `origin_job_queue`，大约每 30 秒更新一次；
 队列不承诺严格先来先服务。等待满 30 分钟时只停止这个等待任务，不会强杀或打断正在占用 Origin
 的任务。任务结束或进程异常退出后，Windows 会释放队列锁；绘图成功后按你的选择保留 Origin
-窗口，也不会继续占用队列。这个保护只协调新版 EditaPlot worker，不能替其他手动脚本、旧版本或
+窗口，也不会继续占用队列。这个保护只协调新版 FigureLoom worker，不能替其他手动脚本、旧版本或
 第三方程序管理 Origin，所以看到排队提示时不要重复启动同一任务。
 
 ## 中文科研配色
 
-![EditaPlot 中文科研配色选择](assets/palettes/palette-selector-public.zh-CN.png)
+![FigureLoom 中文科研配色选择](assets/palettes/palette-selector-public.zh-CN.png)
 
-我在首屏准备了 8 套推荐色组，完整目录另含 2 套进阶色组。你只需选择喜欢的配色，EditaPlot 会记住具体颜色和使用限制，让以后重画保持一致。对 XPS 组分、正负值、热力图、诊断参考线等有科学含义的颜色，我不会为了美观随意改变。
+我在首屏准备了 8 套推荐色组，完整目录另含 2 套进阶色组。你只需选择喜欢的配色，FigureLoom 会记住具体颜色和使用限制，让以后重画保持一致。对 XPS 组分、正负值、热力图、诊断参考线等有科学含义的颜色，我不会为了美观随意改变。
 
 如果你明确指定了每条系列对应的颜色，我会让这一选择优先于参考图，并先检查当前模板是否已验证
 该精确覆盖；结果仍会逐项写成采用、保留默认或拒绝，不会悄悄打乱组分含义。
@@ -217,7 +217,7 @@ Origin 自动化阶段，其余任务自动等待。等待事件名为 `origin_j
 | Python | 需要 64 位 Python 3.10–3.12；启动器会自动选择，你无需手动配置 |
 | 数据 | 你可以使用 CSV、TXT、XLS 或 XLSX，也可以保留中文列名与中文路径 |
 
-你不必先弄懂 Python 环境。我让根目录的 `editaplot.cmd` 先寻找电脑上已有的兼容 Python，再创建只属于本项目的环境。若完全找不到，启动器会返回明确的缺少 Python 诊断；此时 Codex 必须先用中文解释这项系统变更并等你同意，之后才可通过官方 winget 安装用户范围的 Python 3.12。没有 winget 时，我在安装指南中给出了 python.org 官方路径。这个过程不会安装或修改 Origin。Doctor 只做只读发现；正式绘图前的真实 smoke 才会自动启动专用 Origin 实例并验证连接。
+你不必先弄懂 Python 环境。我让根目录的 `figureloom.cmd` 先寻找电脑上已有的兼容 Python，再创建只属于本项目的环境。若完全找不到，启动器会返回明确的缺少 Python 诊断；此时 Codex 必须先用中文解释这项系统变更并等你同意，之后才可通过官方 winget 安装用户范围的 Python 3.12。没有 winget 时，我在安装指南中给出了 python.org 官方路径。这个过程不会安装或修改 Origin。Doctor 只做只读发现；正式绘图前的真实 smoke 才会自动启动专用 Origin 实例并验证连接。
 
 ### Codex 需要哪些权限
 
@@ -225,16 +225,16 @@ Origin 自动化阶段，其余任务自动等待。等待事件名为 `origin_j
 
 | 允许的范围 | 用途 |
 |---|---|
-| 读取完整 EditaPlot 仓库、你的数据文件和可选参考图 | 安装 Skill、理解列含义、制定绘图计划 |
-| 写入 EditaPlot 仓库和当前用户的 `$HOME\.codex\skills\editaplot` | 创建项目隔离环境并安装/更新 Skill |
+| 读取完整 FigureLoom 仓库、你的数据文件和可选参考图 | 安装 Skill、理解列含义、制定绘图计划 |
+| 写入 FigureLoom 仓库和当前用户的 `$HOME\.codex\skills\figureloom` | 创建项目隔离环境并安装/更新 Skill |
 | 写入原始数据所在文件夹 | 在源文件旁新建时间戳交付文件夹；不会覆盖原文件 |
-| 运行本地 `editaplot.cmd`、PowerShell、Python，并在当前 Windows 用户会话启动 Origin | 完成环境检查、Automation smoke、绘图、导出和反读 |
+| 运行本地 `figureloom.cmd`、PowerShell、Python，并在当前 Windows 用户会话启动 Origin | 完成环境检查、Automation smoke、绘图、导出和反读 |
 | 首次安装或更新时访问 GitHub、Python 包源；缺少 Python 时另行确认 winget | 下载公开源码和锁定依赖 |
 
 普通使用**不需要**管理员权限、鼠标控制、整个 C 盘写权限，也不需要修改 DCOM、注册表、防火墙或 Origin 安装。若 Windows“受控文件夹访问”、单位策略、OneDrive/网盘同步或只读目录阻止写入，请只放行当前仓库与当前数据文件夹，或明确选择另一个可写输出目录；不要把全局提权当作修复方法。
 
 Codex 桌面版的普通命令可能由隔离账户运行。这个进程即使继承了你的 `USERNAME` 或
-`USERPROFILE`，也不一定拥有当前登录用户启动 Origin 的权限，所以我让 EditaPlot 读取当前进程
+`USERPROFILE`，也不一定拥有当前登录用户启动 Origin 的权限，所以我让 FigureLoom 读取当前进程
 真实的 Windows 安全令牌，而不是相信环境变量。检测到 Codex 沙箱时，它会在调用 Origin COM
 之前停止，并让 Codex 只针对这一条精确的 `origin-smoke` 或 `render` 命令发起正式、受限的本地
 执行申请。只有这条精确申请获批后，Codex 才会重新执行同一条 Origin 命令并继续当前任务；申请
@@ -243,42 +243,42 @@ Codex 桌面版的普通命令可能由隔离账户运行。这个进程即使�
 权限、DCOM/注册表修改或所谓“绕过沙箱”。如果你所在组织或本机策略拒绝申请，任务会清楚停止，
 不会把失败包装成 Origin 已完成。
 
-EditaPlot 自带的 Python runtime 与 Origin 自动化不会主动把你的数据上传到网络；但你主动交给 Codex 的文件仍受你所使用的 Codex 账号、组织和数据保留策略约束。医学数据或参考图在交给 Codex 前必须按你所在机构的要求去标识化，并检查图像中是否烧录了身份信息；EditaPlot 不承诺自动发现 PHI。详见[隐私说明](PRIVACY.md)。
+FigureLoom 自带的 Python runtime 与 Origin 自动化不会主动把你的数据上传到网络；但你主动交给 Codex 的文件仍受你所使用的 Codex 账号、组织和数据保留策略约束。医学数据或参考图在交给 Codex 前必须按你所在机构的要求去标识化，并检查图像中是否烧录了身份信息；FigureLoom 不承诺自动发现 PHI。详见[隐私说明](PRIVACY.md)。
 
 ### 2. 安装 Codex Skill
 
 ```powershell
-git clone https://github.com/hang-jin/editaplot.git
-Set-Location editaplot
-.\editaplot.cmd setup
+git clone https://github.com/yuxian-cell/figureloom.git
+Set-Location figureloom
+.\figureloom.cmd setup
 ```
 
-请下载或克隆完整仓库，因为 `skill/editaplot` 和绘图 `runtime/` 需要一起工作。只复制 Skill 子目录会缺少绘图引擎。如果你不会使用 GitHub，也可以直接下载 Source ZIP，完整解压后在该目录运行同一条 `setup` 命令。详见[安装指南](docs/installation.md)。
+请下载或克隆完整仓库，因为 `skill/figureloom` 和绘图 `runtime/` 需要一起工作。只复制 Skill 子目录会缺少绘图引擎。如果你不会使用 GitHub，也可以直接下载 Source ZIP，完整解压后在该目录运行同一条 `setup` 命令。详见[安装指南](docs/installation.md)。
 
-重新打开一个 Codex 任务后使用 `$editaplot`。第一次处理数据，只需：
+重新打开一个 Codex 任务后使用 `$figureloom`。第一次处理数据，只需：
 
 ```powershell
-.\editaplot.cmd start "$HOME\Documents\my-data.csv"
+.\figureloom.cmd start "$HOME\Documents\my-data.csv"
 ```
 
-如果你是第一次使用，最简单的方法是把文件拖进 Codex，然后说：“请使用 `$editaplot` 帮我画这份数据。”我会让 EditaPlot 完成环境检查、只读识别与候选图推荐，再给出逐列用途和图形元素清单；你只需确认科学目的与这份清单，只有判断不够明确时才需要补充列义、误差或变换等关键细节。熟悉命令行后，也可以使用下面这些命令：
+如果你是第一次使用，最简单的方法是把文件拖进 Codex，然后说：“请使用 `$figureloom` 帮我画这份数据。”我会让 FigureLoom 完成环境检查、只读识别与候选图推荐，再给出逐列用途和图形元素清单；你只需确认科学目的与这份清单，只有判断不够明确时才需要补充列义、误差或变换等关键细节。熟悉命令行后，也可以使用下面这些命令：
 
-正式绘图时，我会让 EditaPlot 在原始 CSV、TXT、XLS 或 XLSX 所在目录中，新建一个与源文件同级的 `<数据文件名>_EditaPlot_<时间>` 文件夹，并把 render-plan、OPJU、PNG、PDF、TIF、反读与验证结果集中放进去。它不会覆盖原始数据；只有你明确指定其他位置时，才会改变输出目录。
+正式绘图时，我会让 FigureLoom 在原始 CSV、TXT、XLS 或 XLSX 所在目录中，新建一个与源文件同级的 `<数据文件名>_FigureLoom_<时间>` 文件夹，并把 render-plan、OPJU、PNG、PDF、TIF、反读与验证结果集中放进去。它不会覆盖原始数据；只有你明确指定其他位置时，才会改变输出目录。
 
 ```powershell
-.\editaplot.cmd doctor
-.\editaplot.cmd inspect <data.csv>
-.\editaplot.cmd recommend <data.csv> --intent "比较模型并展示误差"
-.\editaplot.cmd understand <data.csv> --template-id xrd --output data-understanding.json
-.\editaplot.cmd palettes
-.\editaplot.cmd plan <data.csv> --template-id bar --claim "模型 A 指标更高" --evidence-role comparison --palette-id ocean_coral --semantic-confirmation-json semantic-confirmation.json --output render-plan.json
-$smokeDir = Join-Path $env:TEMP ("EditaPlot-origin-smoke-" + (Get-Date -Format "yyyyMMdd-HHmmss"))
-.\editaplot.cmd origin-smoke --output-dir $smokeDir
-.\editaplot.cmd render render-plan.json
-.\editaplot.cmd verify <Origin-output-directory>
+.\figureloom.cmd doctor
+.\figureloom.cmd inspect <data.csv>
+.\figureloom.cmd recommend <data.csv> --intent "比较模型并展示误差"
+.\figureloom.cmd understand <data.csv> --template-id xrd --output data-understanding.json
+.\figureloom.cmd palettes
+.\figureloom.cmd plan <data.csv> --template-id bar --claim "模型 A 指标更高" --evidence-role comparison --palette-id ocean_coral --semantic-confirmation-json semantic-confirmation.json --output render-plan.json
+$smokeDir = Join-Path $env:TEMP ("FigureLoom-origin-smoke-" + (Get-Date -Format "yyyyMMdd-HHmmss"))
+.\figureloom.cmd origin-smoke --output-dir $smokeDir
+.\figureloom.cmd render render-plan.json
+.\figureloom.cmd verify <Origin-output-directory>
 ```
 
-仓库已经包含运行所需的 `runtime/`。`origin-smoke` 会先启动 EditaPlot 自有的隔离 Origin
+仓库已经包含运行所需的 `runtime/`。`origin-smoke` 会先启动 FigureLoom 自有的隔离 Origin
 实例并完成最小导出闭环；只有 smoke 通过后才进入正式 render。日常使用可以忽略
 `--engine-home`；只有你主动替换内置引擎时才需要它。普通绘图请省略 `render` 的
 `--output-dir`，这样正式结果会自动保存到源数据同级的新文件夹。
@@ -286,7 +286,7 @@ $smokeDir = Join-Path $env:TEMP ("EditaPlot-origin-smoke-" + (Get-Date -Format "
 ### 3. 直接复制给 Codex 的提示词
 
 ```text
-请使用 $editaplot 帮我画这份数据。不要修改原文件；先告诉我识别到哪些列、最推荐哪种图，
+请使用 $figureloom 帮我画这份数据。不要修改原文件；先告诉我识别到哪些列、最推荐哪种图，
 再逐列说明哪些要画、哪些只作辅助或验证、哪些保留但不画，并列出最终图形元素和不会自动进行的
 计算。若有不确定列，请先问我，不要猜。若需要安装 Python，请先征得我同意；不要安装或修改 Origin。
 等我确认科学目的和元素清单后再绘图，完成后请检查可编辑项目和 PNG、PDF、TIF。
@@ -344,7 +344,7 @@ $smokeDir = Join-Path $env:TEMP ("EditaPlot-origin-smoke-" + (Get-Date -Format "
 
 ## 独立项目声明
 
-我独立维护 EditaPlot，只调用你电脑上已经安装的 Origin 或 OriginPro；默认启动由 EditaPlot 独占的本机实例，不要求你预先打开窗口。它不捆绑、安装或修改该应用，也不通过网络或云端开放其 Automation Server。我与 OriginLab Corporation 没有隶属、赞助或背书关系；相关名称仅用于说明兼容性。
+我独立维护 FigureLoom，只调用你电脑上已经安装的 Origin 或 OriginPro；默认启动由 FigureLoom 独占的本机实例，不要求你预先打开窗口。它不捆绑、安装或修改该应用，也不通过网络或云端开放其 Automation Server。我与 OriginLab Corporation 没有隶属、赞助或背书关系；相关名称仅用于说明兼容性。
 
 ## 开源、贡献与支持
 
@@ -363,13 +363,13 @@ $smokeDir = Join-Path $env:TEMP ("EditaPlot-origin-smoke-" + (Get-Date -Format "
 
 ## 请我喝杯咖啡 ☕
 
-如果 EditaPlot 帮你省下了一点整理数据、调图或排查环境的时间，你可以随意请我喝杯咖啡。一毛、两毛或几块钱，对我来说都是一份很实在的鼓励，也会支持我继续维护模板、完善兼容性并把教程做得更清楚。
+如果 FigureLoom 帮你省下了一点整理数据、调图或排查环境的时间，你可以随意请我喝杯咖啡。一毛、两毛或几块钱，对我来说都是一份很实在的鼓励，也会支持我继续维护模板、完善兼容性并把教程做得更清楚。
 
 赞赏完全自愿，不会解锁任何额外功能，也不会影响问题处理顺序或 Apache-2.0 已经授予你的开源权利。不赞赏也完全没关系：如果这个项目确实帮到了你，点一个 Star、分享给有需要的朋友或提交一条有用的反馈，同样是很大的支持。
 
 <p align="center">
   <a href="assets/support/wechat-tip.png">
-    <img src="assets/support/wechat-tip.png" width="360" alt="EditaPlot 微信赞赏码">
+    <img src="assets/support/wechat-tip.png" width="360" alt="FigureLoom 微信赞赏码">
   </a>
 </p>
 

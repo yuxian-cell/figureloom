@@ -11,13 +11,13 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-for path in (ROOT / "runtime" / "src", ROOT / "skill" / "editaplot" / "scripts"):
+for path in (ROOT / "runtime" / "src", ROOT / "skill" / "figureloom" / "scripts"):
     if str(path) not in sys.path:
         sys.path.insert(0, str(path))
 
-import editaplot_core as core  # noqa: E402
-from editaplot_engine.fit_contract import FitSpec  # noqa: E402
-from editaplot_engine.models import EngineError  # noqa: E402
+import figureloom_core as core  # noqa: E402
+from figureloom_engine.fit_contract import FitSpec  # noqa: E402
+from figureloom_engine.models import EngineError  # noqa: E402
 from grapher_sciplot.engine import GrapherEngine  # noqa: E402
 from grapher_sciplot.smoke import SmokeFailure, discover  # noqa: E402
 
@@ -72,7 +72,7 @@ def _plan(
 
 def _run_cli(*arguments: str) -> dict:
     process = subprocess.run(  # noqa: S603 - local project CLI and test-created paths
-        [sys.executable, str(ROOT / "skill" / "editaplot" / "scripts" / "editaplot.py"), *arguments],
+        [sys.executable, str(ROOT / "skill" / "figureloom" / "scripts" / "figureloom.py"), *arguments],
         capture_output=True,
         text=True,
         encoding="utf-8",

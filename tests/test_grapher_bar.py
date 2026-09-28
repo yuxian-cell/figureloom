@@ -8,11 +8,11 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-for path in (ROOT / "runtime/src", ROOT / "skill/editaplot/scripts"):
+for path in (ROOT / "runtime/src", ROOT / "skill/figureloom/scripts"):
     sys.path.insert(0, str(path))
 
-import editaplot_core as core  # noqa: E402
-from editaplot_engine.models import EngineError  # noqa: E402
+import figureloom_core as core  # noqa: E402
+from figureloom_engine.models import EngineError  # noqa: E402
 from grapher_sciplot.engine import GrapherEngine, _plot_mode  # noqa: E402
 
 FIXTURES = ROOT / "tests/fixtures/grapher_bar"

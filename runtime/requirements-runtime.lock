@@ -1,4 +1,4 @@
-# EditaPlot verified dependency constraints
+# FigureLoom verified dependency constraints
 # Windows 10/11, 64-bit CPython 3.10-3.12 compatibility range.
 # This file pins resolution; it does not redistribute packages.
 attrs==26.1.0

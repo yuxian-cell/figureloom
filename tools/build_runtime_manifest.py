@@ -7,9 +7,9 @@ import hashlib
 import json
 from pathlib import Path
 
-EXCLUDED_PARTS = {"__pycache__", ".pytest_cache", ".ruff_cache", ".editaplot-venv"}
-EXCLUDED_PREFIXES = (".editaplot-venv.build-", ".editaplot-venv.stale-")
-EXCLUDED_FILES = {".editaplot-environment.lock"}
+EXCLUDED_PARTS = {"__pycache__", ".pytest_cache", ".ruff_cache", ".figureloom-venv"}
+EXCLUDED_PREFIXES = (".figureloom-venv.build-", ".figureloom-venv.stale-")
+EXCLUDED_FILES = {".figureloom-environment.lock"}
 EXCLUDED_SUFFIXES = {".pyc", ".pyo"}
 
 
@@ -56,7 +56,7 @@ def main() -> int:
     manifest = {
         "schema_version": "1.0",
         "source_policy": (
-            "curated EditaPlot runtime; caches, tests, builds, outputs, binaries, and local paths excluded"
+            "curated FigureLoom runtime; caches, tests, builds, outputs, binaries, and local paths excluded"
         ),
         "file_count": len(records),
         "files": records,

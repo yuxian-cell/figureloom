@@ -1,4 +1,4 @@
-# EditaPlot v0.2.0 quickstart (Windows)
+# FigureLoom v0.2.0 quickstart (Windows)
 
 Use a physical Windows 10/11 x64 computer with OriginPro 2024 and/or Golden Software Grapher 27 installed. Run these commands in PowerShell from the repository root. Each render creates a native editable project and verifies it after reopening. The example inputs are never modified.
 
@@ -7,26 +7,26 @@ Use a physical Windows 10/11 x64 computer with OriginPro 2024 and/or Golden Soft
 ```powershell
 py -3.12 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -e .\runtime pywin32
-.\.venv\Scripts\python.exe skill\editaplot\scripts\editaplot.py --version
-.\.venv\Scripts\python.exe skill\editaplot\scripts\editaplot.py doctor --engine grapher --live --human
-.\.venv\Scripts\python.exe skill\editaplot\scripts\editaplot.py doctor --engine origin --engine-home runtime --live --human
+.\.venv\Scripts\python.exe skill\figureloom\scripts\figureloom.py --version
+.\.venv\Scripts\python.exe skill\figureloom\scripts\figureloom.py doctor --engine grapher --live --human
+.\.venv\Scripts\python.exe skill\figureloom\scripts\figureloom.py doctor --engine origin --engine-home runtime --live --human
 ```
 
-`doctor` without `--live` preserves the earlier static JSON report. `--live` starts one fresh automation instance and requests a safe shutdown; it does not draw a figure or close an already open user instance. If Origin reports `unknown_process_remaining`, its COM instance cannot be mapped to a proven PID, so EditaPlot leaves the process alone. Close stale automation windows manually if a later job cannot start.
+`doctor` without `--live` preserves the earlier static JSON report. `--live` starts one fresh automation instance and requests a safe shutdown; it does not draw a figure or close an already open user instance. If Origin reports `unknown_process_remaining`, its COM instance cannot be mapped to a proven PID, so FigureLoom leaves the process alone. Close stale automation windows manually if a later job cannot start.
 
 ## CSV → Grapher → edit
 
 Choose a new output directory for each run. Inspect the generated `workflow-preview.json` before confirming: check the selected route, X/Y columns, error meanings, and `confirmation_gate.can_confirm_now`.
 
 ```powershell
-.\.venv\Scripts\python.exe skill\editaplot\scripts\editaplot.py workflow-preview docs\quickstart-data\multiseries.csv --engine grapher --template-id trend --output-dir runs\grapher-01 --engine-home runtime
-.\.venv\Scripts\python.exe skill\editaplot\scripts\editaplot.py workflow-render runs\grapher-01\workflow-preview.json --claim "Compare Control and Treatment" --confirm --human
+.\.venv\Scripts\python.exe skill\figureloom\scripts\figureloom.py workflow-preview docs\quickstart-data\multiseries.csv --engine grapher --template-id trend --output-dir runs\grapher-01 --engine-home runtime
+.\.venv\Scripts\python.exe skill\figureloom\scripts\figureloom.py workflow-render runs\grapher-01\workflow-preview.json --claim "Compare Control and Treatment" --confirm --human
 ```
 
 The summary lists `result.grf`, PNG, PDF, verification, and `session.json`. Open the GRF in Grapher to continue manual editing. In a **new PowerShell process**, continue the same verified project:
 
 ```powershell
-.\.venv\Scripts\python.exe skill\editaplot\scripts\editaplot.py edit runs\grapher-01\session.json "把 Treatment 改成虚线" --human
+.\.venv\Scripts\python.exe skill\figureloom\scripts\figureloom.py edit runs\grapher-01\session.json "把 Treatment 改成虚线" --human
 ```
 
 The edit reopens the GRF, modifies Treatment's native line style, saves, reopens and verifies it. Control remains unchanged.
@@ -36,9 +36,9 @@ The edit reopens the GRF, modifies Treatment's native line style, saves, reopens
 The selected `Data` sheet is copied to a CSV **inside the run directory**. The original XLSX stays read only. The two error columns drive native symmetric Y error bars.
 
 ```powershell
-.\.venv\Scripts\python.exe skill\editaplot\scripts\editaplot.py workflow-preview docs\quickstart-data\error.xlsx --sheet Data --engine origin --template-id line_error --output-dir runs\origin-01 --engine-home runtime
-.\.venv\Scripts\python.exe skill\editaplot\scripts\editaplot.py workflow-render runs\origin-01\workflow-preview.json --claim "Compare two series with uncertainty" --confirm --human
-.\.venv\Scripts\python.exe skill\editaplot\scripts\editaplot.py edit runs\origin-01\session.json "把 Y 轴标题改成 Current (mA)" --human
+.\.venv\Scripts\python.exe skill\figureloom\scripts\figureloom.py workflow-preview docs\quickstart-data\error.xlsx --sheet Data --engine origin --template-id line_error --output-dir runs\origin-01 --engine-home runtime
+.\.venv\Scripts\python.exe skill\figureloom\scripts\figureloom.py workflow-render runs\origin-01\workflow-preview.json --claim "Compare two series with uncertainty" --confirm --human
+.\.venv\Scripts\python.exe skill\figureloom\scripts\figureloom.py edit runs\origin-01\session.json "把 Y 轴标题改成 Current (mA)" --human
 ```
 
 Open the resulting `result.opju` in Origin. The run contains PNG, PDF and TIF exports. To check artifacts again, use `verify <run>\origin --engine origin` or `verify <run>\grapher --engine grapher`.
@@ -49,8 +49,8 @@ The fixture below is explicitly synthetic, including its supplied p-values.
 It demonstrates layout and scientific mapping, not experimental findings.
 
 ```powershell
-.\.venv\Scripts\python.exe skill\editaplot\scripts\editaplot.py workflow-preview tests\fixtures\correlation_heatmap\demo_correlation.csv --engine grapher --template-id heatmap --correlation-spec-json tests\fixtures\correlation_heatmap\demo_spec.json --output-dir runs\correlation-01 --engine-home runtime
-.\.venv\Scripts\python.exe skill\editaplot\scripts\editaplot.py workflow-render runs\correlation-01\workflow-preview.json --claim "Synthetic correlation layout example; supplied synthetic p-values" --confirm --human
+.\.venv\Scripts\python.exe skill\figureloom\scripts\figureloom.py workflow-preview tests\fixtures\correlation_heatmap\demo_correlation.csv --engine grapher --template-id heatmap --correlation-spec-json tests\fixtures\correlation_heatmap\demo_spec.json --output-dir runs\correlation-01 --engine-home runtime
+.\.venv\Scripts\python.exe skill\figureloom\scripts\figureloom.py workflow-render runs\correlation-01\workflow-preview.json --claim "Synthetic correlation layout example; supplied synthetic p-values" --confirm --human
 ```
 
 Use `--engine origin` and a fresh directory for the equivalent native Matrix
@@ -83,9 +83,9 @@ Choose a new output directory for every run; use `engine="origin"` for OPJU.
 import sys
 from pathlib import Path
 import pandas as pd
-sys.path.insert(0, "skill/editaplot/scripts")
-from editaplot_engine.correlation_heatmap import CorrelationHeatmapSpec
-from editaplot_engine.workflow import preview, render_confirmed
+sys.path.insert(0, "skill/figureloom/scripts")
+from figureloom_engine.correlation_heatmap import CorrelationHeatmapSpec
+from figureloom_engine.workflow import preview, render_confirmed
 
 matrix_file = Path("tests/fixtures/correlation_heatmap/concrete_correlation.csv")
 matrix = pd.read_csv(matrix_file, index_col=0, float_precision="round_trip")
@@ -118,7 +118,7 @@ For **C: raw observations**, additionally provide SciPy (the validated analysis
 version is 1.14.1). This is explicit data preparation; the native backend renders
 the derived matrix. The complete Concrete fixture uses all 1030 finite numeric
 rows. This example rejects invalid data instead of silently dropping rows.
-Set `EDITAPLOT_CONCRETE_RAW` to your local raw CSV path and retain the derived
+Set `FIGURELOOM_CONCRETE_RAW` to your local raw CSV path and retain the derived
 files/provenance.
 
 ```python
@@ -128,7 +128,7 @@ import os
 import numpy as np
 from scipy.stats import pearsonr
 
-raw_file = Path(os.environ["EDITAPLOT_CONCRETE_RAW"])
+raw_file = Path(os.environ["FIGURELOOM_CONCRETE_RAW"])
 raw = pd.read_csv(raw_file)
 values = raw.to_numpy(dtype=float)
 assert len(values) >= 3 and np.isfinite(values).all()
@@ -159,6 +159,6 @@ is applied. Keep Grapher's GRF and `correlation_cells.csv` together. See
 
 ## Problems and records
 
-Normal output can be machine readable JSON; `--human` gives short result paths. Put `--verbose` **before the command** to retain native exception details in the run's `runtime.log`, for example `editaplot.py --verbose workflow-render ...`. A failed or interrupted session is never marked verified. `session.json` stores its status and error code; an interrupted `rendering`/`editing` session returns `incomplete_session` on retry. Start a new output directory rather than overwriting a prior run.
+Normal output can be machine readable JSON; `--human` gives short result paths. Put `--verbose` **before the command** to retain native exception details in the run's `runtime.log`, for example `figureloom.py --verbose workflow-render ...`. A failed or interrupted session is never marked verified. `session.json` stores its status and error code; an interrupted `rendering`/`editing` session returns `incomplete_session` on retry. Start a new output directory rather than overwriting a prior run.
 
-Grapher does not support native explicit per-point weighted Linear Fit; EditaPlot returns `unsupported_fit_weighting` and does not substitute an unweighted fit. Origin supports it. The available Grapher route set is 7 of 41 public Origin routes; see [route coverage](route-coverage-phase13.md).
+Grapher does not support native explicit per-point weighted Linear Fit; FigureLoom returns `unsupported_fit_weighting` and does not substitute an unweighted fit. Origin supports it. The available Grapher route set is 7 of 41 public Origin routes; see [route coverage](route-coverage-phase13.md).

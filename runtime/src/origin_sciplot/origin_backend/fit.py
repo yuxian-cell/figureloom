@@ -13,13 +13,13 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
-from editaplot_engine.fit_contract import (
+from figureloom_engine.fit_contract import (
     FitResult,
     FitSpec,
     selected_fit_points,
     selected_weighted_points,
 )
-from editaplot_engine.models import EngineError
+from figureloom_engine.models import EngineError
 
 from .export_utils import export_graph
 from .session import OriginSession
@@ -81,7 +81,7 @@ class _PolynomialFit:
 
 def _fit_source(op: Any, source: Any, spec: FitSpec) -> tuple[Any, str | None, tuple[int, int] | None]:
     if spec.weight_mode == "column":
-        helper = op.new_sheet("w", lname="EditaPlot Fit Weights")
+        helper = op.new_sheet("w", lname="FigureLoom Fit Weights")
         helper.from_df(selected_weighted_points(source.to_df(), spec).reset_index(drop=True))
         return helper, f"[{helper.get_book().name}]{helper.name}", None
     if spec.fit_range is None:
@@ -96,7 +96,7 @@ def _fit_source(op: Any, source: Any, spec: FitSpec) -> tuple[Any, str | None, t
         raise EngineError(
             "fit_range_apply_failed", "Origin X interval mapping is inconsistent", engine="origin"
         )
-    helper = op.new_sheet("w", lname="EditaPlot Fit Range")
+    helper = op.new_sheet("w", lname="FigureLoom Fit Range")
     helper_frame = full.copy()
     helper_frame["FitMinX"] = [lower, *([float("nan")] * (len(full) - 1))]
     helper_frame["FitMaxX"] = [upper, *([float("nan")] * (len(full) - 1))]

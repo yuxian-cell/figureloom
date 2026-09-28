@@ -11,13 +11,13 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-for path in (ROOT / "runtime" / "src", ROOT / "skill" / "editaplot" / "scripts"):
+for path in (ROOT / "runtime" / "src", ROOT / "skill" / "figureloom" / "scripts"):
     if str(path) not in sys.path:
         sys.path.insert(0, str(path))
 
-import editaplot_core as core  # noqa: E402
-from editaplot_engine.fit_contract import FitResult, FitSpec, production_linear_fits  # noqa: E402
-from editaplot_engine.models import EngineError  # noqa: E402
+import figureloom_core as core  # noqa: E402
+from figureloom_engine.fit_contract import FitResult, FitSpec, production_linear_fits  # noqa: E402
+from figureloom_engine.models import EngineError  # noqa: E402
 from grapher_sciplot.fit import parse_polynomial_statistics  # noqa: E402
 
 
@@ -103,7 +103,7 @@ def test_origin_native_quadratic_fit(tmp_path: Path) -> None:
     pytest.importorskip("originpro")
     if not core.discover_origin_application()["launch_registration_detected"]:
         pytest.skip("Origin isolated COM registration is unavailable")
-    from editaplot_engine.origin import OriginEngine
+    from figureloom_engine.origin import OriginEngine
 
     plan_file = _plan(tmp_path)
     output = tmp_path / "origin"

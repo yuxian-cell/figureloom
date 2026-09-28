@@ -8,8 +8,8 @@ from pathlib import Path
 from typing import Any
 from xml.etree import ElementTree
 
-from editaplot_engine.fit_contract import FitResult, FitSpec
-from editaplot_engine.models import EngineError
+from figureloom_engine.fit_contract import FitResult, FitSpec
+from figureloom_engine.models import EngineError
 
 from .smoke import call, get, put
 
@@ -52,7 +52,7 @@ def _native_statistics(document: Any, fit: Any) -> str:
             raise EngineError(
                 "fit_readback_failed", "Statistics text is not linked to native Fit", engine="grapher"
             )
-        with tempfile.TemporaryDirectory(prefix="editaplot-fit-") as directory:
+        with tempfile.TemporaryDirectory(prefix="figureloom-fit-") as directory:
             svg = Path(directory) / "fit-statistics.svg"
             if not call(document, "Export", str(svg)) or not svg.is_file():
                 raise EngineError(

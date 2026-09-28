@@ -8,7 +8,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "runtime" / "src"))
 
-from editaplot_engine.fit_contract import (
+from figureloom_engine.fit_contract import (
     FIT_CAPABILITIES,
     FitCapabilities,
     FitResult,
@@ -17,7 +17,7 @@ from editaplot_engine.fit_contract import (
     fit_error,
     selected_weighted_points,
 )
-from editaplot_engine.models import EngineError
+from figureloom_engine.models import EngineError
 
 
 def test_fit_spec_roundtrip_and_parameter_identity():

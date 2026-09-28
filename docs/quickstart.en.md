@@ -18,10 +18,10 @@ additional gallery entries.
 Download the **complete repository** and run this from its root:
 
 ```powershell
-.\editaplot.cmd setup
+.\figureloom.cmd setup
 ```
 
-Do not copy only `skill/editaplot`; it does not contain the rendering runtime. Git users can clone
+Do not copy only `skill/figureloom`; it does not contain the rendering runtime. Git users can clone
 the repository. Everyone else can download the Source ZIP without a GitHub account and extract it
 in full. See the [installation guide](installation.md).
 
@@ -30,8 +30,8 @@ explain the system-level change and obtain explicit consent before installing of
 in user scope with winget. It never installs Origin automatically.
 
 Codex needs only scoped access: read the complete repository, selected table, and optional reference
-image; write to the repository, the current user's `$HOME\.codex\skills\editaplot`, and the source
-data folder; run local `editaplot.cmd`, PowerShell, Python, and Origin in the same interactive
+image; write to the repository, the current user's `$HOME\.codex\skills\figureloom`, and the source
+data folder; run local `figureloom.cmd`, PowerShell, Python, and Origin in the same interactive
 Windows user session; and use the network only for initial download/update and locked dependencies.
 Normal use requires no administrator rights, mouse control, whole-drive write access, or DCOM,
 registry, firewall, or Origin-installation changes.
@@ -45,15 +45,15 @@ copy it into your own PowerShell, use administrator rights, or change DCOM or th
 not a sandbox bypass; if a machine or organization policy rejects the request, the task stops
 explicitly.
 
-The local EditaPlot runtime and Origin automation do not initiate a network upload of selected data.
+The local FigureLoom runtime and Origin automation do not initiate a network upload of selected data.
 Files explicitly provided through Codex remain subject to the user's Codex account, organization,
 and retention policies. Deidentify medical data and reference images and check burned-in text
-before providing them; EditaPlot does not automatically detect PHI.
+before providing them; FigureLoom does not automatically detect PHI.
 
 Then attach a CSV, TXT, XLS, or XLSX file in Codex and say:
 
 ```text
-Use $editaplot to make an appropriate figure from this file. Check the environment and inspect the
+Use $figureloom to make an appropriate figure from this file. Check the environment and inspect the
 data read-only. Recommend suitable charts, then classify every column as drawn, support/validation
 only, retained without rendering, or uncertain. List the final figure elements and calculations that
 will not be performed. Ask me to confirm the scientific purpose and this checklist; ask about uncertain
@@ -63,7 +63,7 @@ roles instead of guessing. Do not modify the source or silently invent, fit, nor
 The equivalent command-line entry point is:
 
 ```powershell
-.\editaplot.cmd start "$HOME\Documents\my-data.csv"
+.\figureloom.cmd start "$HOME\Documents\my-data.csv"
 ```
 
 ## What the Skill handles for a beginner
@@ -91,7 +91,7 @@ accepted long table has `Feature`, `SHAP value`, and `Feature value`. Optional r
 `Feature Order`, `Mean absolute SHAP`, `Feature Group`, and `Group contribution (%)`; equivalent
 Chinese column names are also recognized.
 
-EditaPlot selects beeswarm-only, beeswarm with a top Mean |SHAP| axis, or the full grouped composite
+FigureLoom selects beeswarm-only, beeswarm with a top Mean |SHAP| axis, or the full grouped composite
 from the roles actually present. If Mean |SHAP| or grouped percentages are absent but requested, I
 first list the formula and lineage and wait for explicit approval of those derived items. The
 within-feature color normalization and deterministic beeswarm offset are also disclosed in the
@@ -100,7 +100,7 @@ understanding checklist. The source file stays read-only. Use
 
 ## GSAS / GSAS-II XRD refinement data
 
-For Powder or Publication CSV files, EditaPlot distinguishes:
+For Powder or Publication CSV files, FigureLoom distinguishes:
 
 - visible elements: 2θ, Observed, Calculated, plus supplied Background, Difference, and explicitly
   identified Phase ticks;
@@ -152,10 +152,10 @@ default retained, or rejected. None of these visual choices changes the scientif
 If you use the command line directly, run the confirmed RenderPlan in this order:
 
 ```powershell
-$smokeDir = Join-Path $env:TEMP ("EditaPlot-origin-smoke-" + (Get-Date -Format "yyyyMMdd-HHmmss"))
-.\editaplot.cmd origin-smoke --output-dir $smokeDir
-.\editaplot.cmd render .\render-plan.json
-.\editaplot.cmd verify "<formal-output-directory>"
+$smokeDir = Join-Path $env:TEMP ("FigureLoom-origin-smoke-" + (Get-Date -Format "yyyyMMdd-HHmmss"))
+.\figureloom.cmd origin-smoke --output-dir $smokeDir
+.\figureloom.cmd render .\render-plan.json
+.\figureloom.cmd verify "<formal-output-directory>"
 ```
 
 Inside Codex, you do not have to copy and run those PowerShell commands yourself. When the task is
@@ -165,7 +165,7 @@ guaranteed. Codex reruns that same command only after the exact request is appro
 rejects it, Codex stops and explains instead of switching to administrator mode, editing DCOM/the
 registry, or routing through an external PowerShell session.
 
-I put `origin-smoke` before render so an EditaPlot-owned isolated Origin instance completes the
+I put `origin-smoke` before render so an FigureLoom-owned isolated Origin instance completes the
 minimal graph-and-export loop first; Doctor's read-only discovery is never treated as a successful
 live connection.
 
@@ -174,7 +174,7 @@ about four or five minutes is a reasonable range. If no reply or permission is p
 progress appears for 30–60 minutes, stop looped retries and use the
 [installation and stage-diagnosis guide](installation.md#runtime-duration).
 After a safely recoverable transient startup failure, the current runtime attempts to clean up the
-EditaPlot-owned partial instance and makes one fresh-instance attempt only if cleanup succeeds.
+FigureLoom-owned partial instance and makes one fresh-instance attempt only if cleanup succeeds.
 Cleanup failure or a failed second activation stops the run; any approved retry must use a new empty
 sibling output directory so the first report is preserved. Do not force-kill a Python worker merely
 because it has run for a long time: it may be managing a hidden Origin instance. Preserve the
@@ -183,12 +183,12 @@ When both activation and cleanup fail, the report keeps separate redacted code/s
 primary activation and the cleanup. It contains no account name, local path, or raw COM text and
 does not trigger another automatic retry.
 
-Multiple Codex tasks may analyze data and prepare plans concurrently, but current EditaPlot workers
+Multiple Codex tasks may analyze data and prepare plans concurrently, but current FigureLoom workers
 serialize their active `origin-smoke` / `render` sections within one signed-in Windows session.
 Waiting tasks emit `origin_job_queue` progress about every 30 seconds; strict FIFO order is not
 guaranteed. At 30 minutes only the waiter stops—the active holder is not killed. Windows releases
 the lock when that process ends, and a completed Origin window kept open does not retain it. The
-queue cannot coordinate manual scripts, older EditaPlot releases, or unrelated programs, so do not
+queue cannot coordinate manual scripts, older FigureLoom releases, or unrelated programs, so do not
 submit a duplicate render when a queue message is visible.
 
 ```text
@@ -205,6 +205,6 @@ DCOM or the registry.
 
 The source file stays read-only. Missing measurements are never invented; helper columns may exist
 only in memory or in the editable Origin workbook.
-For an ordinary render, omit `--output-dir`. I have EditaPlot create
-`<source_stem>_EditaPlot_<timestamp>` beside the original CSV, TXT, XLS, or XLSX file and keep the
+For an ordinary render, omit `--output-dir`. I have FigureLoom create
+`<source_stem>_FigureLoom_<timestamp>` beside the original CSV, TXT, XLS, or XLSX file and keep the
 RenderPlan, OPJU, PNG, PDF, TIF, object readback, and verification files together in that folder.

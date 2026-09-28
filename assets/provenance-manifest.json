@@ -7,7 +7,7 @@
   },
   "gallery_fixture_generator": {
     "path": "tools/generate_showcase_data.py",
-    "sha256": "ab1104fb57f49d925026632f58c80faedf83f0eeff9d9c30dc78368369172f7c"
+    "sha256": "782c4528282e8ebeaf875cb7a0aad2e95bef85e131541c1a73e7973741ba37a7"
   },
   "human_review": {
     "decision": "approved_for_public_source_release",
@@ -1019,8 +1019,8 @@
     {
       "path": "assets/palettes/cards/amber_lavender.png",
       "kind": "generated_original_palette_asset",
-      "size_bytes": 55442,
-      "sha256": "95296587dc17ddc7a973842ce6036703449e0bdf8b2d4cbf8058e8eb4ff806e7",
+      "size_bytes": 55449,
+      "sha256": "4859dbbb56fa0519fb0e06eb525ec3f8610de4695fec5b5a2868c30537a1abf8",
       "synthetic_or_generated": true,
       "contains_phi": false,
       "png_text": {}
@@ -1028,8 +1028,8 @@
     {
       "path": "assets/palettes/cards/blue_coral.png",
       "kind": "generated_original_palette_asset",
-      "size_bytes": 55700,
-      "sha256": "911621761ed6e1a3ed52ffee5ee810d35eb5e4cf593bf593dbb51d411873ab06",
+      "size_bytes": 55675,
+      "sha256": "c40c8605e070d1d91e2d7858e62af946f48c7f5c5c70f9acb8195d7356bdadee",
       "synthetic_or_generated": true,
       "contains_phi": false,
       "png_text": {}
@@ -1037,8 +1037,8 @@
     {
       "path": "assets/palettes/cards/deep_sea_gold.png",
       "kind": "generated_original_palette_asset",
-      "size_bytes": 54927,
-      "sha256": "489c13a9ca71d5e8918c4c1e03a5a7911e6b47d1dd2aca4775072e3c9e4d8d61",
+      "size_bytes": 54932,
+      "sha256": "7c6ba3cb8ee670b2f2251a18b31f0cbcc0bf2253256fe0f580fa4da4d853e1fc",
       "synthetic_or_generated": true,
       "contains_phi": false,
       "png_text": {}
@@ -1046,8 +1046,8 @@
     {
       "path": "assets/palettes/cards/forest_amber.png",
       "kind": "generated_original_palette_asset",
-      "size_bytes": 54831,
-      "sha256": "7550dc4d8b5df5057f22a47c6cdfd42e47fa3a50fa70d232def843d165447c4b",
+      "size_bytes": 54839,
+      "sha256": "156c1a8373e5ced46d827eaad6d723f7d294bc3d087e7a1fc2c74cfda25be5c1",
       "synthetic_or_generated": true,
       "contains_phi": false,
       "png_text": {}
@@ -1055,8 +1055,8 @@
     {
       "path": "assets/palettes/cards/navy_cyan_gold.png",
       "kind": "generated_original_palette_asset",
-      "size_bytes": 53094,
-      "sha256": "2ac254538e191b91ff201f6a1e92bd6f596b733166e3834767fbe5df79e339c5",
+      "size_bytes": 53047,
+      "sha256": "31d3965750f6b1fc98d78312ad899e14a65d7cd8058e71d5c72346312185c280",
       "synthetic_or_generated": true,
       "contains_phi": false,
       "png_text": {}
@@ -1064,8 +1064,8 @@
     {
       "path": "assets/palettes/cards/navy_ember.png",
       "kind": "generated_original_palette_asset",
-      "size_bytes": 55579,
-      "sha256": "d71c1284a5a23f42f09270cf1f2cf0803914ce6a50c20f5525ab44a4c36818d7",
+      "size_bytes": 55584,
+      "sha256": "cd35f1a726c3ab9ed136af1632ea069668a4c7d86fde9ba748ba710fde1353c4",
       "synthetic_or_generated": true,
       "contains_phi": false,
       "png_text": {}
@@ -1073,8 +1073,8 @@
     {
       "path": "assets/palettes/cards/ocean_coral.png",
       "kind": "generated_original_palette_asset",
-      "size_bytes": 56220,
-      "sha256": "e21d770c0e52682d340d78b6c33773358c939dfa7b6519ff0ad80459e9c1247f",
+      "size_bytes": 56210,
+      "sha256": "e3d96758ddd5c55d68f7b61630357ee242c20880bef074adc2e467bb2224b4d6",
       "synthetic_or_generated": true,
       "contains_phi": false,
       "png_text": {}
@@ -1082,8 +1082,8 @@
     {
       "path": "assets/palettes/cards/plum_rose.png",
       "kind": "generated_original_palette_asset",
-      "size_bytes": 56933,
-      "sha256": "fe4b35993d43c9edd61fa91ba215938bd4ceccbc6b6bbd6c6800173f8a5c412b",
+      "size_bytes": 56922,
+      "sha256": "cc69604f22ebd96b0dcd3eaba5d168712baa8f8e0a647dd4d6ecf4a835cbe548",
       "synthetic_or_generated": true,
       "contains_phi": false,
       "png_text": {}
@@ -1091,8 +1091,8 @@
     {
       "path": "assets/palettes/cards/sky_terra.png",
       "kind": "generated_original_palette_asset",
-      "size_bytes": 53238,
-      "sha256": "846d39b1eedabb6d932b497bfdcdc2d61ce7846aa429940b42f4c41b8afb370f",
+      "size_bytes": 53207,
+      "sha256": "9f1e85955743f00e1cc8e87c8ca157dba75a3bb2fe598335646a235d3f2f23d3",
       "synthetic_or_generated": true,
       "contains_phi": false,
       "png_text": {}
@@ -1100,8 +1100,8 @@
     {
       "path": "assets/palettes/cards/violet_lime.png",
       "kind": "generated_original_palette_asset",
-      "size_bytes": 53055,
-      "sha256": "b43973e97dba0de4bf3bc634f9f31c0ad4881a3bd74a46d7bce5c107ac57a8a1",
+      "size_bytes": 53010,
+      "sha256": "8d35eac18bd4e61166cf0d653dfb62ec8dcb244d7989874a88239991471c5b55",
       "synthetic_or_generated": true,
       "contains_phi": false,
       "png_text": {}
@@ -1109,8 +1109,8 @@
     {
       "path": "assets/palettes/palette-selector-all.zh-CN.png",
       "kind": "generated_original_palette_asset",
-      "size_bytes": 469526,
-      "sha256": "374bf9a31ffae16c0c678cdde4229e663ad481050304af039338baf4a00a2c04",
+      "size_bytes": 469646,
+      "sha256": "1fbb3ee0a30c6647154453843664baa7c312a50990f3728f627a32aba6e9d5d0",
       "synthetic_or_generated": true,
       "contains_phi": false,
       "png_text": {}
@@ -1118,8 +1118,8 @@
     {
       "path": "assets/palettes/palette-selector-public.zh-CN.png",
       "kind": "generated_original_palette_asset",
-      "size_bytes": 387630,
-      "sha256": "e4d069f3c3ceb2692d4de37a591863c8744b32bb7081432a63a28628d9264ea4",
+      "size_bytes": 387743,
+      "sha256": "9dd3f4f8a02d179e80451e4a1ef1e3b9400fd2721c1830782af31ac83ba23500",
       "synthetic_or_generated": true,
       "contains_phi": false,
       "png_text": {}
@@ -2315,12 +2315,12 @@
     {
       "path": "runtime/templates/xps_c1s_fit/preview.png",
       "kind": "generated_synthetic_ui_preview",
-      "size_bytes": 179279,
-      "sha256": "5d3a935a68988f0a365d629c1a7624cd4e252f05f064cf6479794d5d809f5758",
+      "size_bytes": 179280,
+      "sha256": "fa4d897f794dd1d44029f7d3d89be385e30a99ac7434137387272688c617f8e1",
       "synthetic_or_generated": true,
       "contains_phi": false,
       "png_text": {
-        "Software": "EditaPlot"
+        "Software": "FigureLoom"
       }
     },
     {
@@ -2444,109 +2444,109 @@
       "contains_phi": false
     },
     {
-      "path": "skill/editaplot/assets/palettes/cards/amber_lavender.png",
+      "path": "skill/figureloom/assets/palettes/cards/amber_lavender.png",
       "kind": "generated_original_palette_asset",
-      "size_bytes": 55442,
-      "sha256": "95296587dc17ddc7a973842ce6036703449e0bdf8b2d4cbf8058e8eb4ff806e7",
+      "size_bytes": 55449,
+      "sha256": "4859dbbb56fa0519fb0e06eb525ec3f8610de4695fec5b5a2868c30537a1abf8",
       "synthetic_or_generated": true,
       "contains_phi": false,
       "png_text": {}
     },
     {
-      "path": "skill/editaplot/assets/palettes/cards/blue_coral.png",
+      "path": "skill/figureloom/assets/palettes/cards/blue_coral.png",
       "kind": "generated_original_palette_asset",
-      "size_bytes": 55700,
-      "sha256": "911621761ed6e1a3ed52ffee5ee810d35eb5e4cf593bf593dbb51d411873ab06",
+      "size_bytes": 55675,
+      "sha256": "c40c8605e070d1d91e2d7858e62af946f48c7f5c5c70f9acb8195d7356bdadee",
       "synthetic_or_generated": true,
       "contains_phi": false,
       "png_text": {}
     },
     {
-      "path": "skill/editaplot/assets/palettes/cards/deep_sea_gold.png",
+      "path": "skill/figureloom/assets/palettes/cards/deep_sea_gold.png",
       "kind": "generated_original_palette_asset",
-      "size_bytes": 54927,
-      "sha256": "489c13a9ca71d5e8918c4c1e03a5a7911e6b47d1dd2aca4775072e3c9e4d8d61",
+      "size_bytes": 54932,
+      "sha256": "7c6ba3cb8ee670b2f2251a18b31f0cbcc0bf2253256fe0f580fa4da4d853e1fc",
       "synthetic_or_generated": true,
       "contains_phi": false,
       "png_text": {}
     },
     {
-      "path": "skill/editaplot/assets/palettes/cards/forest_amber.png",
+      "path": "skill/figureloom/assets/palettes/cards/forest_amber.png",
       "kind": "generated_original_palette_asset",
-      "size_bytes": 54831,
-      "sha256": "7550dc4d8b5df5057f22a47c6cdfd42e47fa3a50fa70d232def843d165447c4b",
+      "size_bytes": 54839,
+      "sha256": "156c1a8373e5ced46d827eaad6d723f7d294bc3d087e7a1fc2c74cfda25be5c1",
       "synthetic_or_generated": true,
       "contains_phi": false,
       "png_text": {}
     },
     {
-      "path": "skill/editaplot/assets/palettes/cards/navy_cyan_gold.png",
+      "path": "skill/figureloom/assets/palettes/cards/navy_cyan_gold.png",
       "kind": "generated_original_palette_asset",
-      "size_bytes": 53094,
-      "sha256": "2ac254538e191b91ff201f6a1e92bd6f596b733166e3834767fbe5df79e339c5",
+      "size_bytes": 53047,
+      "sha256": "31d3965750f6b1fc98d78312ad899e14a65d7cd8058e71d5c72346312185c280",
       "synthetic_or_generated": true,
       "contains_phi": false,
       "png_text": {}
     },
     {
-      "path": "skill/editaplot/assets/palettes/cards/navy_ember.png",
+      "path": "skill/figureloom/assets/palettes/cards/navy_ember.png",
       "kind": "generated_original_palette_asset",
-      "size_bytes": 55579,
-      "sha256": "d71c1284a5a23f42f09270cf1f2cf0803914ce6a50c20f5525ab44a4c36818d7",
+      "size_bytes": 55584,
+      "sha256": "cd35f1a726c3ab9ed136af1632ea069668a4c7d86fde9ba748ba710fde1353c4",
       "synthetic_or_generated": true,
       "contains_phi": false,
       "png_text": {}
     },
     {
-      "path": "skill/editaplot/assets/palettes/cards/ocean_coral.png",
+      "path": "skill/figureloom/assets/palettes/cards/ocean_coral.png",
       "kind": "generated_original_palette_asset",
-      "size_bytes": 56220,
-      "sha256": "e21d770c0e52682d340d78b6c33773358c939dfa7b6519ff0ad80459e9c1247f",
+      "size_bytes": 56210,
+      "sha256": "e3d96758ddd5c55d68f7b61630357ee242c20880bef074adc2e467bb2224b4d6",
       "synthetic_or_generated": true,
       "contains_phi": false,
       "png_text": {}
     },
     {
-      "path": "skill/editaplot/assets/palettes/cards/plum_rose.png",
+      "path": "skill/figureloom/assets/palettes/cards/plum_rose.png",
       "kind": "generated_original_palette_asset",
-      "size_bytes": 56933,
-      "sha256": "fe4b35993d43c9edd61fa91ba215938bd4ceccbc6b6bbd6c6800173f8a5c412b",
+      "size_bytes": 56922,
+      "sha256": "cc69604f22ebd96b0dcd3eaba5d168712baa8f8e0a647dd4d6ecf4a835cbe548",
       "synthetic_or_generated": true,
       "contains_phi": false,
       "png_text": {}
     },
     {
-      "path": "skill/editaplot/assets/palettes/cards/sky_terra.png",
+      "path": "skill/figureloom/assets/palettes/cards/sky_terra.png",
       "kind": "generated_original_palette_asset",
-      "size_bytes": 53238,
-      "sha256": "846d39b1eedabb6d932b497bfdcdc2d61ce7846aa429940b42f4c41b8afb370f",
+      "size_bytes": 53207,
+      "sha256": "9f1e85955743f00e1cc8e87c8ca157dba75a3bb2fe598335646a235d3f2f23d3",
       "synthetic_or_generated": true,
       "contains_phi": false,
       "png_text": {}
     },
     {
-      "path": "skill/editaplot/assets/palettes/cards/violet_lime.png",
+      "path": "skill/figureloom/assets/palettes/cards/violet_lime.png",
       "kind": "generated_original_palette_asset",
-      "size_bytes": 53055,
-      "sha256": "b43973e97dba0de4bf3bc634f9f31c0ad4881a3bd74a46d7bce5c107ac57a8a1",
+      "size_bytes": 53010,
+      "sha256": "8d35eac18bd4e61166cf0d653dfb62ec8dcb244d7989874a88239991471c5b55",
       "synthetic_or_generated": true,
       "contains_phi": false,
       "png_text": {}
     },
     {
-      "path": "skill/editaplot/assets/palettes/palette-selector-all.zh-CN.png",
+      "path": "skill/figureloom/assets/palettes/palette-selector-all.zh-CN.png",
       "kind": "generated_original_palette_asset",
-      "size_bytes": 469526,
-      "sha256": "374bf9a31ffae16c0c678cdde4229e663ad481050304af039338baf4a00a2c04",
+      "size_bytes": 469646,
+      "sha256": "1fbb3ee0a30c6647154453843664baa7c312a50990f3728f627a32aba6e9d5d0",
       "synthetic_or_generated": true,
       "contains_phi": false,
       "png_text": {}
     },
     {
-      "path": "skill/editaplot/assets/palettes/palette-selector-public.zh-CN.png",
+      "path": "skill/figureloom/assets/palettes/palette-selector-public.zh-CN.png",
       "kind": "generated_original_palette_asset",
-      "size_bytes": 387630,
-      "sha256": "e4d069f3c3ceb2692d4de37a591863c8744b32bb7081432a63a28628d9264ea4",
+      "size_bytes": 387743,
+      "sha256": "9dd3f4f8a02d179e80451e4a1ef1e3b9400fd2721c1830782af31ac83ba23500",
       "synthetic_or_generated": true,
       "contains_phi": false,
       "png_text": {}

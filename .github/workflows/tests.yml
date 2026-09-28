@@ -37,7 +37,7 @@ jobs:
       - name: Lint public control surface
         run: >-
           python -m ruff check --no-cache
-          skill/editaplot/scripts
+          skill/figureloom/scripts
           runtime/src/origin_sciplot/app.py
           runtime/src/origin_sciplot/circular_network_layout.py
           runtime/src/origin_sciplot/heatmap_layout.py
@@ -79,7 +79,7 @@ jobs:
         run: >-
           python -m pytest
           -p no:cacheprovider
-          --basetemp "$env:RUNNER_TEMP\editaplot-pytest"
+          --basetemp "$env:RUNNER_TEMP\figureloom-pytest"
           -ra
 
       - name: Enforce public-release allowlist
@@ -124,7 +124,7 @@ jobs:
         run: >-
           python -m pytest
           -p no:cacheprovider
-          --basetemp "$env:RUNNER_TEMP\editaplot-pytest"
+          --basetemp "$env:RUNNER_TEMP\figureloom-pytest"
           -ra
 
       - name: Enforce public-release allowlist

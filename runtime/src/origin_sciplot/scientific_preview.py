@@ -1252,7 +1252,7 @@ def _draw_shap_composite(
         series.color_column,
     )
     colormap = mpl.colors.LinearSegmentedColormap.from_list(
-        "EditaPlotShapFeatureValue",
+        "FigureLoomShapFeatureValue",
         SHAP_FEATURE_VALUE_COLORS,
     )
     color_norm = mpl.colors.Normalize(vmin=0.0, vmax=1.0)

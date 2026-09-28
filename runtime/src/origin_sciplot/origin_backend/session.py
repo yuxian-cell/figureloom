@@ -149,7 +149,7 @@ class OriginSession:
                 break
             except Exception as exc:  # noqa: BLE001 - redact local Automation failure details
                 code = classify_origin_activation_error(exc)
-                # Activation may have created a partial EditaPlot-owned
+                # Activation may have created a partial FigureLoom-owned
                 # instance. OriginLab's external-Python lifecycle permits
                 # best-effort Exit; its wrapper then creates a fresh
                 # Application object on the next access.
@@ -185,12 +185,12 @@ class OriginSession:
                     stage="create_instance",
                 ) from exc
 
-        self.ownership = SessionOwnership.EDITAPLOT
+        self.ownership = SessionOwnership.FIGURELOOM
         self._wait_until_ready(op)
         version_info = self._read_supported_version(op)
 
         try:
-            # Only an EditaPlot-owned instance may discard its current project.
+            # Only an FigureLoom-owned instance may discard its current project.
             op.new(asksave=False)
         except Exception as exc:  # noqa: BLE001 - redact local Automation failure details
             self._cleanup_failed_entry(op)
@@ -313,7 +313,7 @@ class OriginSession:
         if self.ownership is SessionOwnership.USER:
             with suppress(Exception):
                 op.detach()
-        elif self.ownership is SessionOwnership.EDITAPLOT:
+        elif self.ownership is SessionOwnership.FIGURELOOM:
             # Entry never completed, so keep_open does not apply. Leaving a
             # visible instance here would discard the only management handle.
             with suppress(Exception):
@@ -342,7 +342,7 @@ class OriginSession:
                 op.detach()
             elif self.keep_open:
                 # A renderer may fail immediately after __enter__. Keep-open
-                # still means the EditaPlot-owned window must be visible.
+                # still means the FigureLoom-owned window must be visible.
                 op.set_show(True)
             else:
                 _exit_owned(op)

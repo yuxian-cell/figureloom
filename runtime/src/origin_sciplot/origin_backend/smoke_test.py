@@ -114,7 +114,7 @@ class _SmokePaths:
                     "The Origin smoke output path is invalid or too long. Choose a shorter "
                     "writable directory and retry."
                     if invalid_path
-                    else "EditaPlot could not prepare the Origin smoke output directory. Check "
+                    else "FigureLoom could not prepare the Origin smoke output directory. Check "
                     "free disk space, cloud-sync or security-software locks, and folder access."
                 ),
                 code=(
@@ -882,7 +882,7 @@ def run_origin_smoke(
             _mark_passed(stages, current_stage, command=READY_COMMAND)
 
             current_stage = "create_book"
-            book = op.new_book("w", "EditaPlot Compatibility Smoke")
+            book = op.new_book("w", "FigureLoom Compatibility Smoke")
             if book is None:
                 raise RuntimeError("Origin returned no workbook")
             sheet = book[0]
@@ -891,7 +891,7 @@ def run_origin_smoke(
             _mark_passed(stages, current_stage, rows=4, columns=2)
 
             current_stage = "create_graph"
-            graph = op.new_graph("EditaPlot Compatibility Smoke", template="Line")
+            graph = op.new_graph("FigureLoom Compatibility Smoke", template="Line")
             if graph is None:
                 raise RuntimeError("Origin returned no graph")
             layer = graph[0]

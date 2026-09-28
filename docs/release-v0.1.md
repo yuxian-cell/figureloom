@@ -1,6 +1,6 @@
-# EditaPlot v0.1 release notes
+# FigureLoom v0.1 release notes
 
-EditaPlot v0.1 is a Windows Python/CLI release for inspect → recommend → understand → explicit confirmation → RenderPlan → native Origin or Grapher render → save/reopen/readback/verify → session resume → limited native edit. Start with [Quickstart](quickstart.md).
+FigureLoom v0.1 is a Windows Python/CLI release for inspect → recommend → understand → explicit confirmation → RenderPlan → native Origin or Grapher render → save/reopen/readback/verify → session resume → limited native edit. Start with [Quickstart](quickstart.md).
 
 ## What works
 
@@ -14,7 +14,7 @@ EditaPlot v0.1 is a Windows Python/CLI release for inspect → recommend → und
 
 - Grapher has no verified native explicit per-point weighted Linear Fit; requests fail with `unsupported_fit_weighting`. Origin supports direct weights.
 - Grapher automation uses one isolated COM instance per job. Many jobs in one long-lived Python process may encounter COM access conflicts.
-- The installed Origin external COM API does not provide a verified PID/HWND ownership identity. Exit and Python-reference release are attempted; an immediate doctor check may report `unknown_process_remaining`. Native Fit teardown can still print `0x800706be`, and unknown residual processes have been observed after the 13-case suite. Subsequent doctor/render/edit jobs recovered successfully. EditaPlot never kills an unproven Origin process.
+- The installed Origin external COM API does not provide a verified PID/HWND ownership identity. Exit and Python-reference release are attempted; an immediate doctor check may report `unknown_process_remaining`. Native Fit teardown can still print `0x800706be`, and unknown residual processes have been observed after the 13-case suite. Subsequent doctor/render/edit jobs recovered successfully. FigureLoom never kills an unproven Origin process.
 - Grapher covers 7 of 41 public Origin routes. The other routes are not silently rendered as approximations. See [route coverage](route-coverage-phase13.md).
 - Origin automatic Fit statistics boxes can be crowded for multiple Fits.
 - EditPlan is intentionally limited; it does not edit Fit range or arbitrary plot properties. There is no desktop shell or installer in this release.
@@ -22,9 +22,9 @@ EditaPlot v0.1 is a Windows Python/CLI release for inspect → recommend → und
 ## Use
 
 ```powershell
-.\.venv\Scripts\python.exe skill\editaplot\scripts\editaplot.py --version
-.\.venv\Scripts\python.exe skill\editaplot\scripts\editaplot.py doctor --engine grapher --live --human
-.\.venv\Scripts\python.exe skill\editaplot\scripts\editaplot.py workflow-preview docs\quickstart-data\multiseries.csv --engine grapher --template-id trend --output-dir runs\grapher-01 --engine-home runtime
+.\.venv\Scripts\python.exe skill\figureloom\scripts\figureloom.py --version
+.\.venv\Scripts\python.exe skill\figureloom\scripts\figureloom.py doctor --engine grapher --live --human
+.\.venv\Scripts\python.exe skill\figureloom\scripts\figureloom.py workflow-preview docs\quickstart-data\multiseries.csv --engine grapher --template-id trend --output-dir runs\grapher-01 --engine-home runtime
 ```
 
 Review and confirm the generated `workflow-preview.json`, then follow the render/edit commands in [Quickstart](quickstart.md). Successful output names the native project, exports, verification status and session path.

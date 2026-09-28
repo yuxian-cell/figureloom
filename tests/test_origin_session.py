@@ -46,7 +46,7 @@ def test_default_session_launches_and_owns_an_isolated_instance(
         assert environment.originpro_version == "1.1.15"
         assert environment.originext_version == "1.2.5"
         assert environment.connection_mode is ConnectionMode.NEW_ISOLATED
-        assert environment.ownership is SessionOwnership.EDITAPLOT
+        assert environment.ownership is SessionOwnership.FIGURELOOM
         assert environment.origin_version_info.product_label == "2024b"
         assert environment.python_version
         assert environment.python_architecture_bits in {32, 64}
@@ -62,7 +62,7 @@ def test_default_session_launches_and_owns_an_isolated_instance(
             "python_version": environment.python_version,
             "python_architecture_bits": environment.python_architecture_bits,
             "connection_mode": "new_isolated",
-            "session_ownership": "editaplot",
+            "session_ownership": "figureloom",
         }
 
     assert events == [

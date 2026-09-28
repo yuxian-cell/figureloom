@@ -15,17 +15,17 @@ Z=0 基线焦点，不会自动运行 KDE、找峰或求交点。热力图页面
 安装时必须下载**完整仓库**，在仓库根目录运行：
 
 ```powershell
-.\editaplot.cmd setup
+.\figureloom.cmd setup
 ```
 
-不要只复制 `skill/editaplot`，那样没有绘图 runtime。会 Git 的用户可以 `git clone`；不会 Git
+不要只复制 `skill/figureloom`，那样没有绘图 runtime。会 Git 的用户可以 `git clone`；不会 Git
 或没有 GitHub 账号的用户可以下载 Source ZIP 并完整解压。完整步骤见[安装指南](installation.md)。
 我让启动器先复用已有的 64 位 CPython 3.10–3.12；若完全没有兼容 Python，Codex 必须先向你
 说明这是系统级变更并征得明确同意，才可通过官方 winget 以用户范围安装 Python 3.12。
-EditaPlot 永不自动安装 Origin。
+FigureLoom 永不自动安装 Origin。
 
 给 Codex 的最小权限是：读取完整仓库、数据和可选参考图；写入仓库、当前用户
-`$HOME\.codex\skills\editaplot` 及数据父文件夹；运行本地 `editaplot.cmd`、PowerShell、Python
+`$HOME\.codex\skills\figureloom` 及数据父文件夹；运行本地 `figureloom.cmd`、PowerShell、Python
 和同一 Windows 用户会话中的 Origin；首次下载/更新时访问 GitHub 与 Python 包源。普通使用不需要
 管理员、鼠标、全盘写入或 DCOM/注册表/防火墙修改。目录被 Windows 安全策略或网盘锁定时，只放行
 当前仓库和当前数据目录，或明确选择另一个可写输出目录。
@@ -37,14 +37,14 @@ Codex 才会重跑同一条命令并继续；申请可以由你在提示时确�
 PowerShell，也无需管理员、DCOM 或注册表修改。这不是绕过沙箱；被本机或组织策略拒绝时，任务会
 明确停止。
 
-EditaPlot 本地 runtime 与 Origin 自动化不会主动上传数据；你主动交给 Codex 的文件仍受当前
+FigureLoom 本地 runtime 与 Origin 自动化不会主动上传数据；你主动交给 Codex 的文件仍受当前
 Codex 账号、组织和数据保留策略约束。医学数据或参考图必须先按机构要求去标识化并检查烧录文字，
-不要依赖 EditaPlot 自动发现 PHI。
+不要依赖 FigureLoom 自动发现 PHI。
 
 然后把 CSV、TXT、XLS 或 XLSX 拖进 Codex，只说这一句：
 
 ```text
-请使用 $editaplot 帮我画这份数据。自动检查环境并只读识别数据，推荐合适图形；
+请使用 $figureloom 帮我画这份数据。自动检查环境并只读识别数据，推荐合适图形；
 选定候选模板后，逐列说明哪些要画、哪些只作辅助或验证、哪些保留但不画，
 再列出最终图形元素和不会自动进行的计算。先让我确认科学目的与这份清单；
 不确定列请先问我。不要修改源文件，也不要补造、静默拟合或计算数据。
@@ -53,7 +53,7 @@ Codex 账号、组织和数据保留策略约束。医学数据或参考图必�
 命令行用户可以运行：
 
 ```powershell
-.\editaplot.cmd start "$HOME\Documents\my-data.csv"
+.\figureloom.cmd start "$HOME\Documents\my-data.csv"
 ```
 
 ## 我会让 Skill 替新手处理什么
@@ -130,10 +130,10 @@ Publication CSV 的 `Diff` 若已含显示位置，会按源值直接绘制，�
 如果你直接使用命令行，确认 RenderPlan 后请按下面的顺序运行：
 
 ```powershell
-$smokeDir = Join-Path $env:TEMP ("EditaPlot-origin-smoke-" + (Get-Date -Format "yyyyMMdd-HHmmss"))
-.\editaplot.cmd origin-smoke --output-dir $smokeDir
-.\editaplot.cmd render .\render-plan.json
-.\editaplot.cmd verify "<正式输出目录>"
+$smokeDir = Join-Path $env:TEMP ("FigureLoom-origin-smoke-" + (Get-Date -Format "yyyyMMdd-HHmmss"))
+.\figureloom.cmd origin-smoke --output-dir $smokeDir
+.\figureloom.cmd render .\render-plan.json
+.\figureloom.cmd verify "<正式输出目录>"
 ```
 
 在 Codex 中不需要你自己复制执行这些 PowerShell 命令。若当前任务处于沙箱，Codex 应为精确的
@@ -141,7 +141,7 @@ Origin 命令发起一次受限审批；只有这条精确申请获批后，它�
 由你在提示时确认，也可由已经配置的自动审查评估，但审批不保证通过。被策略拒绝时应停止并解释，
 不能改用管理员权限、DCOM/注册表修改或外部 PowerShell 旁路。
 
-我把 `origin-smoke` 放在 render 前面，是为了先用 EditaPlot 自有的隔离 Origin 实例完成
+我把 `origin-smoke` 放在 render 前面，是为了先用 FigureLoom 自有的隔离 Origin 实例完成
 最小建图和导出闭环，而不是把 Doctor 的只读发现当成已经连接成功。
 
 环境已经配好且必要确认已经完成时，完整本地流程在 4–5 分钟内完成可视为合理；若没有等待你的
@@ -153,11 +153,11 @@ Origin 命令发起一次受限审批；只有这条精确申请获批后，它�
 若启动和清理都失败，报告会分别保存脱敏的最初启动代码/阶段和清理代码/阶段，不包含账户名、路径
 或原始 COM 文本，也不会继续自动重试。
 
-多个 Codex 任务可以同时分析数据和准备方案，但同一 Windows 登录会话中的新版 EditaPlot 会把
+多个 Codex 任务可以同时分析数据和准备方案，但同一 Windows 登录会话中的新版 FigureLoom 会把
 真正的 `origin-smoke` / `render` 阶段自动串行。等待时会看到 `origin_job_queue`，约每 30 秒更新
 一次；顺序不保证严格先来先服务。等待达到 30 分钟时只停止等待者，不会杀掉占用者；进程结束后
 Windows 会释放锁，成功后保留的 Origin 窗口也不继续占锁。该队列不能协调手动脚本、旧版
-EditaPlot 或第三方程序，因此看到等待提示时不要重复提交同一绘图任务。
+FigureLoom 或第三方程序，因此看到等待提示时不要重复提交同一绘图任务。
 
 ```text
 请使用已确认的方案绘图。我不需要提前打开 Origin；请先运行真实 smoke，自动启动专用 Origin
@@ -169,6 +169,6 @@ EditaPlot 或第三方程序，因此看到等待提示时不要重复提交同�
 ```
 
 原始文件始终只读。缺少的数据列不会被补造；helper columns 只能存在于内存或可编辑 Origin 工作簿。
-普通 render 不指定 `--output-dir`。我会让 EditaPlot 在源 CSV、TXT、XLS 或 XLSX 所在目录中，
-新建与原文件同级的 `<source_stem>_EditaPlot_<timestamp>` 文件夹，把 RenderPlan、OPJU、
+普通 render 不指定 `--output-dir`。我会让 FigureLoom 在源 CSV、TXT、XLS 或 XLSX 所在目录中，
+新建与原文件同级的 `<source_stem>_FigureLoom_<timestamp>` 文件夹，把 RenderPlan、OPJU、
 PNG、PDF、TIF、对象反读和验证文件全部放在里面。

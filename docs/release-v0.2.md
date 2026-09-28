@@ -1,4 +1,4 @@
-# EditaPlot v0.2.0 release notes
+# FigureLoom v0.2.0 release notes
 
 v0.2.0 adds the production **Correlation Heatmap** submode to the existing
 Heatmap template. It retains inspect/understand → explicit confirmation →
@@ -89,5 +89,18 @@ Historical engineering evidence: [Phase 16](correlation-heatmap-phase16.md),
 - Existing Fit/EditPlan scope, platform constraints and installer limitations
   remain as documented in [v0.1 notes](release-v0.1.md).
 
-This release finalization creates a local annotated `v0.2.0` tag only. No push,
-GitHub Release, package publication or Phase 18 is part of this operation.
+The original release finalization created a local annotated `v0.2.0` tag.
+The user subsequently authorized the FigureLoom rebrand and public repository
+push. GitHub Release creation, package publication and Phase 18 remain outside
+this operation.
+
+## Public repository identity
+
+The public project and package are FigureLoom / `figureloom`, hosted at
+https://github.com/yuxian-cell/figureloom. The user authorized updating the frozen
+v0.2.0 identity before its first successful push; version remains 0.2.0.
+Use `figureloom.cmd`, `skill/figureloom/scripts/figureloom.py`, the `figureloom`
+package, and `FIGURELOOM_*` environment variables. Previous names have no
+compatibility aliases. Native OPJU/GRF projects remain editable; existing
+RenderPlan/session records are not silently rewritten or declared migrated.
+Scientific fixture values, algorithms, and native plotting behavior are preserved.

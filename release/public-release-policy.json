@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "policy_name": "EditaPlot public source release",
+  "policy_name": "FigureLoom public source release",
   "required_tracked": [
     ".github/workflows/star-trend.yml",
     ".github/workflows/tests.yml",
@@ -8,7 +8,7 @@
     "ASSET_PROVENANCE.md",
     "AUTHORS.md",
     "CONTRIBUTING.md",
-    "editaplot.cmd",
+    "figureloom.cmd",
     "LICENSE",
     "NOTICE",
     "README.md",
@@ -30,15 +30,15 @@
     "runtime/requirements-runtime.lock",
     "runtime/requirements-runtime.txt",
     "runtime/runtime-manifest.json",
-    "skill/editaplot/LICENSE",
-    "skill/editaplot/NOTICE",
-    "skill/editaplot/SKILL.md",
-    "skill/editaplot/agents/openai.yaml",
-    "skill/editaplot/scripts/editaplot.py",
-    "skill/editaplot/scripts/bootstrap_editaplot.py",
-    "skill/editaplot/scripts/editaplot_core.py",
-    "skill/editaplot/scripts/requirements-runtime.lock",
-    "tests/test_editaplot.py",
+    "skill/figureloom/LICENSE",
+    "skill/figureloom/NOTICE",
+    "skill/figureloom/SKILL.md",
+    "skill/figureloom/agents/openai.yaml",
+    "skill/figureloom/scripts/figureloom.py",
+    "skill/figureloom/scripts/bootstrap_figureloom.py",
+    "skill/figureloom/scripts/figureloom_core.py",
+    "skill/figureloom/scripts/requirements-runtime.lock",
+    "tests/test_figureloom.py",
     "tests/test_public_release_gate.py",
     "tests/test_star_trend.py",
     "tools/build_asset_provenance.py",
@@ -114,15 +114,15 @@
     "docs/route-coverage-phase13.md",
     "docs/runtime-origin-lifecycle-phase15.md",
     "docs/workflow-phase14.md",
-    "editaplot.cmd",
+    "figureloom.cmd",
     "pyproject.toml",
     "release/public-release-policy.json",
     "requirements-runtime.lock",
     "requirements-runtime.txt",
     "runtime/LICENSE",
     "runtime/NOTICE",
-    "skill/editaplot/LICENSE",
-    "skill/editaplot/NOTICE",
+    "skill/figureloom/LICENSE",
+    "skill/figureloom/NOTICE",
     "tests/fixtures/correlation_heatmap/README.md",
     "tests/fixtures/correlation_heatmap/concrete_correlation.csv",
     "tests/fixtures/correlation_heatmap/concrete_pvalues.csv",
@@ -193,7 +193,7 @@
       ]
     },
     {
-      "prefix": "skill/editaplot/",
+      "prefix": "skill/figureloom/",
       "extensions": [
         ".json",
         ".lock",
@@ -213,7 +213,7 @@
   ],
   "forbidden_segments": [
     ".build-venv",
-    ".editaplot-venv",
+    ".figureloom-venv",
     ".git",
     ".mypy_cache",
     ".pytest_cache",
@@ -354,6 +354,10 @@
     {
       "id": "personal_mailbox",
       "pattern": "[A-Z0-9._%+-]+@(?:gmail|outlook|hotmail|qq|163)\\.[A-Z]{2,}"
+    },
+    {
+      "id": "legacy_editaplot_brand",
+      "pattern": "EditaPlot|editaplot|EDITAPLOT"
     }
   ],
   "license": {
@@ -368,8 +372,8 @@
   "notice": {
     "path": "NOTICE",
     "required_phrases": [
-      "EditaPlot",
-      "Copyright 2026 EditaPlot contributors",
+      "FigureLoom",
+      "Copyright 2026 FigureLoom contributors",
       "Apache License, Version 2.0",
       "OriginLab Corporation",
       "not affiliated",
@@ -382,7 +386,7 @@
     "constraint_copies": [
       "requirements-runtime.lock",
       "runtime/requirements-runtime.lock",
-      "skill/editaplot/scripts/requirements-runtime.lock"
+      "skill/figureloom/scripts/requirements-runtime.lock"
     ],
     "runtime_pyproject": "runtime/pyproject.toml",
     "expected_locked_packages": [
@@ -426,7 +430,7 @@
   },
   "palettes": {
     "source": "assets/palettes",
-    "skill_copy": "skill/editaplot/assets/palettes",
+    "skill_copy": "skill/figureloom/assets/palettes",
     "expected_file_count": 13,
     "catalog": "assets/palettes/palette-catalog.json",
     "expected_palette_count": 10,

@@ -75,10 +75,10 @@ def test_verified_showcase_case_is_publicly_displayed() -> None:
 
 def test_author_voice_documents_describe_the_verified_route() -> None:
     documents = {
-        "chart": ROOT / "skill" / "editaplot" / "references" / "chart-selection.md",
-        "data": ROOT / "skill" / "editaplot" / "references" / "data-contracts.md",
-        "showcase": ROOT / "skill" / "editaplot" / "references" / "showcase.md",
-        "skill": ROOT / "skill" / "editaplot" / "SKILL.md",
+        "chart": ROOT / "skill" / "figureloom" / "references" / "chart-selection.md",
+        "data": ROOT / "skill" / "figureloom" / "references" / "data-contracts.md",
+        "showcase": ROOT / "skill" / "figureloom" / "references" / "showcase.md",
+        "skill": ROOT / "skill" / "figureloom" / "SKILL.md",
     }
     text = {name: path.read_text(encoding="utf-8") for name, path in documents.items()}
 

@@ -1,4 +1,4 @@
-"""Static Origin capability requirements for public EditaPlot templates.
+"""Static Origin capability requirements for public FigureLoom templates.
 
 The matrix in this module is deliberately independent from ``originpro`` and
 Origin itself.  It describes what a renderer needs; a separate live probe can
@@ -15,7 +15,7 @@ from .capabilities import OriginVersionInfo, parse_origin_version
 
 
 class OriginCapability(str, Enum):
-    """Independently testable Origin features used by EditaPlot renderers."""
+    """Independently testable Origin features used by FigureLoom renderers."""
 
     CORE_2D = "core_2d"
     EDITABLE_OPJU = "editable_opju"

@@ -16,12 +16,12 @@ def test_current_release_version_consistency():
     version = re.search(r'^version\s*=\s*"([^"]+)"', project, re.M).group(1)
     assert version == __version__ == "0.2.0"
     try:
-        installed = metadata.version("editaplot-runtime")
+        installed = metadata.version("figureloom")
     except metadata.PackageNotFoundError:
         installed = version  # Source checkout CLI uses the pyproject fallback.
     assert installed == version
     result = subprocess.run(
-        [sys.executable, str(ROOT / "skill/editaplot/scripts/editaplot.py"), "--version"],
+        [sys.executable, str(ROOT / "skill/figureloom/scripts/figureloom.py"), "--version"],
         capture_output=True, text=True, check=True,
     )
-    assert result.stdout.strip() == "EditaPlot 0.2.0"
+    assert result.stdout.strip() == "FigureLoom 0.2.0"

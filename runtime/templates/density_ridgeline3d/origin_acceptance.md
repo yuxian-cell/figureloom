@@ -1,6 +1,6 @@
 # Origin route acceptance — verified 2026-08-01
 
-`density_ridgeline3d` 已在隔离的 EditaPlot-owned Origin 2024b（10.15）、
+`density_ridgeline3d` 已在隔离的 FigureLoom-owned Origin 2024b（10.15）、
 `originpro 1.1.15` 实例中完成对象级、产物级和人工视觉验收。实现只使用官方
 `plotxyz` / `glTraject`（plot 240）路线；不使用 Waterfall、`-pf` / `-pfm 4`、填充或未经验证的
 More Colors 参数。

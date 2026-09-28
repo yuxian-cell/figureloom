@@ -8,9 +8,9 @@ import numpy as np
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path[:0] = [str(ROOT / "runtime/src"), str(ROOT / "skill/editaplot/scripts")]
+sys.path[:0] = [str(ROOT / "runtime/src"), str(ROOT / "skill/figureloom/scripts")]
 
-from editaplot_core import build_plan, understand_data  # noqa: E402
+from figureloom_core import build_plan, understand_data  # noqa: E402
 from origin_sciplot.scientific_workflow import (  # noqa: E402
     ScientificColumnMapping,
     ScientificWorkflowError,

@@ -142,7 +142,7 @@ def test_smoke_report_carries_advisory_without_turning_it_into_a_gate(
         python_version="3.10.11",
         python_architecture_bits=64,
         connection_mode=ConnectionMode.NEW_ISOLATED,
-        ownership=SessionOwnership.EDITAPLOT,
+        ownership=SessionOwnership.FIGURELOOM,
         origin_version_info=version,
     )
     calls: list[tuple[bool, ConnectionMode]] = []

@@ -8,8 +8,8 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "runtime" / "src"))
 
-from editaplot_engine.correlation_heatmap import CorrelationHeatmapSpec, grapher_classes, verify_readback
-from editaplot_engine.models import EngineError
+from figureloom_engine.correlation_heatmap import CorrelationHeatmapSpec, grapher_classes, verify_readback
+from figureloom_engine.models import EngineError
 
 
 def spec(**updates):
@@ -128,7 +128,7 @@ def test_verify_rejects_changed_native_values_annotations_and_colors():
 
 
 def test_unsupported_engine_has_no_heatmap_fallback():
-    from editaplot_engine.correlation_runtime import readback
+    from figureloom_engine.correlation_runtime import readback
 
     with pytest.raises(EngineError) as error:
         readback("wps", Path("result.grf"))

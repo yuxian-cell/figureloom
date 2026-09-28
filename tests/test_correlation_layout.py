@@ -8,8 +8,8 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "runtime/src"))
-from editaplot_engine.correlation_heatmap import CorrelationHeatmapSpec  # noqa: E402
-from editaplot_engine.correlation_layout import plan_layout, text_width_inches, verify_layout  # noqa: E402
+from figureloom_engine.correlation_heatmap import CorrelationHeatmapSpec  # noqa: E402
+from figureloom_engine.correlation_layout import plan_layout, text_width_inches, verify_layout  # noqa: E402
 
 FIXTURES = ROOT / "tests/fixtures/correlation_heatmap"
 
@@ -103,10 +103,10 @@ def test_native_layout_verification_rejects_missing_and_wrong_properties():
 
 
 def test_canonical_plan_freezes_layout_and_rejects_stale_geometry(tmp_path):
-    sys.path.insert(0, str(ROOT / "skill/editaplot/scripts"))
-    import editaplot_core as core
-    from editaplot_engine.correlation_layout import layouts
-    from editaplot_engine.workflow import preview
+    sys.path.insert(0, str(ROOT / "skill/figureloom/scripts"))
+    import figureloom_core as core
+    from figureloom_engine.correlation_layout import layouts
+    from figureloom_engine.workflow import preview
 
     spec = concrete()
     source = FIXTURES / "concrete_correlation.csv"
@@ -132,5 +132,5 @@ def test_canonical_plan_freezes_layout_and_rejects_stale_geometry(tmp_path):
     assert plan["correlation_layout"] == layouts(spec)
     core.validate_plan(plan)
     plan["correlation_layout"]["origin"]["annotation_font_pt"] = 9
-    with pytest.raises(core.EditaPlotError, match="Frozen correlation layout"):
+    with pytest.raises(core.FigureLoomError, match="Frozen correlation layout"):
         core._validate_correlation_heatmap_plan(plan)

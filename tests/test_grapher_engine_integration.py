@@ -9,11 +9,11 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-for candidate in (ROOT / "skill" / "editaplot" / "scripts", ROOT / "runtime" / "src"):
+for candidate in (ROOT / "skill" / "figureloom" / "scripts", ROOT / "runtime" / "src"):
     if str(candidate) not in sys.path:
         sys.path.insert(0, str(candidate))
 
-import editaplot_core as core  # noqa: E402
+import figureloom_core as core  # noqa: E402
 from grapher_sciplot.smoke import SmokeFailure, discover  # noqa: E402
 
 
@@ -63,7 +63,7 @@ def test_real_xy_render_plan_to_grapher_round_trip(
     plan_file = tmp_path / "render-plan.json"
     plan_file.write_text(json.dumps(plan, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    cli = ROOT / "skill" / "editaplot" / "scripts" / "editaplot.py"
+    cli = ROOT / "skill" / "figureloom" / "scripts" / "figureloom.py"
     output = tmp_path / "result"
     rendered = subprocess.run(  # noqa: S603 - fixed local CLI and source-created plan
         [
@@ -160,7 +160,7 @@ def test_real_symmetric_y_error_round_trip(
     plan_file = tmp_path / "render-plan.json"
     plan_file.write_text(json.dumps(plan, ensure_ascii=False, indent=2), encoding="utf-8")
     output = tmp_path / "result"
-    cli = ROOT / "skill/editaplot/scripts/editaplot.py"
+    cli = ROOT / "skill/figureloom/scripts/figureloom.py"
     rendered = subprocess.run(
         [
             sys.executable,
@@ -226,7 +226,7 @@ def test_real_native_category_bar_round_trip(tmp_path: Path, name: str) -> None:
     plan_file = tmp_path / "render-plan.json"
     plan_file.write_text(json.dumps(plan, ensure_ascii=False), encoding="utf-8")
     output = tmp_path / "bar"
-    cli = ROOT / "skill/editaplot/scripts/editaplot.py"
+    cli = ROOT / "skill/figureloom/scripts/figureloom.py"
     rendered = subprocess.run(
         [
             sys.executable,

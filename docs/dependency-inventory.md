@@ -1,8 +1,8 @@
 # Verified Python dependency inventory
 
-This is the dependency snapshot used for the 2026-07-21 EditaPlot open-source release
+This is the dependency snapshot used for the 2026-07-21 FigureLoom open-source release
 verification on Windows with Python 3.10. It records installed package metadata; it is not a claim
-that third-party projects endorse EditaPlot.
+that third-party projects endorse FigureLoom.
 
 The current repository does not vendor these packages. `doctor --repair` installs exact direct
 versions into a project-local virtual environment and constrains transitive resolution with

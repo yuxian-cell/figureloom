@@ -4,7 +4,7 @@ Status: conservative v0.1 policy accepted after real native suites, next-job rec
 
 ## Current creation and cleanup path
 
-`OriginEngine.render` starts an EditaPlot worker subprocess. Its renderer uses
+`OriginEngine.render` starts an FigureLoom worker subprocess. Its renderer uses
 `OriginSession(connection_mode=NEW_ISOLATED)`; the first `originpro.set_show(False)`
 call lazily creates `OriginExt.Application()`. The wrapper's `APP.Exit()` calls
 `Application.Exit(releaseonly=False)` and clears its own `_app` reference.
@@ -42,7 +42,7 @@ Two independent real probes then started with zero Origin processes:
 | Probe | After create | After `Exit` and a 3-second wait | After Python reference release/GC |
 | --- | --- | --- | --- |
 | Direct `OriginExt.Application` | One new `Origin64.exe -Embedding` | Same process still present | Process gone |
-| `OriginSession(keep_open=False)` | One new `Origin64.exe -Embedding`; ownership recorded as `editaplot` | Same process still present; `originpro.po._app` is already `None` | Process gone after `gc.collect()`, even while `op` and session variables remain |
+| `OriginSession(keep_open=False)` | One new `Origin64.exe -Embedding`; ownership recorded as `figureloom` | Same process still present; `originpro.po._app` is already `None` | Process gone after `gc.collect()`, even while `op` and session variables remain |
 
 Holding a worksheet page proxy did not prevent shutdown after the application
 reference was released and GC ran. A third OriginSession probe showed that GC
@@ -55,7 +55,7 @@ close, and exit request, then disappeared after GC outside the `with` block.
 The collection inside `OriginSession.__exit__` alone did not make the process
 disappear at that point, so it is not claimed as a complete cleanup fix.
 A separate-owner probe held one external Origin process (PID 18208) while
-EditaPlot attached/detached through `ApplicationSI`, then ran a new isolated
+FigureLoom attached/detached through `ApplicationSI`, then ran a new isolated
 Origin session. The external process survived both operations. Its owner then
 exited normally; the final process set was empty. This is an automation-owned
 surrogate for a user-opened window, not a manual GUI acceptance. A unit test
@@ -104,7 +104,7 @@ The doctor now has an optional `--live` probe in a short-lived Python process. O
 
 The full Phase 15 Origin native suite passed 13/13. It still printed `0x800706be` during native Fit teardown. Three `Origin64.exe -Embedding` processes were visible afterward and remained untouched. A fresh Python environment then passed a live Origin doctor and a complete XLSX→Origin render/edit while those processes existed; the doctor called out the preexisting count and its own immediate shutdown warning. After the new workflow, the same three PIDs remained and no additional Origin process was visible. This supports the documented recovery policy but does not establish ownership of the three PIDs or resolve the COM exit diagnostic.
 
-The user then opened the Phase 15 Origin OPJU in the GUI and confirmed native error bars, the edited Y-axis title and editable Plot Details. Its window PID was 21372. While that window stayed open, EditaPlot ran a new isolated live doctor followed by a real `origin-smoke` that saved and verified OPJU/PNG/PDF/TIF. PID 21372 and its project title remained unchanged after both jobs. The three prior unknown processes also remained; none was killed. This is the manual user-owned instance protection acceptance.
+The user then opened the Phase 15 Origin OPJU in the GUI and confirmed native error bars, the edited Y-axis title and editable Plot Details. Its window PID was 21372. While that window stayed open, FigureLoom ran a new isolated live doctor followed by a real `origin-smoke` that saved and verified OPJU/PNG/PDF/TIF. PID 21372 and its project title remained unchanged after both jobs. The three prior unknown processes also remained; none was killed. This is the manual user-owned instance protection acceptance.
 
 A final full Origin native rerun passed 13/13 in 11m29s. `0x800706be` appeared again during Fit teardown, and three unknown `Origin64.exe -Embedding` PIDs remained visible afterward. There is still no reliable mapping from the COM object to those PIDs; the conservative no-kill policy remains in force.
 

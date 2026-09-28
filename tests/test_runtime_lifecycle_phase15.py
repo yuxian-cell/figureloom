@@ -12,7 +12,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "runtime" / "src"))
-sys.path.insert(0, str(ROOT / "skill" / "editaplot" / "scripts"))
+sys.path.insert(0, str(ROOT / "skill" / "figureloom" / "scripts"))
 
 
 def test_grapher_quit_never_terminates_pid_from_process_difference(
@@ -72,7 +72,7 @@ def test_origin_cleanup_warning_preserves_primary_error(monkeypatch: pytest.Monk
 def test_grapher_cleanup_warning_preserves_primary_error(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from editaplot_engine.models import EngineError
+    from figureloom_engine.models import EngineError
     from grapher_sciplot import engine
 
     monkeypatch.setitem(sys.modules, "pythoncom", SimpleNamespace(
@@ -99,8 +99,8 @@ def test_grapher_cleanup_warning_preserves_primary_error(
 def test_interrupted_session_and_failed_edit_are_not_reported_as_applied(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from editaplot_engine import workflow
-    from editaplot_engine.models import EngineError
+    from figureloom_engine import workflow
+    from figureloom_engine.models import EngineError
 
     source = tmp_path / "data.csv"
     source.write_text("X,Y\n1,2\n", encoding="utf-8")
@@ -139,8 +139,8 @@ def test_interrupted_session_and_failed_edit_are_not_reported_as_applied(
 def test_failed_native_verify_leaves_failed_session(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from editaplot_engine import workflow
-    from editaplot_engine.models import EngineError
+    from figureloom_engine import workflow
+    from figureloom_engine.models import EngineError
 
     source = ROOT / "tests" / "fixtures" / "phase14" / "experiment_multiseries.csv"
     run = tmp_path / "run"
@@ -166,8 +166,8 @@ def test_failed_native_verify_leaves_failed_session(
 
 
 def test_workflow_output_failure_is_structured(tmp_path: Path) -> None:
-    from editaplot_engine import workflow
-    from editaplot_engine.models import EngineError
+    from figureloom_engine import workflow
+    from figureloom_engine.models import EngineError
 
     blocked = tmp_path / "not-a-directory"
     blocked.write_text("occupied", encoding="utf-8")
@@ -180,8 +180,8 @@ def test_workflow_output_failure_is_structured(tmp_path: Path) -> None:
 def test_edit_verify_failure_cannot_become_applied(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from editaplot_engine import workflow
-    from editaplot_engine.models import EngineError
+    from figureloom_engine import workflow
+    from figureloom_engine.models import EngineError
 
     source = tmp_path / "source.csv"
     source.write_text("X,Y\n1,2\n", encoding="utf-8")
@@ -208,7 +208,7 @@ def test_edit_verify_failure_cannot_become_applied(
 def test_live_doctor_failure_is_reported_without_native_traceback(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    import editaplot as cli
+    import figureloom as cli
 
     monkeypatch.setattr(cli, "_native_pids", lambda _engine: set())
     monkeypatch.setattr(cli.subprocess, "run", lambda *_args, **_kwargs: SimpleNamespace(
@@ -225,8 +225,8 @@ def test_live_doctor_failure_is_reported_without_native_traceback(
 def test_missing_input_sheet_and_backend_availability_are_distinct(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from editaplot_engine import workflow
-    from editaplot_engine.models import EngineError
+    from figureloom_engine import workflow
+    from figureloom_engine.models import EngineError
 
     with pytest.raises(EngineError) as error:
         workflow.preview(tmp_path / "missing.csv", tmp_path / "missing-run")
@@ -261,9 +261,9 @@ def test_missing_input_sheet_and_backend_availability_are_distinct(
 def test_verbose_runtime_log_keeps_native_diagnostic_without_table_data(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from editaplot_engine.workflow import _log
+    from figureloom_engine.workflow import _log
 
-    monkeypatch.setenv("EDITAPLOT_VERBOSE", "1")
+    monkeypatch.setenv("FIGURELOOM_VERBOSE", "1")
     _log(tmp_path, {"run_id": "run-1", "engine": "grapher",
                     "recommendation": {"selected_template_id": "trend"}},
          "render_failed", RuntimeError("HRESULT 0x800706be"))
@@ -276,8 +276,8 @@ def test_verbose_runtime_log_keeps_native_diagnostic_without_table_data(
 def test_verified_session_matches_plan_source_artifacts_and_readback(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from editaplot_engine import workflow
-    from editaplot_engine.models import RenderResult
+    from figureloom_engine import workflow
+    from figureloom_engine.models import RenderResult
 
     source = ROOT / "docs" / "quickstart-data" / "multiseries.csv"
     run = tmp_path / "run"

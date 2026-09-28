@@ -1,6 +1,6 @@
 # Phase 7: production Scatter + Linear Fit
 
-`RenderPlan.fit` is an optional Phase 6 `FitSpec`. `editaplot plan --fit-spec-json fit.json` freezes it into the plan and its hash. Without `fit`, the existing Scatter, Error, Line, Bar, and Origin routes keep their previous behavior. The first production Fit capability accepts one XY Scatter series, all points, no weighting, free slope and intercept, and `requested_statistics=["r_squared"]`. Unsupported combinations fail before either application starts.
+`RenderPlan.fit` is an optional Phase 6 `FitSpec`. `figureloom plan --fit-spec-json fit.json` freezes it into the plan and its hash. Without `fit`, the existing Scatter, Error, Line, Bar, and Origin routes keep their previous behavior. The first production Fit capability accepts one XY Scatter series, all points, no weighting, free slope and intercept, and `requested_statistics=["r_squared"]`. Unsupported combinations fail before either application starts.
 
 The existing Grapher XY renderer creates its Scatter plot, then adds `AutoLinePlot.AddFit(0)` to that plot. The saved GRF contains a native `AutoFitPlot` child; the base Scatter connecting line remains disabled. After reopening, verification reads its parent, X/Y columns, curve limits, native fit type, legend, and Grapher's own statistics. The GRF refers to the exported staging CSV; keep the files together.
 

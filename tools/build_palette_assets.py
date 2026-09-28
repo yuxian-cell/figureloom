@@ -140,7 +140,7 @@ def _selector(palettes: list[dict[str, object]], title: str, subtitle: str) -> I
     footer_y = height - 72
     draw.text(
         (gap, footer_y),
-        "EditaPlot · 原创色卡资产 · 参考图原件、期刊封面与水印均未收录",
+        "FigureLoom · 原创色卡资产 · 参考图原件、期刊封面与水印均未收录",
         fill="#697887",
         font=_font(20),
     )

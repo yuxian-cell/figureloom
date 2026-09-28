@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: editaplot-star-trend
+  group: figureloom-star-trend
   cancel-in-progress: false
 
 jobs:
@@ -56,7 +56,7 @@ jobs:
           cp "$RUNNER_TEMP/star-trend/assets/star-trend/stars.json" assets/star-trend/stars.json
           cp "$RUNNER_TEMP/star-trend/assets/star-trend/stars.svg" assets/star-trend/stars.svg
           git add assets/star-trend/stars.json assets/star-trend/stars.svg
-          git config user.name "EditaPlot Automation"
-          git config user.email "editaplot-automation@users.noreply.github.com"
+          git config user.name "FigureLoom Automation"
+          git config user.email "figureloom-automation@users.noreply.github.com"
           git commit -m "Update anonymous aggregate Star trend"
           git push --force-with-lease origin HEAD:metrics

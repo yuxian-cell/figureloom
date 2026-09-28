@@ -21,7 +21,7 @@ are unchanged. All labels, including underscores, are retained in full.
 
 ## Architecture and deterministic rule
 
-`editaplot_engine/correlation_layout.py` computes physical inch/point layouts
+`figureloom_engine/correlation_layout.py` computes physical inch/point layouts
 beside the Core contract. `build_plan` freezes both backend layouts in the
 hash-bound `RenderPlan.correlation_layout`; validation rejects stale layouts.
 Renderers consume the selected backend layout. Older plans without this
@@ -87,7 +87,7 @@ cases each execute canonical workflow → native render → save/close/reopen �
 native readback → verify. Raw analysis uses the previously agreed SciPy Pearson
 two-sided test, all rows, no correction; it is test/data preparation, not a new
 production statistical engine. The raw user table is not committed. Optional
-test source is `EDITAPLOT_CONCRETE_RAW`; absent source/SciPy means SKIP, not PASS.
+test source is `FIGURELOOM_CONCRETE_RAW`; absent source/SciPy means SKIP, not PASS.
 
 Small supplied Concrete matrices are checked in with source explanation.
 Anchors (abs tolerance 1e-13) are Cement–Strength 0.4978319193241571,

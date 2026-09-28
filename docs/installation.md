@@ -2,7 +2,7 @@
 
 ## 先看兼容范围
 
-我目前把 EditaPlot V1 的完整支持范围限定为 **Windows 10/11 x64 实体电脑**。macOS（Intel 与 Apple Silicon）、
+我目前把 FigureLoom V1 的完整支持范围限定为 **Windows 10/11 x64 实体电脑**。macOS（Intel 与 Apple Silicon）、
 Linux、WSL、Wine/CrossOver、Parallels 及其他虚拟机均不支持。当前没有 Mac 绘图模式，
 也不建议用兼容层尝试调用 Origin。
 
@@ -14,16 +14,16 @@ Linux、WSL、Wine/CrossOver、Parallels 及其他虚拟机均不支持。当前
 - 64 位 CPython 3.10、3.11 或 3.12；CLI/依赖覆盖这三个版本，真实 Origin 端到端基线为 CPython 3.10；
 - 本机已安装兼容目标范围内的 Origin/OriginPro 2021–2026b；2024b / 10.15 是当前唯一
   完整实机基线，其他目标版本会按本机握手、真实 smoke 和模板能力报告兼容状态；
-- 完整的 EditaPlot 仓库，而不只是 `skill/editaplot` 子目录。
+- 完整的 FigureLoom 仓库，而不只是 `skill/figureloom` 子目录。
 
 Origin 2020b 及更早版本不在当前外部 `originpro` 路线的支持范围内。
 各版本怎样从“目标范围”进入“当前模板可用”状态，见
 [Origin 2021–2026b 兼容说明](origin-2021-2026-compatibility.md)。
 
-> `editaplot.cmd` 会优先使用电脑上已有的兼容 Python。Python 依赖只进入项目目录的
-> `.editaplot-venv`。完全没有兼容 Python 时，我会要求 Codex 先说明并取得你的明确确认，才可安装官方
+> `figureloom.cmd` 会优先使用电脑上已有的兼容 Python。Python 依赖只进入项目目录的
+> `.figureloom-venv`。完全没有兼容 Python 时，我会要求 Codex 先说明并取得你的明确确认，才可安装官方
 > Python；环境修复不会安装或修改 Origin。你无需提前打开 Origin，正式绘图前的真实 smoke
-> 会自动启动一个由 EditaPlot 独占的专用实例并验证连接。
+> 会自动启动一个由 FigureLoom 独占的专用实例并验证连接。
 
 ## 先给 Codex 哪些权限
 
@@ -33,10 +33,10 @@ Origin 2020b 及更早版本不在当前外部 `originpro` 路线的支持范围
 | 最小权限 | 具体范围 | 为什么需要 |
 |---|---|---|
 | 读取文件 | 完整仓库、你选中的 CSV/TXT/XLS/XLSX、可选参考图 | 安装、数据理解与计划 |
-| 写入项目 | EditaPlot 仓库目录 | 创建 `.editaplot-venv`、锁文件和项目配置 |
-| 写入 Skill | 当前用户的 `$HOME\.codex\skills\editaplot` | 安装或原子更新 `$editaplot` |
-| 写入交付目录 | 原始数据的父文件夹 | 在源文件旁新建 `<source_stem>_EditaPlot_<时间>` |
-| 本地执行 | `editaplot.cmd`、PowerShell、Python，以及同一交互式 Windows 用户会话中的 Origin Automation | 体检、smoke、绘图、导出和对象反读 |
+| 写入项目 | FigureLoom 仓库目录 | 创建 `.figureloom-venv`、锁文件和项目配置 |
+| 写入 Skill | 当前用户的 `$HOME\.codex\skills\figureloom` | 安装或原子更新 `$figureloom` |
+| 写入交付目录 | 原始数据的父文件夹 | 在源文件旁新建 `<source_stem>_FigureLoom_<时间>` |
+| 本地执行 | `figureloom.cmd`、PowerShell、Python，以及同一交互式 Windows 用户会话中的 Origin Automation | 体检、smoke、绘图、导出和对象反读 |
 
 联网权限只在下载/更新仓库和安装锁定 Python 包时需要。完全没有兼容 Python 时，winget 安装属于
 单独的系统级变更，必须再次解释并征得明确同意。普通运行不需要管理员权限、鼠标控制、整个磁盘
@@ -48,56 +48,56 @@ Origin 2020b 及更早版本不在当前外部 `originpro` 路线的支持范围
 把 Codex、PowerShell 或 Origin 全部改成管理员运行。
 
 Codex 桌面版的普通命令可能由隔离账户执行，即使 `USERNAME` / `USERPROFILE` 看起来仍是你的
-资料。EditaPlot 会读取进程真实的 Windows 安全令牌；若识别为 Codex 沙箱，它会在调用 Origin
+资料。FigureLoom 会读取进程真实的 Windows 安全令牌；若识别为 Codex 沙箱，它会在调用 Origin
 COM 前停止，并请 Codex 只为当前这条 `origin-smoke` 或 `render` 命令发起正式、受限的本地执行
 申请。只有这条精确申请获批后，Codex 才会重新执行同一条命令并继续当前任务；申请可以由你在
 提示时确认，也可以由已经配置的 Codex 自动审查评估，但审批不保证通过，自动审查也不代表所有
 Origin 命令预先获得权限。无需复制到自己的 PowerShell，也无需管理员、DCOM、注册表或所谓
 “绕过沙箱”。本机或组织策略拒绝申请时，任务会明确停止。
 
-EditaPlot 的本地 runtime 与 Origin 自动化不会主动上传数据，但交给 Codex 的文件仍受你当前
+FigureLoom 的本地 runtime 与 Origin 自动化不会主动上传数据，但交给 Codex 的文件仍受你当前
 Codex 账号、组织和数据保留策略约束。医学数据或参考图在交给 Codex 前必须先按所在机构要求
-去标识化并检查烧录文字；EditaPlot 不会自动识别 PHI。
+去标识化并检查烧录文字；FigureLoom 不会自动识别 PHI。
 
 ## 路线 A：会使用 GitHub / Git
 
 在 PowerShell 中运行：
 
 ```powershell
-git clone https://github.com/hang-jin/editaplot.git
-Set-Location editaplot
-.\editaplot.cmd setup
+git clone https://github.com/yuxian-cell/figureloom.git
+Set-Location figureloom
+.\figureloom.cmd setup
 ```
 
 `setup` 会把 Skill 安装到当前 Codex 用户目录、记录本地 runtime 位置、选择兼容 Python，
-并完成一次项目级依赖准备。关闭并重新打开一个 Codex 任务后即可使用 `$editaplot`。
+并完成一次项目级依赖准备。关闭并重新打开一个 Codex 任务后即可使用 `$figureloom`。
 安装后请保留完整仓库且不要随意移动；本地配置会指向其中的 `runtime/`。若移动了目录，
-回到新的仓库根目录重新运行 `.\editaplot.cmd setup` 即可更新指向。
+回到新的仓库根目录重新运行 `.\figureloom.cmd setup` 即可更新指向。
 
 ## 路线 B：不会 GitHub，也没有 GitHub 账号
 
 GitHub 账号不是必需的。任选一种方式：
 
 1. 在仓库网页点击 **Code → Download ZIP**，下载 Source ZIP；
-2. 完整解压 ZIP，不要只拖出 `skill/editaplot` 文件夹；
+2. 完整解压 ZIP，不要只拖出 `skill/figureloom` 文件夹；
 3. 在解压后的仓库根目录打开 PowerShell；
 4. 运行：
 
 ```powershell
-.\editaplot.cmd setup
+.\figureloom.cmd setup
 ```
 
-以后下载新版或执行 `git pull` 后，再运行一次 `.\editaplot.cmd setup` 即可安全更新已安装 Skill
-和项目级依赖；不会覆盖其他非 EditaPlot 目录。
+以后下载新版或执行 `git pull` 后，再运行一次 `.\figureloom.cmd setup` 即可安全更新已安装 Skill
+和项目级依赖；不会覆盖其他非 FigureLoom 目录。
 
 也可以把下面这段直接交给 Codex，让它在得到你的确认后完成下载与项目级配置：
 
 ```text
-请从 https://github.com/hang-jin/editaplot 下载完整仓库到一个新文件夹。
-不要只复制 skill/editaplot 子目录。阅读 README.md 和 docs/installation.md，
+请从 https://github.com/yuxian-cell/figureloom 下载完整仓库到一个新文件夹。
+不要只复制 skill/figureloom 子目录。阅读 README.md 和 docs/installation.md，
 先复用已有的 64 位 CPython 3.10–3.12；若完全没有兼容版本，请先说明安装官方 Python 3.12
-是系统级变更并等我明确同意。之后在仓库根目录运行 editaplot.cmd setup，Python 包只进入
-项目环境。不要安装或修改 Origin。完成后运行 editaplot.cmd doctor，并用中文告诉我
+是系统级变更并等我明确同意。之后在仓库根目录运行 figureloom.cmd setup，Python 包只进入
+项目环境。不要安装或修改 Origin。完成后运行 figureloom.cmd doctor，并用中文告诉我
 是否可以分析、是否发现默认独立启动入口，以及最简洁的下一步。
 ```
 
@@ -106,7 +106,7 @@ GitHub 账号不是必需的。任选一种方式：
 最省心的方式是把 CSV、TXT、XLS 或 XLSX 拖进 Codex，然后说：
 
 ```text
-请使用 $editaplot 帮我画这份数据。先检查环境并只读识别数据，最多推荐 3 种合适的图。
+请使用 $figureloom 帮我画这份数据。先检查环境并只读识别数据，最多推荐 3 种合适的图。
 选定候选模板后，请逐列说明哪些要画、哪些只作辅助或验证、哪些保留但不画，并列出最终图形元素
 和不会自动进行的计算。先让我确认科学目的和这份清单；不确定列必须先问我，不要修改源文件，
 也不要静默拟合或补造数据。
@@ -115,15 +115,15 @@ GitHub 账号不是必需的。任选一种方式：
 命令行入口等价于：
 
 ```powershell
-.\editaplot.cmd start "$HOME\Documents\my-data.csv"
+.\figureloom.cmd start "$HOME\Documents\my-data.csv"
 ```
 
-我会让 EditaPlot 在后台完成环境检查、数据识别和图形推荐。你不需要理解 `inspect`、`recommend`、
+我会让 FigureLoom 在后台完成环境检查、数据识别和图形推荐。你不需要理解 `inspect`、`recommend`、
 `understand` 或 `RenderPlan` 这些内部步骤；Codex 会用大白话汇总数据类型、每列用途、要画的
 图形元素、保留但不画的内容和不会自动进行的计算。你确认科学目的与这份清单后才能进入绘图；
 列含义、误差、归一化、排序等科学选择存在歧义时，它只追问会改变图意的部分。
 
-## 列很多时，EditaPlot 怎样避免“全部画上去”
+## 列很多时，FigureLoom 怎样避免“全部画上去”
 
 我把每个源列分为五类：主要绘图证据、可见辅助元素、仅用于计算或验证、保留但不绘制、仍不确定。
 每列必须且只能出现一次；不确定列会阻止绘图计划，不会自动变成另一条曲线。
@@ -163,8 +163,8 @@ OPJU，也不承诺任意图 1:1 复刻。你可以直接这样说：
 ## Doctor：知道哪里还没准备好
 
 ```powershell
-.\editaplot.cmd --diagnose
-.\editaplot.cmd doctor
+.\figureloom.cmd --diagnose
+.\figureloom.cmd doctor
 ```
 
 我让 Doctor 把 Python、Windows、runtime、依赖和 Origin 应用分别报告：
@@ -194,7 +194,7 @@ runtime 和默认启动入口等静态前提已找到，后者只说明当前 Do
 如仅缺项目级 Python 依赖，可运行：
 
 ```powershell
-.\editaplot.cmd doctor --repair
+.\figureloom.cmd doctor --repair
 ```
 
 修复只使用锁定的依赖清单和项目级环境。Python 版本不兼容、非 Windows、runtime 缺失、
@@ -206,16 +206,16 @@ Doctor 只读发现环境，不代替真实连接。等你确认 RenderPlan 后�
 `origin-smoke → render → verify`：
 
 ```powershell
-$smokeDir = Join-Path $env:TEMP ("EditaPlot-origin-smoke-" + (Get-Date -Format "yyyyMMdd-HHmmss"))
-.\editaplot.cmd origin-smoke --output-dir $smokeDir
-.\editaplot.cmd render .\render-plan.json
-.\editaplot.cmd verify "<正式输出目录>"
+$smokeDir = Join-Path $env:TEMP ("FigureLoom-origin-smoke-" + (Get-Date -Format "yyyyMMdd-HHmmss"))
+.\figureloom.cmd origin-smoke --output-dir $smokeDir
+.\figureloom.cmd render .\render-plan.json
+.\figureloom.cmd verify "<正式输出目录>"
 ```
 
-`origin-smoke` 默认启动一个由 EditaPlot 所有的隔离 Origin 实例，并完成最小建图与导出闭环。
+`origin-smoke` 默认启动一个由 FigureLoom 所有的隔离 Origin 实例，并完成最小建图与导出闭环。
 只有 smoke 通过后才能运行正式 render。普通 render 不要指定 `--output-dir`：runtime 会在
 原始 CSV、TXT、XLS 或 XLSX 所在目录中新建
-`<source_stem>_EditaPlot_<timestamp>` 同级文件夹，将 RenderPlan、OPJU、PNG、PDF、TIF、
+`<source_stem>_FigureLoom_<timestamp>` 同级文件夹，将 RenderPlan、OPJU、PNG、PDF、TIF、
 对象反读、验证与 provenance 集中保存。源文件不会被覆盖。只有你明确要求其他目的地时，
 才可为 render 指定 `--output-dir`。
 
@@ -225,11 +225,11 @@ Origin、版本或数据有问题。Codex 应为原来的精确命令发起一�
 审批不保证通过。被本机或组织策略拒绝时应
 停止，不能让你复制 PowerShell、切换管理员、修改 DCOM/注册表或改走未验证的接口。
 
-多个 Codex 任务可以并行完成读取数据、理解列和制定 RenderPlan。真正进入新版 EditaPlot 的
+多个 Codex 任务可以并行完成读取数据、理解列和制定 RenderPlan。真正进入新版 FigureLoom 的
 `origin-smoke` 或 `render` 时，同一 Windows 登录会话只允许一个任务占用 Origin 自动化阶段；
 其余任务报告 `origin_job_queue`，约每 30 秒更新一次，且不保证严格 FIFO。等待满 30 分钟时只
 停止等待者，不会杀掉或打断持有者。持有进程结束或异常退出后由 Windows 释放锁；成功后保留的
-Origin 窗口不会继续占锁。该保护不覆盖手动 Origin 脚本、旧版 EditaPlot 或其他程序，看到排队
+Origin 窗口不会继续占锁。该保护不覆盖手动 Origin 脚本、旧版 FigureLoom 或其他程序，看到排队
 状态时不要重复启动相同任务。
 
 如果旧版本曾在 `style_graph` 阶段提示左边距应为 `17`、却读回约 `70.06`，请先更新仓库的
@@ -257,8 +257,8 @@ winget install --exact --id Python.Python.3.12 --source winget --scope user --ar
 安装完成后重新运行：
 
 ```powershell
-.\editaplot.cmd setup
-.\editaplot.cmd doctor
+.\figureloom.cmd setup
+.\figureloom.cmd doctor
 ```
 
 若 winget 不存在或安装失败，我会让 Codex 停止自动安装并带你使用
@@ -281,7 +281,7 @@ winget install --exact --id Python.Python.3.12 --source winget --scope user --ar
 可以视为正常范围；这是一条排障参考线，不是对所有电脑和所有复杂数据的硬性承诺。
 
 首次克隆或更新仓库、`setup` 下载锁定依赖、`doctor --repair`、等待用户回答科学含义，以及
-Codex 对话受网络影响的等待时间，都要单独统计。EditaPlot 正常的 `--diagnose`、`doctor`、
+Codex 对话受网络影响的等待时间，都要单独统计。FigureLoom 正常的 `--diagnose`、`doctor`、
 `start`、`understand`、`origin-smoke`、`render` 和 `verify` 是本地流程；因此不能只看到总时间长，
 就直接认定是网络慢。
 
@@ -312,7 +312,7 @@ smoke 和 render 的 JSONL 进度事件会包含从各自 worker 启动起计算
 需要保留现场时，可以运行：
 
 ```powershell
-.\editaplot.cmd render .\render-plan.json 2>&1 |
+.\figureloom.cmd render .\render-plan.json 2>&1 |
   Tee-Object -FilePath .\render-progress.jsonl
 ```
 
@@ -323,12 +323,12 @@ smoke 和 render 的 JSONL 进度事件会包含从各自 worker 启动起计算
 ### 为什么不能只复制 Skill 文件夹？
 
 Skill 是“操作说明与入口”，`runtime/` 才包含经过验证的绘图引擎。只复制子目录会失去
-runtime，通常得到 `engine_not_found`。请保留完整仓库，并用根目录 `editaplot.cmd setup` 安装。
+runtime，通常得到 `engine_not_found`。请保留完整仓库，并用根目录 `figureloom.cmd setup` 安装。
 
 ### 我装了 Python，为什么仍然不能运行？
 
 可能是命令行指向旧版 Python，或只安装了不受支持的 3.13。直接运行
-`.\editaplot.cmd --diagnose`；启动器会搜索 64 位 CPython 3.10–3.12，并优先复用兼容版本。
+`.\figureloom.cmd --diagnose`；启动器会搜索 64 位 CPython 3.10–3.12，并优先复用兼容版本。
 
 ### Mac 能不能先用分析功能？
 
@@ -339,17 +339,17 @@ V1 不支持。为避免“分析能跑、Origin 绘图不能跑”的半成品�
 
 ## English summary
 
-EditaPlot V1 supports **physical Windows 10/11 x64 computers only**. macOS (Intel or Apple
+FigureLoom V1 supports **physical Windows 10/11 x64 computers only**. macOS (Intel or Apple
 Silicon), Linux, WSL, Wine/CrossOver, Parallels, and other VMs are unsupported. Use 64-bit
 CPython 3.10–3.12 and a local Origin/OriginPro application reachable through Automation.
 The compatibility target is Origin/OriginPro 2021–2026b; Origin 2024b (10.15) with CPython 3.10
 is the only current fully verified live baseline. Other target versions are reported after a local
 handshake, real smoke test, and template capability check. Doctor performs read-only discovery and never proves a live
-connection. Users do not need to open Origin first: the smoke test starts an EditaPlot-owned,
+connection. Users do not need to open Origin first: the smoke test starts an FigureLoom-owned,
 dedicated instance. Attaching to an existing window is an explicit advanced mode only.
 
 A normal Codex desktop command may run under an isolated account even when inherited profile
-variables look familiar. EditaPlot checks the process's real Windows token and stops before COM
+variables look familiar. FigureLoom checks the process's real Windows token and stops before COM
 when it detects the Codex sandbox. Codex then submits a formal, narrowly scoped local-execution
 request for the same `origin-smoke` or `render` command. Codex may rerun it only if that exact
 request is approved. A user prompt or the configured Codex auto-reviewer may evaluate the request,
@@ -358,39 +358,39 @@ copy the command into their own PowerShell, use administrator rights, change DCO
 bypass the sandbox. A machine or organization policy may reject the request. An `unknown` Windows
 execution context is not an approval request and stops fail-closed before COM.
 
-Current EditaPlot workers also serialize their active smoke/render sections within one signed-in
+Current FigureLoom workers also serialize their active smoke/render sections within one signed-in
 Windows session while data analysis and planning remain concurrent. Waiting jobs report progress
 about every 30 seconds; strict FIFO is not guaranteed. A 30-minute limit stops only the waiter, not
 the active holder. Windows releases the lock when the holder exits, including an unexpected exit;
 an Origin window kept open after completion does not retain the lock. Manual scripts, older
-EditaPlot releases, and unrelated programs are outside this queue.
+FigureLoom releases, and unrelated programs are outside this queue.
 
 The Skill reuses a compatible Python first. If none exists, it must explain the system-level change
 and obtain explicit consent before running official winget to install `Python.Python.3.12` in user
 scope. If winget is unavailable, it provides only the official python.org Windows installation
-instructions. Locked dependencies still go into `.editaplot-venv`; Origin is never installed or
+instructions. Locked dependencies still go into `.figureloom-venv`; Origin is never installed or
 modified automatically.
 
 The bundled runtime and Origin automation do not initiate a network upload of selected data.
 Files explicitly provided through Codex remain subject to the user's Codex account, organization,
 and retention policies. Medical data and reference images must be deidentified and checked for
-burned-in text before they are provided; EditaPlot does not automatically detect PHI.
+burned-in text before they are provided; FigureLoom does not automatically detect PHI.
 
 With Git:
 
 ```powershell
-git clone https://github.com/hang-jin/editaplot.git
-Set-Location editaplot
-.\editaplot.cmd setup
+git clone https://github.com/yuxian-cell/figureloom.git
+Set-Location figureloom
+.\figureloom.cmd setup
 ```
 
 Without Git or a GitHub account, download **Code → Download ZIP**, extract the entire repository,
-open PowerShell in its root, and run `.\editaplot.cmd setup`. Never copy only `skill/editaplot`,
+open PowerShell in its root, and run `.\figureloom.cmd setup`. Never copy only `skill/figureloom`,
 because the runtime would be missing. Keep the repository after setup; if it is moved or updated,
-run `.\editaplot.cmd setup` again from its new root. Then attach a data file in Codex and ask:
+run `.\figureloom.cmd setup` again from its new root. Then attach a data file in Codex and ask:
 
 ```text
-Use $editaplot to make an appropriate figure from this file. Check the environment and inspect the
+Use $figureloom to make an appropriate figure from this file. Check the environment and inspect the
 data read-only. Recommend no more than three charts, then classify every source column as drawn,
 support/validation only, retained without rendering, or uncertain. List the final figure elements and
 calculations that will not be performed. Ask me to confirm the scientific purpose and element checklist;
@@ -401,19 +401,19 @@ or invent data.
 After the RenderPlan is confirmed, run the live gate and formal workflow in this order:
 
 ```powershell
-$smokeDir = Join-Path $env:TEMP ("EditaPlot-origin-smoke-" + (Get-Date -Format "yyyyMMdd-HHmmss"))
-.\editaplot.cmd origin-smoke --output-dir $smokeDir
-.\editaplot.cmd render .\render-plan.json
-.\editaplot.cmd verify "<formal-output-directory>"
+$smokeDir = Join-Path $env:TEMP ("FigureLoom-origin-smoke-" + (Get-Date -Format "yyyyMMdd-HHmmss"))
+.\figureloom.cmd origin-smoke --output-dir $smokeDir
+.\figureloom.cmd render .\render-plan.json
+.\figureloom.cmd verify "<formal-output-directory>"
 ```
 
 Omit `render --output-dir` for ordinary work. The runtime creates a unique
-`<source_stem>_EditaPlot_<timestamp>` folder in the same directory as the original CSV, TXT, XLS,
+`<source_stem>_FigureLoom_<timestamp>` folder in the same directory as the original CSV, TXT, XLS,
 or XLSX file and keeps all formal artifacts there.
 
 For a GSAS/GSAS-II XRD refinement table, this understanding stage separates Observed, Calculated,
 optional Background, supplied Difference, explicit Phase ticks, and non-rendering control columns.
-For a supplied reference image, EditaPlot abstracts only safe figure grammar and style, asks for a
+For a supplied reference image, FigureLoom abstracts only safe figure grammar and style, asks for a
 separate confirmation, and neither copies reference content nor promises an arbitrary one-to-one
 replica. A separately confirmed user choice of colors, widths, transparency, page/aspect ratio, and
 legend behavior takes precedence; every field remains capability-gated and is reported as applied,

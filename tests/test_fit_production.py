@@ -9,13 +9,13 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "runtime" / "src"))
 
-from editaplot_engine.fit_contract import (  # noqa: E402
+from figureloom_engine.fit_contract import (  # noqa: E402
     FitSpec,
     ParameterSpec,
     production_linear_fit,
     selected_fit_points,
 )
-from editaplot_engine.models import EngineError  # noqa: E402
+from figureloom_engine.models import EngineError  # noqa: E402
 from grapher_sciplot.fit import parse_statistics  # noqa: E402
 from origin_sciplot.origin_backend.fit import _fit_source  # noqa: E402
 
@@ -152,7 +152,7 @@ def test_origin_weight_staging_keeps_plot_source_separate():
 
     class Origin:
         def new_sheet(self, kind, lname):
-            assert (kind, lname) == ("w", "EditaPlot Fit Weights")
+            assert (kind, lname) == ("w", "FigureLoom Fit Weights")
             return Sheet()
 
     source = Sheet(original)

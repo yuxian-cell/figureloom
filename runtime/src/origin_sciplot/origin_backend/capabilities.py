@@ -22,7 +22,7 @@ class ConnectionMode(str, Enum):
 class SessionOwnership(str, Enum):
     """Identify who owns the lifecycle of the connected Origin session."""
 
-    EDITAPLOT = "editaplot"
+    FIGURELOOM = "figureloom"
     USER = "user"
 
 
@@ -89,7 +89,7 @@ def parse_origin_version(value: float | str) -> OriginVersionInfo:
     """Normalize an Origin numeric version without opening Origin.
 
     Origin 2021 (9.80) is the minimum product supported by the current
-    ``originpro`` integration. Origin 2024b (10.15) remains EditaPlot's
+    ``originpro`` integration. Origin 2024b (10.15) remains FigureLoom's
     verified baseline; other supported versions are classified as compatible
     but unverified until they pass the full real-Origin evidence gate.
     """

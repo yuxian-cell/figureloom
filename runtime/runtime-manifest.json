@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "source_policy": "curated EditaPlot runtime; caches, tests, builds, outputs, binaries, and local paths excluded",
+  "source_policy": "curated FigureLoom runtime; caches, tests, builds, outputs, binaries, and local paths excluded",
   "file_count": 441,
   "files": [
     {
@@ -10,18 +10,18 @@
     },
     {
       "path": "NOTICE",
-      "size_bytes": 861,
-      "sha256": "dc8008407c4bc5d224911d637451ee812bcf758277ca3c77ed273f0af434d0f2"
+      "size_bytes": 865,
+      "sha256": "d946e102942fa663ddfc1be5c34a5bcd0ddaaade9b447139bd868c8f632cc67c"
     },
     {
       "path": "pyproject.toml",
-      "size_bytes": 1138,
-      "sha256": "0a1b094ae00f6ebcf6e6c6086b89c40839099b99f2c3ba1435b3c8ea53d10dc9"
+      "size_bytes": 1134,
+      "sha256": "ed3f0c483dfb822e598b15f45a79a5faaba65fb7962df04af0d207c61e2950ec"
     },
     {
       "path": "requirements-runtime.lock",
-      "size_bytes": 629,
-      "sha256": "c2f4198ce3e64634fca2dc5712f141bcf164b67a2c8d4fb1221388d9b8f9d4da"
+      "size_bytes": 630,
+      "sha256": "7868fd3d48a2d245979b018b8015883e8911a30878c7a61fa8aedb4e13bebe81"
     },
     {
       "path": "requirements-runtime.txt",
@@ -29,89 +29,89 @@
       "sha256": "b8db9b07d8a7dc430b3b7b0f89dc5c5143965bc5810d64e8232770f33e69b7e3"
     },
     {
-      "path": "src/editaplot_engine/__init__.py",
-      "size_bytes": 370,
-      "sha256": "f21f6a35d2ab66586990b4449e616650567f705854b8e6171619cf0f77cca7d4"
+      "path": "src/figureloom_engine/__init__.py",
+      "size_bytes": 371,
+      "sha256": "c036a53c81647690a2fe18ed8ae4dea3c8e17e73840c62cd9e59bf1d4d6500a7"
     },
     {
-      "path": "src/editaplot_engine/correlation_heatmap.py",
+      "path": "src/figureloom_engine/correlation_heatmap.py",
       "size_bytes": 15000,
       "sha256": "ed820ea0da101735847f3449f5fe0df6e70e242819c04da212d88358d101b4c0"
     },
     {
-      "path": "src/editaplot_engine/correlation_layout.py",
+      "path": "src/figureloom_engine/correlation_layout.py",
       "size_bytes": 6108,
       "sha256": "44639f52da5fd384ae7afbe54761cc7cdc31812ab858d88244b40aa06427cdfe"
     },
     {
-      "path": "src/editaplot_engine/correlation_runtime.py",
-      "size_bytes": 7709,
-      "sha256": "de9a15e9e1cc8ad9ba52decbb2463c37201e24fd4b42010c2c17bfa713f159da"
+      "path": "src/figureloom_engine/correlation_runtime.py",
+      "size_bytes": 7711,
+      "sha256": "0ceea4b67c375bc9e8cc1df9f8519316ea2317fd68351e1d94a431a567daeb83"
     },
     {
-      "path": "src/editaplot_engine/doctor_probe.py",
+      "path": "src/figureloom_engine/doctor_probe.py",
       "size_bytes": 1238,
       "sha256": "5d3205a849b42af0720b6e91d6ac72f92d92625f45e3cbe1adba01f9e3461ded"
     },
     {
-      "path": "src/editaplot_engine/fit_contract.py",
+      "path": "src/figureloom_engine/fit_contract.py",
       "size_bytes": 17630,
       "sha256": "3c5bc0d878d1af6fa98428ff15b739cfdc21fd1f453018d7ff62b160a2132a38"
     },
     {
-      "path": "src/editaplot_engine/models.py",
-      "size_bytes": 2744,
-      "sha256": "9a4c17a580c03be42e6b11ec1134f0cb460d873c0d82e6bbc22ddf9bd6c314fd"
+      "path": "src/figureloom_engine/models.py",
+      "size_bytes": 2745,
+      "sha256": "e40ed955262e05bf2f2c859c2ad4abe68156f2a97ae3fd77c94cda4d6038bd93"
     },
     {
-      "path": "src/editaplot_engine/origin.py",
-      "size_bytes": 21390,
-      "sha256": "c9185dc3d3e96c41b74b277cfe1eccb97655da12932cd4794e56eca241cd0214"
+      "path": "src/figureloom_engine/origin.py",
+      "size_bytes": 21398,
+      "sha256": "ae0d7df13154f2f2bfe03e0ce9d165e249a74a7b887d1595c10fc14b95e22bd3"
     },
     {
-      "path": "src/editaplot_engine/registry.py",
-      "size_bytes": 979,
-      "sha256": "6c4437a58f57074e0567806498384365f786d93cfd8787d5d2e5e0f6be765db5"
+      "path": "src/figureloom_engine/registry.py",
+      "size_bytes": 980,
+      "sha256": "62cb5012f1830a660d3416aea1bd85e8515aed473b96b5d8bcba21f406f0ffa8"
     },
     {
-      "path": "src/editaplot_engine/workflow.py",
-      "size_bytes": 18969,
-      "sha256": "7277ced9cbac43401fcbfb4d63cd2159a06e11484eb31a785ab4e935ab5e9f8f"
+      "path": "src/figureloom_engine/workflow.py",
+      "size_bytes": 18974,
+      "sha256": "aebf367f8654ea2cc5c17266e036991e3f8418747aa3255c9bf02e1777d03073"
     },
     {
       "path": "src/grapher_sciplot/__init__.py",
-      "size_bytes": 68,
-      "sha256": "0313a386f270650ff47bfdbb8bdced289f9c765d9ce99be7a797a2183847ee9c"
+      "size_bytes": 69,
+      "sha256": "ac6499bd945a969ad2936ae363f5c38615bbe57f9016196a1e827e897eec6f85"
     },
     {
       "path": "src/grapher_sciplot/correlation_heatmap.py",
-      "size_bytes": 12193,
-      "sha256": "fe19ad5bf31d2e45e281858fbb495d0b03d7e3631493d8ecc6b7644d650ab11f"
+      "size_bytes": 12197,
+      "sha256": "adc6a284a0f7c13bfca893259a86253dd8f802636dabb782f47241c237a631ba"
     },
     {
       "path": "src/grapher_sciplot/engine.py",
-      "size_bytes": 50356,
-      "sha256": "4eb43a149447f467e51300c0d7ec912092ca2a4b7c12e3afb425bfa4fafcf552"
+      "size_bytes": 50368,
+      "sha256": "c8190527f421450ed6166e0745bfed530a2e2eb29d3d6ea9c8964a8f3f2f1825"
     },
     {
       "path": "src/grapher_sciplot/error_bar.py",
-      "size_bytes": 1981,
-      "sha256": "0cec3bae782f4be937220b8918b8495448673a12d4017b490352c8a9c57f49d4"
+      "size_bytes": 1982,
+      "sha256": "f747cd8332c6e15c7376ac5e1ab8518d10f3ad5822d607827ad664579518ab29"
     },
     {
       "path": "src/grapher_sciplot/fit.py",
-      "size_bytes": 7258,
-      "sha256": "7644c5854f0ebe14dbccb09cf19a874bfc00a361cbb40d9d3a5fffc35367b059"
+      "size_bytes": 7261,
+      "sha256": "7c94586ad09f78759a14ea2605af2332dd4a47b013e7031b87acd4834a5a881e"
     },
     {
       "path": "src/grapher_sciplot/smoke.py",
-      "size_bytes": 10914,
-      "sha256": "d61aa46ad079906789777bac925936e0f63f3af08c0ffe13bbdeae8fa4652311"
+      "size_bytes": 10915,
+      "sha256": "5546cb9d30e891a99f1e39eafcf4919630adfe110b2cc90690ced4bbf897ed5d"
     },
     {
       "path": "src/origin_sciplot/__init__.py",
-      "size_bytes": 96,
-      "sha256": "c4bde3f8167ce64973392dcdd4b1e7cf6b25746c549d9815b682e1d2bae4bb33"
+      "size_bytes": 97,
+      "sha256": "ce2d6c261b8eeb3ae71f97272dd60f6ba22c0f472c9fe8db40627a5e7aee406a"
     },
     {
       "path": "src/origin_sciplot/__main__.py",
@@ -145,8 +145,8 @@
     },
     {
       "path": "src/origin_sciplot/main_window.py",
-      "size_bytes": 62421,
-      "sha256": "6a2ad40af7ca7409c5097038eefd0b69e03750a6583a341e93428c1dd9207974"
+      "size_bytes": 62425,
+      "sha256": "8ff20773e9889b36ed33c82bfaf9ee3751d9c08cb773fcaedd030185d8e21add"
     },
     {
       "path": "src/origin_sciplot/origin_backend/__init__.py",
@@ -160,8 +160,8 @@
     },
     {
       "path": "src/origin_sciplot/origin_backend/capabilities.py",
-      "size_bytes": 3798,
-      "sha256": "866d8de39fe701981536c5cdac2f9fb89e7c3e3e2bdf9c93e8e750974ed7a9f3"
+      "size_bytes": 3801,
+      "sha256": "504d78181c9e6ed5165f76f3c8ca54c9570a44ca1dadf28bacae172f7bed076b"
     },
     {
       "path": "src/origin_sciplot/origin_backend/categorical_renderer.py",
@@ -170,8 +170,8 @@
     },
     {
       "path": "src/origin_sciplot/origin_backend/correlation_heatmap.py",
-      "size_bytes": 10413,
-      "sha256": "d2dcde5917fd517113f4ed03177ceac42ea35081be97ae9b6ca4019a37f75611"
+      "size_bytes": 10416,
+      "sha256": "979baba66c5643fbf092e7210efff8b6e56072e317527c91a11162ac046be0d0"
     },
     {
       "path": "src/origin_sciplot/origin_backend/density_ridgeline3d_renderer.py",
@@ -185,8 +185,8 @@
     },
     {
       "path": "src/origin_sciplot/origin_backend/execution_context.py",
-      "size_bytes": 5422,
-      "sha256": "cd025bbe592c9c61763301d5debd7b21ccea0aa2e6d0dc6f439018f97973456c"
+      "size_bytes": 5423,
+      "sha256": "397b232c26070c6da49047cbd8a02de67810456a3f7c93a544c691fbea920617"
     },
     {
       "path": "src/origin_sciplot/origin_backend/export_utils.py",
@@ -195,13 +195,13 @@
     },
     {
       "path": "src/origin_sciplot/origin_backend/fit.py",
-      "size_bytes": 22739,
-      "sha256": "9e45e96e9c1cf507847e45002fb2276ae77254224f144b87dc07c763f6bdb4a9"
+      "size_bytes": 22743,
+      "sha256": "6fbfb90eda3371a5f11237e99292a8798f0ce168a31dc4cc30487abfa783f227"
     },
     {
       "path": "src/origin_sciplot/origin_backend/job_queue.py",
-      "size_bytes": 7701,
-      "sha256": "c955df3109b13b56cc79563c1eeeba08ef9d0dbaecb5f116ce6d8081741aa3ba"
+      "size_bytes": 7706,
+      "sha256": "fbea59559e2eabbe16f1fd4c71caa23573b1352ac7c4142251e55b6135582b97"
     },
     {
       "path": "src/origin_sciplot/origin_backend/network_renderer.py",
@@ -220,8 +220,8 @@
     },
     {
       "path": "src/origin_sciplot/origin_backend/session.py",
-      "size_bytes": 16721,
-      "sha256": "9d4ac2aff2b35ad8361d704a4f688f1d657de83146a81b9981bfac5b59246325"
+      "size_bytes": 16726,
+      "sha256": "80123a359b684f5a36d205d48598a28aea55b92f58bc0bb2edb9a1710181622a"
     },
     {
       "path": "src/origin_sciplot/origin_backend/shap_dashboard_renderer.py",
@@ -230,13 +230,13 @@
     },
     {
       "path": "src/origin_sciplot/origin_backend/smoke_test.py",
-      "size_bytes": 37117,
-      "sha256": "23d86225980f17b8b92038e63cc611c90cf9d7bd559c7ba991541898c733a3eb"
+      "size_bytes": 37120,
+      "sha256": "fcca2885549f2ff14b798037ec9a1b27282e739bad823ee2927d84b218382f74"
     },
     {
       "path": "src/origin_sciplot/origin_backend/template_capabilities.py",
-      "size_bytes": 15614,
-      "sha256": "caaa6f7d62f5f2c78566544905197708caf226d167f54dbc0d6bb14c1749a291"
+      "size_bytes": 15616,
+      "sha256": "ff30099b237e97082c9d30cad75816c434ae1467ce10bb2f34bd283c3761774d"
     },
     {
       "path": "src/origin_sciplot/origin_backend/trajectory3d_renderer.py",
@@ -255,8 +255,8 @@
     },
     {
       "path": "src/origin_sciplot/output_manager.py",
-      "size_bytes": 5004,
-      "sha256": "32c90e09e50b2d210112ff56e95daa352dbfc0d3ea36d7df9864936aceb5f4ab"
+      "size_bytes": 5009,
+      "sha256": "64d848a847a2a5ebf680d0681ebcedf8d601b9fd22494ad3d6f5401d86a4138a"
     },
     {
       "path": "src/origin_sciplot/palette_catalog.py",
@@ -295,8 +295,8 @@
     },
     {
       "path": "src/origin_sciplot/scientific_preview.py",
-      "size_bytes": 88692,
-      "sha256": "874b56fc38113685d51af8444b9931f6ebf29387fc4afa494cf8f9d435f905fd"
+      "size_bytes": 88693,
+      "sha256": "8da8769d3fa2db66a82cac20e90b5386d7adffe64a7844a5a5a58b1879318c58"
     },
     {
       "path": "src/origin_sciplot/scientific_visual.py",
@@ -310,8 +310,8 @@
     },
     {
       "path": "src/origin_sciplot/semantic_analysis.py",
-      "size_bytes": 29352,
-      "sha256": "78fe300c50185c65ed8bb7dabd01776c485605ee2d5e7138171fdd459d650679"
+      "size_bytes": 29355,
+      "sha256": "d51f2dc7b3c2ebbbf4a1900fe74d8fced339e0340597be33e525775bfa9b9282"
     },
     {
       "path": "src/origin_sciplot/semantic_contract.py",
@@ -320,8 +320,8 @@
     },
     {
       "path": "src/origin_sciplot/shap_composite.py",
-      "size_bytes": 14969,
-      "sha256": "1cce64f610de43f12a21a1ae2941eef22adea5ee1aa2be984c6af4152f292a84"
+      "size_bytes": 14970,
+      "sha256": "1fcfcfbb8212c8bb089a13a7287e5e1abf6fec503a15fb6042d0acbefdc5b850"
     },
     {
       "path": "src/origin_sciplot/shap_dashboard.py",
@@ -365,8 +365,8 @@
     },
     {
       "path": "src/origin_sciplot/workers/origin_smoke_worker.py",
-      "size_bytes": 4087,
-      "sha256": "c1f4d664e0a679deecc21f81e233bb958787a40d1c75e27eadbd8c6c12a7b1e2"
+      "size_bytes": 4088,
+      "sha256": "b30ae3647123ff8520752642ef4c026467b565f91cf2599e6f6039c8c7a76683"
     },
     {
       "path": "src/origin_sciplot/workers/process_launcher.py",
@@ -380,8 +380,8 @@
     },
     {
       "path": "src/origin_sciplot/workers/run_template_worker.py",
-      "size_bytes": 43491,
-      "sha256": "ca9e9c3a1f4b90e83d787f4489fcd8ffa4df1eb510ec3164273bab14388f90d2"
+      "size_bytes": 43492,
+      "sha256": "b8bb7c2fbe2982f3a15600eb462e3ac47840989e9f8e758ad62626602aecf687"
     },
     {
       "path": "src/origin_sciplot/xps_adaptive.py",
@@ -390,8 +390,8 @@
     },
     {
       "path": "src/origin_sciplot/xps_preview.py",
-      "size_bytes": 24290,
-      "sha256": "1578d4c2647e34dc4b40cfbd5e3e1be25023c42c779ff30477f65dd43583f76d"
+      "size_bytes": 24291,
+      "sha256": "8ea13d41d6e7982eaec9d0ccb5f28838a5f71413926c2f460e0ca1eda626dd10"
     },
     {
       "path": "src/origin_sciplot/xps_visual_style.py",
@@ -740,8 +740,8 @@
     },
     {
       "path": "templates/density_ridgeline3d/data_contract.md",
-      "size_bytes": 3591,
-      "sha256": "c185551713cc3f2b6e77f6c95d5307992bb5fef22d3dd3463472a86c406d452a"
+      "size_bytes": 3592,
+      "sha256": "2edb022e6c353522ae44bbb5933031d62464ea9608fb53c6c3a05284648371cc"
     },
     {
       "path": "templates/density_ridgeline3d/data_template.csv",
@@ -760,8 +760,8 @@
     },
     {
       "path": "templates/density_ridgeline3d/origin_acceptance.md",
-      "size_bytes": 6455,
-      "sha256": "9daf68292ab41c1c8a310a435c13a84386b02a9d11c676baf2ad78a2066097fd"
+      "size_bytes": 6456,
+      "sha256": "778507dfc007572ca6bd8b42996ae13f247ef7c4343a233998288be1b1fd563c"
     },
     {
       "path": "templates/density_ridgeline3d/runner.py",
@@ -2055,8 +2055,8 @@
     },
     {
       "path": "templates/xps_c1s_fit/preview.png",
-      "size_bytes": 179279,
-      "sha256": "5d3a935a68988f0a365d629c1a7624cd4e252f05f064cf6479794d5d809f5758"
+      "size_bytes": 179280,
+      "sha256": "fa4d897f794dd1d44029f7d3d89be385e30a99ac7434137387272688c617f8e1"
     },
     {
       "path": "templates/xps_c1s_fit/runner.py",

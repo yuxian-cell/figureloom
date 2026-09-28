@@ -16,7 +16,7 @@ scientific semantics, confirmation, palette choice, source identity, and output 
 
 | Shared | Origin | Grapher |
 | --- | --- | --- |
-| `editaplot_core.py`, RenderPlan, `editaplot_engine/models.py`, registry and CLI dispatch | `OriginEngine` adapts the unchanged `origin_sciplot` worker and verifier | `grapher_sciplot/engine.py` owns COM launch, native XY creation, GRF save, export, reopen, readback and verify |
+| `figureloom_core.py`, RenderPlan, `figureloom_engine/models.py`, registry and CLI dispatch | `OriginEngine` adapts the unchanged `origin_sciplot` worker and verifier | `grapher_sciplot/engine.py` owns COM launch, native XY creation, GRF save, export, reopen, readback and verify |
 
 `grapher_sciplot` does not import `origin_sciplot`. The first formal Grapher route reads the frozen
 backend-neutral `render_spec` and creates a deterministic staging CSV from the original CSV/XLSX.
@@ -52,10 +52,10 @@ not changed.
 ## CLI
 
 ```powershell
-editaplot doctor --engine grapher
-editaplot smoke --engine grapher --output-dir <directory>
-editaplot render render-plan.json --engine grapher
-editaplot verify <output-directory> --engine grapher
+figureloom doctor --engine grapher
+figureloom smoke --engine grapher --output-dir <directory>
+figureloom render render-plan.json --engine grapher
+figureloom verify <output-directory> --engine grapher
 ```
 
 Omitting `--engine` selects Origin. `origin-smoke` and `grapher-smoke` remain compatibility aliases.

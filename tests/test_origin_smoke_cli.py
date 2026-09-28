@@ -7,14 +7,14 @@ from pathlib import Path
 import pytest
 
 PRODUCT_ROOT = Path(__file__).resolve().parents[1]
-SCRIPTS = PRODUCT_ROOT / "skill" / "editaplot" / "scripts"
+SCRIPTS = PRODUCT_ROOT / "skill" / "figureloom" / "scripts"
 RUNTIME = PRODUCT_ROOT / "runtime"
 RUNTIME_SRC = RUNTIME / "src"
 for candidate in (SCRIPTS, RUNTIME_SRC):
     if str(candidate) not in sys.path:
         sys.path.insert(0, str(candidate))
 
-import editaplot_core as core  # noqa: E402
+import figureloom_core as core  # noqa: E402
 from origin_sciplot.origin_backend.safe_errors import (  # noqa: E402
     OriginEnvironmentError,
     WorkerExitCode,

@@ -3,12 +3,12 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "editaplot-runtime"
+name = "figureloom"
 version = "0.2.0"
 description = "Windows compatibility runtime for editable scientific plotting."
 requires-python = ">=3.10,<3.13"
 license = "Apache-2.0"
-authors = [{ name = "EditaPlot contributors" }]
+authors = [{ name = "FigureLoom contributors" }]
 dependencies = [
   "numpy==1.26.4",
   "pandas==2.3.3",
@@ -27,8 +27,8 @@ desktop = ["PySide6==6.6.3.1"]
 dev = ["pytest==9.1.1", "ruff==0.14.11", "pyinstaller==6.21.0", "xlwt==1.3.0"]
 
 [project.scripts]
-editaplot-desktop = "origin_sciplot.app:main"
-editaplot-worker = "origin_sciplot.workers.run_template_worker:main"
+figureloom-desktop = "origin_sciplot.app:main"
+figureloom-worker = "origin_sciplot.workers.run_template_worker:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
