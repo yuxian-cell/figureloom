@@ -354,10 +354,6 @@
     {
       "id": "personal_mailbox",
       "pattern": "[A-Z0-9._%+-]+@(?:gmail|outlook|hotmail|qq|163)\\.[A-Z]{2,}"
-    },
-    {
-      "id": "legacy_editaplot_brand",
-      "pattern": "EditaPlot|editaplot|EDITAPLOT"
     }
   ],
   "license": {
