@@ -197,6 +197,7 @@ class GrapherEngine:
 
     def doctor(self, *, engine_home: str | Path | None = None) -> dict[str, Any]:
         del engine_home
+        from editaplot_engine.correlation_heatmap import HEATMAP_CAPABILITIES
         try:
             detection = self.detect()
             automation_available = importlib.util.find_spec("pythoncom") is not None
@@ -211,6 +212,7 @@ class GrapherEngine:
                 "ready_for_analysis": True,
                 "ready_for_render": automation_available,
                 "fit_capabilities": FIT_CAPABILITIES[self.name].to_dict(),
+                "heatmap_capabilities": HEATMAP_CAPABILITIES[self.name],
             }
         except Exception as exc:
             code = getattr(exc, "code", "grapher_not_installed")
@@ -223,6 +225,7 @@ class GrapherEngine:
                 "ready_for_analysis": True,
                 "ready_for_render": False,
                 "fit_capabilities": FIT_CAPABILITIES[self.name].to_dict(),
+                "heatmap_capabilities": HEATMAP_CAPABILITIES[self.name],
                 "error": {"code": code, "message": str(exc)},
             }
 
@@ -496,6 +499,10 @@ class GrapherEngine:
                 document = None
 
     def readback(self, artifact: str | Path) -> dict[str, Any]:
+        from editaplot_engine.correlation_runtime import is_correlation_project, readback
+
+        if is_correlation_project(Path(artifact)):
+            return readback(self.name, Path(artifact).resolve())
         path = Path(artifact).resolve()
         require_file(path, "grapher_readback_failed")
         with _application(visible=False) as (app, _metadata):
@@ -583,6 +590,10 @@ class GrapherEngine:
         import editaplot_core
 
         editaplot_core.validate_plan(plan)
+        if plan.get("correlation_heatmap") is not None:
+            from editaplot_engine.correlation_runtime import render
+
+            return render(self.name, plan, plan_file, output_dir)
         fit_specs = production_linear_fits(plan)
         fit_spec = fit_specs[0] if len(fit_specs) == 1 else None
         if (
@@ -761,6 +772,10 @@ class GrapherEngine:
         return result
 
     def verify(self, output_dir: str | Path) -> dict[str, Any]:
+        from editaplot_engine.correlation_runtime import is_correlation_project, verify
+
+        if is_correlation_project(Path(output_dir) / "result.grf"):
+            return verify(self.name, Path(output_dir).resolve())
         target = Path(output_dir).expanduser().resolve()
         manifest_path = target / "manifest.json"
         expected_files = {

@@ -1,5 +1,11 @@
 # Phase 13 route inventory and coverage
 
+Phase 16 adds an explicit **correlation submode** of `heatmap`, using
+`CorrelationHeatmapSpec`: native Origin Matrix Heatmap and native Grapher Class
+Scatter with 21 fixed color intervals and a linked class legend. Generic
+Grapher Heatmap remains unsupported, so the full-route coverage remains 7/41.
+See [correlation semantics and acceptance](correlation-heatmap-phase16.md).
+
 ## Inventory boundary
 
 The authoritative route list is `TemplateRegistry.implemented()`: **41 public implemented Origin template routes**. `xps_adaptive` and `xps_c1s_fit` are two internal adapters behind the public `xps` route and are not counted again. ErrorBar, Fit, range and series count are composable variants of a template route, not independent registry IDs. Some templates have multiple plot modes; classification below covers the **whole** public template, including its optional modes. The generated [machine-readable matrix](route-coverage-phase13.json) records each registry ID, example mode, fixture, Origin runner, required capabilities, test-file evidence, and both backend statuses. Regenerate it with `python tools/build_route_coverage.py`. The generator fails if the A/B/C annotations drift from the public registry.

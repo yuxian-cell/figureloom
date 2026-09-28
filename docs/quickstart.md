@@ -43,6 +43,23 @@ The selected `Data` sheet is copied to a CSV **inside the run directory**. The o
 
 Open the resulting `result.opju` in Origin. The run contains PNG, PDF and TIF exports. To check artifacts again, use `verify <run>\origin --engine origin` or `verify <run>\grapher --engine grapher`.
 
+## Optional advanced example: correlation matrix
+
+The fixture below is explicitly synthetic, including its supplied p-values.
+It demonstrates layout and scientific mapping, not experimental findings.
+
+```powershell
+.\.venv\Scripts\python.exe skill\editaplot\scripts\editaplot.py workflow-preview tests\fixtures\correlation_heatmap\demo_correlation.csv --engine grapher --template-id heatmap --correlation-spec-json tests\fixtures\correlation_heatmap\demo_spec.json --output-dir runs\correlation-01 --engine-home runtime
+.\.venv\Scripts\python.exe skill\editaplot\scripts\editaplot.py workflow-render runs\correlation-01\workflow-preview.json --claim "Synthetic correlation layout example; supplied synthetic p-values" --confirm --human
+```
+
+Use `--engine origin` and a fresh directory for the equivalent native Matrix
+Heatmap. Origin exports OPJU/PNG/PDF/TIF; Grapher exports GRF/PNG/PDF and uses a
+native 21-interval class legend. Keep `correlation_cells.csv` beside the GRF as
+its editable native worksheet backing data. This correlation submode does not
+enable arbitrary generic Grapher heatmaps. Recommended size is at most 10×10;
+the tested hard limit is 20×20. Heatmap AI EditPlan operations are not supported.
+
 ## Problems and records
 
 Normal output can be machine readable JSON; `--human` gives short result paths. Put `--verbose` **before the command** to retain native exception details in the run's `runtime.log`, for example `editaplot.py --verbose workflow-render ...`. A failed or interrupted session is never marked verified. `session.json` stores its status and error code; an interrupted `rendering`/`editing` session returns `incomplete_session` on retry. Start a new output directory rather than overwriting a prior run.

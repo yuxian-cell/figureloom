@@ -111,6 +111,18 @@ def build() -> dict[str, object]:
             "gui_representative": "phase10_xy_multiline" if manifest.id in BATCH_1 else None,
             "migration_group": "batch_1" if manifest.id in BATCH_1 else None,
         })
+        if manifest.id == "heatmap":
+            routes[-1]["submodes"] = {
+                "correlation_heatmap": {
+                    "origin": "native_matrix_heatmap",
+                    "grapher": "native_class_scatter_21_intervals",
+                    "save_reopen": True, "native_readback": True, "verify": True,
+                    "gui_checked": True,
+                    "gui_checked_engines": {"origin": True, "grapher": True},
+                    "spec_required": "CorrelationHeatmapSpec",
+                    "generic_grapher_heatmap_supported": False,
+                }
+            }
     return {
         "schema_version": "1.0", "source": "TemplateRegistry.public implemented manifests",
         "route_count": len(routes), "category_counts": {name: sum(row["category"] == name for row in routes)

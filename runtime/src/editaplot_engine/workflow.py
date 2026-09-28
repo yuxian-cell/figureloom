@@ -115,6 +115,7 @@ def preview(
     intent: str = "",
     mapping: dict[str, Any] | None = None,
     fit_spec: dict[str, Any] | list[dict[str, Any]] | None = None,
+    correlation_heatmap_spec: dict[str, Any] | None = None,
     engine_home: str | Path | None = None,
 ) -> dict[str, Any]:
     import editaplot_core as core
@@ -139,12 +140,23 @@ def preview(
         raise EngineError("workspace_exists", "This workspace already contains a workflow.")
     before = _hash(source)
     effective, selected_sheet, sheets = _source_for_sheet(source, sheet, root)
+    if correlation_heatmap_spec is not None:
+        from .correlation_heatmap import CorrelationHeatmapSpec, validate_source
+
+        if fit_spec is not None or template_id not in {None, "heatmap"}:
+            raise EngineError("heatmap_unsupported_by_engine", "Correlation uses Heatmap without Fit.")
+        specification = CorrelationHeatmapSpec.from_dict(correlation_heatmap_spec)
+        validate_source(specification, effective)
+        correlation_heatmap_spec = specification.to_dict()
+        template_id = "heatmap"
     inspection = core.inspect_data(effective, engine_home=engine_home)
     recommendation = core.recommend_charts(effective, intent=intent, limit=41, engine_home=engine_home)
     if engine.name == "grapher":
         from grapher_sciplot.engine import SUPPORTED_TEMPLATE_ROUTES
 
         supported = set(SUPPORTED_TEMPLATE_ROUTES)
+        if correlation_heatmap_spec is not None:
+            supported.add("heatmap")
         candidates = [item for item in recommendation["candidates"] if item["template_id"] in supported]
     else:
         candidates = recommendation["candidates"]
@@ -180,6 +192,7 @@ def preview(
         "understanding": understanding,
         "mapping": mapping,
         "fit_spec": fit_spec,
+        **({"correlation_heatmap_spec": correlation_heatmap_spec} if correlation_heatmap_spec else {}),
         "intent": intent,
         "engine_home": str(engine_home) if engine_home else None,
     }
@@ -219,6 +232,7 @@ def render_confirmed(preview_file: str | Path, *, claim: str, confirmed: bool = 
         intent=data["intent"],
         mapping=data["mapping"],
         fit_spec=data["fit_spec"],
+        correlation_heatmap_spec=data.get("correlation_heatmap_spec"),
         semantic_confirmation=understanding["confirmation_gate"]["confirmation_payload_template"],
         engine_home=data["engine_home"],
     )

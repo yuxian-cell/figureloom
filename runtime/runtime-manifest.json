@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "source_policy": "curated EditaPlot runtime; caches, tests, builds, outputs, binaries, and local paths excluded",
-  "file_count": 436,
+  "file_count": 440,
   "files": [
     {
       "path": "LICENSE",
@@ -34,6 +34,16 @@
       "sha256": "f21f6a35d2ab66586990b4449e616650567f705854b8e6171619cf0f77cca7d4"
     },
     {
+      "path": "src/editaplot_engine/correlation_heatmap.py",
+      "size_bytes": 15000,
+      "sha256": "ed820ea0da101735847f3449f5fe0df6e70e242819c04da212d88358d101b4c0"
+    },
+    {
+      "path": "src/editaplot_engine/correlation_runtime.py",
+      "size_bytes": 7358,
+      "sha256": "13ac3b6c74dd3bde7397715b6a09363212eb74cf7b0487bbc398c7f485d932a3"
+    },
+    {
       "path": "src/editaplot_engine/doctor_probe.py",
       "size_bytes": 1238,
       "sha256": "5d3205a849b42af0720b6e91d6ac72f92d92625f45e3cbe1adba01f9e3461ded"
@@ -50,8 +60,8 @@
     },
     {
       "path": "src/editaplot_engine/origin.py",
-      "size_bytes": 20685,
-      "sha256": "f87098f1006f4f94d05dc3302e301b5e7eae6dbe8fcc95f25c1a22037f432a13"
+      "size_bytes": 21390,
+      "sha256": "c9185dc3d3e96c41b74b277cfe1eccb97655da12932cd4794e56eca241cd0214"
     },
     {
       "path": "src/editaplot_engine/registry.py",
@@ -60,8 +70,8 @@
     },
     {
       "path": "src/editaplot_engine/workflow.py",
-      "size_bytes": 18120,
-      "sha256": "287394e36b50459acd5ab3843c55ab8067e46963d4892903a9b90c5b222c4ac6"
+      "size_bytes": 18969,
+      "sha256": "7277ced9cbac43401fcbfb4d63cd2159a06e11484eb31a785ab4e935ab5e9f8f"
     },
     {
       "path": "src/grapher_sciplot/__init__.py",
@@ -69,9 +79,14 @@
       "sha256": "0313a386f270650ff47bfdbb8bdced289f9c765d9ce99be7a797a2183847ee9c"
     },
     {
+      "path": "src/grapher_sciplot/correlation_heatmap.py",
+      "size_bytes": 10033,
+      "sha256": "02008a582211b32f924f502462a5932c19136323ca63bea8ce809a459308b213"
+    },
+    {
       "path": "src/grapher_sciplot/engine.py",
-      "size_bytes": 49512,
-      "sha256": "a13bd85731ca02c256ff348f495359da1cc7078b3341b06caf29aa4750d0aae1"
+      "size_bytes": 50356,
+      "sha256": "4eb43a149447f467e51300c0d7ec912092ca2a4b7c12e3afb425bfa4fafcf552"
     },
     {
       "path": "src/grapher_sciplot/error_bar.py",
@@ -147,6 +162,11 @@
       "path": "src/origin_sciplot/origin_backend/categorical_renderer.py",
       "size_bytes": 63283,
       "sha256": "23d7f56d1fcb1f5c6d38583d26d6a38cd0d9da9f747b98a60ef237bc6a248771"
+    },
+    {
+      "path": "src/origin_sciplot/origin_backend/correlation_heatmap.py",
+      "size_bytes": 7738,
+      "sha256": "80dca6cbe82e14d87163bc610419dfdc719f5522fc6ce0ba7d857b5edeec44a2"
     },
     {
       "path": "src/origin_sciplot/origin_backend/density_ridgeline3d_renderer.py",

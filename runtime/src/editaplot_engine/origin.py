@@ -80,10 +80,13 @@ class OriginEngine:
         return self._core().discover_origin_application()
 
     def doctor(self, *, engine_home: str | Path | None = None) -> dict[str, Any]:
+        from .correlation_heatmap import HEATMAP_CAPABILITIES
+
         return {
             "engine": self.name,
             **self._core().doctor(engine_home=engine_home),
             "fit_capabilities": FIT_CAPABILITIES[self.name].to_dict(),
+            "heatmap_capabilities": HEATMAP_CAPABILITIES[self.name],
         }
 
     def smoke(
@@ -128,6 +131,10 @@ class OriginEngine:
         close_application: bool = False,
     ) -> RenderResult:
         core = self._core()
+        if plan.get("correlation_heatmap") is not None:
+            from .correlation_runtime import render
+
+            return render(self.name, plan, plan_file, output_dir)
         fit_specs = production_linear_fits(plan)
         fit_spec = fit_specs[0] if len(fit_specs) == 1 else None
         if fit_spec is not None and fit_spec.weight_mode == "column":
@@ -228,6 +235,10 @@ class OriginEngine:
         return result
 
     def readback(self, artifact: str | Path) -> dict[str, Any]:
+        from .correlation_runtime import is_correlation_project, readback
+
+        if is_correlation_project(Path(artifact)):
+            return readback(self.name, Path(artifact).resolve())
         report = Path(artifact).resolve().parent / "origin_verify_report.json"
         if not report.is_file():
             raise EngineError(
@@ -277,6 +288,10 @@ class OriginEngine:
                 "verification": "native_reopen_readback"}
 
     def verify(self, output_dir: str | Path) -> dict[str, Any]:
+        from .correlation_runtime import is_correlation_project, verify
+
+        if is_correlation_project(Path(output_dir) / "result.opju"):
+            return verify(self.name, Path(output_dir).resolve())
         result = self._core().verify_output(output_dir)
         report = {
             "status": "ok" if result["programmatic_pass"] else "failed",

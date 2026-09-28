@@ -710,6 +710,7 @@
         }
       ],
       "current_tests": [
+        "tests/test_correlation_heatmap_integration.py",
         "tests/test_editaplot.py",
         "tests/test_heatmap_density.py",
         "tests/test_public_release_gate.py",
@@ -727,7 +728,23 @@
       "verify": false,
       "gui_checked": false,
       "gui_representative": null,
-      "migration_group": null
+      "migration_group": null,
+      "submodes": {
+        "correlation_heatmap": {
+          "origin": "native_matrix_heatmap",
+          "grapher": "native_class_scatter_21_intervals",
+          "save_reopen": true,
+          "native_readback": true,
+          "verify": true,
+          "gui_checked": true,
+          "gui_checked_engines": {
+            "origin": true,
+            "grapher": true
+          },
+          "spec_required": "CorrelationHeatmapSpec",
+          "generic_grapher_heatmap_supported": false
+        }
+      }
     },
     {
       "route_id": "histogram",

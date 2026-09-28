@@ -148,6 +148,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     plan_parser.add_argument("--mapping-json", help="Confirmed assignments/context JSON")
     plan_parser.add_argument("--fit-spec-json", help="Optional backend-neutral FitSpec JSON file")
+    plan_parser.add_argument("--correlation-spec-json", help="Explicit correlation matrix HeatmapSpec JSON")
     plan_parser.add_argument(
         "--semantic-confirmation-json",
         required=True,
@@ -219,6 +220,7 @@ def build_parser() -> argparse.ArgumentParser:
     workflow_preview.add_argument("--intent", default="")
     workflow_preview.add_argument("--mapping-json")
     workflow_preview.add_argument("--fit-spec-json")
+    workflow_preview.add_argument("--correlation-spec-json")
     _engine_option(workflow_preview)
     _backend_option(workflow_preview)
 
@@ -664,10 +666,12 @@ def main(argv: list[str] | None = None) -> int:
                 args.reference_confirmation_json,
                 args.reference_bindings_json,
                 args.fit_spec_json,
+                args.correlation_spec_json,
             ):
                 _ensure_output_does_not_replace_input(reference_input, args.output)
             mapping = load_json(args.mapping_json) if args.mapping_json else None
             fit_spec = load_json(args.fit_spec_json) if args.fit_spec_json else None
+            correlation_spec = load_json(args.correlation_spec_json) if args.correlation_spec_json else None
             visual_style = load_json(args.visual_style_json) if args.visual_style_json else None
             semantic_confirmation = load_json(args.semantic_confirmation_json)
             reference_spec = (
@@ -705,6 +709,7 @@ def main(argv: list[str] | None = None) -> int:
                 reference_bindings=reference_bindings,
                 engine_home=args.engine_home,
                 fit_spec=fit_spec,
+                correlation_heatmap_spec=correlation_spec,
             )
             _emit(payload, args.output)
         elif args.command == "render":
@@ -738,6 +743,8 @@ def main(argv: list[str] | None = None) -> int:
                 template_id=args.template_id, sheet=args.sheet, intent=args.intent,
                 mapping=load_json(args.mapping_json) if args.mapping_json else None,
                 fit_spec=load_json(args.fit_spec_json) if args.fit_spec_json else None,
+                correlation_heatmap_spec=(load_json(args.correlation_spec_json)
+                                          if args.correlation_spec_json else None),
                 engine_home=args.engine_home,
             ))
         elif args.command == "workflow-render":
