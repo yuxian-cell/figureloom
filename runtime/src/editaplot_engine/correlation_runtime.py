@@ -14,6 +14,7 @@ from .correlation_heatmap import (
     validate_source,
     verify_readback,
 )
+from .correlation_layout import plan_layout, verify_layout
 from .models import EngineError, RenderResult
 
 
@@ -68,6 +69,7 @@ def render(
 
     editaplot_core.validate_plan(plan)
     spec = CorrelationHeatmapSpec.from_dict(plan["correlation_heatmap"])
+    layout = plan.get("correlation_layout", {}).get(engine) or plan_layout(spec, engine)
     warnings = (
         ["Dense annotation layout: recommended maximum is 10 labels; inspect native text before publication."]
         if len(spec.labels) > RECOMMENDED_MAX_SIZE
@@ -91,7 +93,7 @@ def render(
             from origin_sciplot.origin_backend.session import OriginSession
 
             with OriginSession(keep_open=False) as session:
-                path = create(session.op, spec, target)
+                path = create(session.op, spec, target, layout)
                 native = read(session.op, path)
                 version = session.environment.origin_version
         else:
@@ -99,10 +101,11 @@ def render(
             from grapher_sciplot.engine import _application
 
             with _application(visible=False) as (app, _info):
-                path = create(app, spec, target)
+                path = create(app, spec, target, layout)
                 native = read(app, path)
                 version = _info["version"]
         checks = verify_readback(spec, native)
+        checks["layout"] = verify_layout(layout, native)
         if not all(checks.values()):
             raise EngineError(
                 _verification_code(checks),
@@ -157,6 +160,8 @@ def verify(engine: str, target: Path) -> dict[str, Any]:
     try:
         native = readback(engine, path)
         checks = verify_readback(spec, native)
+        if "correlation_layout" in plan:
+            checks["layout"] = verify_layout(plan["correlation_layout"][engine], native)
         signatures = {"png": b"\x89PNG\r\n\x1a\n", "pdf": b"%PDF"}
         checks["editable_project"] = path.is_file() and path.stat().st_size > 0
         for suffix, signature in signatures.items():

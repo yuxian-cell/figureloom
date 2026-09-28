@@ -2437,6 +2437,9 @@ def build_plan(
         from editaplot_engine.correlation_heatmap import CorrelationHeatmapSpec
 
         plan["correlation_heatmap"] = CorrelationHeatmapSpec.from_dict(correlation_heatmap_spec).to_dict()
+        from editaplot_engine.correlation_layout import layouts
+
+        plan["correlation_layout"] = layouts(CorrelationHeatmapSpec.from_dict(plan["correlation_heatmap"]))
         plan["render_spec"]["chart_type"] = "correlation_heatmap"
         _validate_correlation_heatmap_plan(plan)
     if fit_spec is not None:
@@ -2457,6 +2460,10 @@ def _validate_correlation_heatmap_plan(plan: dict[str, Any]) -> None:
     try:
         spec = CorrelationHeatmapSpec.from_dict(plan["correlation_heatmap"])
         validate_source(spec, plan["source"]["path"])
+        from editaplot_engine.correlation_layout import layouts
+
+        if "correlation_layout" in plan and plan["correlation_layout"] != layouts(spec):
+            raise EditaPlotError("heatmap_layout_mismatch", "Frozen correlation layout differs from its spec.")
     except EngineError as exc:
         raise EditaPlotError(exc.code, str(exc)) from exc
 

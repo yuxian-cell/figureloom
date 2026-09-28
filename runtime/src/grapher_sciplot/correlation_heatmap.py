@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from editaplot_engine.correlation_heatmap import CorrelationHeatmapSpec, grapher_classes
+from editaplot_engine.correlation_layout import plan_layout
 from editaplot_engine.models import EngineError
 
 from .smoke import call, get, put, require_file
@@ -38,8 +39,10 @@ def _text(
     put(text, "Rotation", rotation)
 
 
-def create(app: Any, spec: CorrelationHeatmapSpec, target: Path) -> Path:
+def create(app: Any, spec: CorrelationHeatmapSpec, target: Path, layout: dict | None = None) -> Path:
     size = len(spec.labels)
+    layout = layout or plan_layout(spec, "grapher")
+    left, bottom = layout["plot_left_in"], layout["plot_bottom_in"]
     staging = target / "correlation_cells.csv"
     with staging.open("w", newline="", encoding="utf-8-sig") as stream:
         writer = csv.writer(stream)
@@ -52,11 +55,11 @@ def create(app: Any, spec: CorrelationHeatmapSpec, target: Path) -> Path:
     try:
         shapes = get(document, "Shapes")
         page = get(document, "PageSetup")
-        cell_width = max(0.24, min(0.48, 4.0 / size))
-        span = cell_width * size
+        cell_width = layout["cell_size_in"]
+        span = layout["plot_span_in"]
         put(page, "pageSize", -1)
-        put(page, "width", span + 3.4)
-        put(page, "height", span + 2.1)
+        put(page, "width", layout["page_width_in"])
+        put(page, "height", layout["page_height_in"])
         graph = call(shapes, "AddClassPlotGraph", str(staging), 1, 2, 3)
         put(graph, "Name", GRAPH_NAME)
         put(graph, "LinkTitleToObjectName", False)
@@ -85,8 +88,8 @@ def create(app: Any, spec: CorrelationHeatmapSpec, target: Path) -> Path:
                 "Min": 0.5,
                 "Max": size + 0.5,
                 "length": span,
-                "xPos": 1.15,
-                "yPos": 1.0,
+                "xPos": left,
+                "yPos": bottom,
             }.items():
                 put(axis, name, setting)
             put(get(axis, "title"), "text", "")
@@ -101,43 +104,56 @@ def create(app: Any, spec: CorrelationHeatmapSpec, target: Path) -> Path:
             _text(
                 shapes,
                 f"CH_X_{index}",
-                1.15 + (index + 0.5) * cell_width,
-                0.68,
+                left + (index + 0.5) * cell_width,
+                bottom - 0.15 - layout["x_label_height_in"] / 2,
                 label,
-                size=9,
-                align=3,
-                rotation=45,
+                size=layout["label_font_pt"],
+                align=2,
+                rotation=layout["x_rotation_deg"],
             )
             _text(
-                shapes, f"CH_Y_{index}", 1.05, 1 + (size - index - 0.5) * cell_width, label, size=9, align=3
+                shapes,
+                f"CH_Y_{index}",
+                left - 0.15,
+                bottom + (size - index - 0.5) * cell_width,
+                label,
+                size=layout["label_font_pt"],
+                align=3,
             )
         for cell in spec.cells():
             if cell["annotation"]:
                 _text(
                     shapes,
                     f"CH_CELL_{cell['row']}_{cell['column']}",
-                    1.15 + (cell["column"] + 0.5) * cell_width,
-                    1 + (size - cell["row"] - 0.5) * cell_width,
+                    left + (cell["column"] + 0.5) * cell_width,
+                    bottom + (size - cell["row"] - 0.5) * cell_width,
                     cell["annotation"],
-                    size=max(6, min(9, cell_width * 22)),
+                    size=layout["annotation_font_pt"],
                 )
-        _text(shapes, "CH_TITLE", 1.15 + span / 2, span + 1.35, spec.title, size=12)
+        _text(
+            shapes,
+            "CH_TITLE",
+            left + span / 2,
+            bottom + span + 0.35,
+            spec.title,
+            size=layout["title_font_pt"],
+        )
         legend = call(get(graph, "Legends"), "Item", 1)
         put(legend, "TitleLinked", False)
         put(legend, "TitleText", "r (21 bins; +1 included)")
-        put(get(legend, "TitleFont"), "size", 8)
+        put(get(legend, "TitleFont"), "size", 10)
         put(legend, "ShowEmptyClasses", True)
         put(legend, "DrawDescending", True)
         put(get(legend, "line"), "style", "Invisible")
-        put(legend, "RowOffset", 0.02)
+        put(legend, "RowOffset", 0.045)
         for index in range(1, 22):
             call(legend, "EntrySymbolMode", index, 2)
-            call(legend, "EntrySymbolSize", index, 0.075)
-            put(call(legend, "EntryFont", index), "size", 7)
-        put(legend, "left", span + 1.45)
-        put(legend, "top", span + 1.0)
+            call(legend, "EntrySymbolSize", index, 0.11)
+            put(call(legend, "EntryFont", index), "size", 9)
+        put(legend, "left", layout["legend_left_in"])
+        put(legend, "top", bottom + span)
         # Native interval entries remain linked; a decorative gradient would hide the bins.
-        put(get(legend, "Font"), "size", 7)
+        put(get(legend, "Font"), "size", 9)
         path = target / "result.grf"
         call(document, "SaveAs", str(path))
         require_file(path, "heatmap_render_failed")
@@ -229,6 +245,37 @@ def read_document(document: Any) -> dict[str, Any]:
         "p_value_matrix": pvalues,
         "cells": cells,
         "title": str(get(call(shapes, "Item", "CH_TITLE"), "text")),
+        "layout": {
+            "page_width_in": get(get(document, "PageSetup"), "width"),
+            "page_height_in": get(get(document, "PageSetup"), "height"),
+            "plot_left_in": get(call(get(graph, "Axes"), "Item", 1), "xPos"),
+            "plot_bottom_in": get(call(get(graph, "Axes"), "Item", 1), "yPos"),
+            "plot_span_in": get(call(get(graph, "Axes"), "Item", 1), "length"),
+            "plot_height_in": get(call(get(graph, "Axes"), "Item", 2), "length"),
+            # Text shape Rotation returns 0 even for rotated glyphs in Grapher 27.
+            # Preserve the actual COM value, not the planned angle as a fake readback.
+            "x_label_shape_rotation_deg": [
+                get(call(shapes, "Item", f"CH_X_{i}"), "Rotation") for i in range(size)
+            ],
+            "x_label_bounds_in": [
+                {
+                    key: get(call(shapes, "Item", f"CH_X_{i}"), key)
+                    for key in ("left", "top", "width", "height")
+                }
+                for i in range(size)
+            ],
+            "x_label_font_pt": [
+                get(get(call(shapes, "Item", f"CH_X_{i}"), "Font"), "size") for i in range(size)
+            ],
+            "y_label_font_pt": [
+                get(get(call(shapes, "Item", f"CH_Y_{i}"), "Font"), "size") for i in range(size)
+            ],
+            "annotation_font_pt": [
+                get(get(call(shapes, "Item", f"CH_CELL_{c['row']}_{c['column']}"), "Font"), "size")
+                for c in cells
+                if c["annotation"]
+            ],
+        },
         "mapping": {"mode": "discrete_classes", "classes": classes},
         "legend": {
             "count": get(legend, "EntryCount"),

@@ -41,3 +41,11 @@ All 21 final Grapher case logs in `.phase15-grapher-release-gate` contain `1 pas
 Final non-GUI run: **1012 passed, 7 skipped, 34 deselected in 101.56s**, exit 0, with no competing native test job. Modified Python files pass Ruff; `git diff --check` passes. The generated runtime manifest and route inventory checks pass within the full suite. Source hashes for both new-environment Quickstart workflows stayed unchanged; sessions resumed across separate CLI processes.
 
 Release decision: **release-ready** for the Windows Python/CLI v0.1 scope. No new route, Fit model, EditPlan operation, installer or later phase was started. Origin exit diagnostics/unknown process ownership, Grapher isolated execution and unsupported explicit weighted Fit remain limitations, not hidden success claims.
+# Phase 17 development gate
+
+Correlation Heatmap adaptive native layout passed Concrete 9-variable matrix,
+supplied p-values and raw-data Pearson native tests. All four representative
+Origin/Grapher projects passed user GUI acceptance; the final Origin Whole Page
+viewport patch also passed automatic tests and user reopen spot-check. Phase 17
+is approved for commit, with version remaining 0.1.0. No v0.2.0 bump,
+tag or release is authorized. See [Phase 17 evidence](correlation-heatmap-phase17.md).

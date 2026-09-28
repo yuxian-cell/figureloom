@@ -711,6 +711,8 @@
       ],
       "current_tests": [
         "tests/test_correlation_heatmap_integration.py",
+        "tests/test_correlation_layout.py",
+        "tests/test_correlation_layout_native.py",
         "tests/test_editaplot.py",
         "tests/test_heatmap_density.py",
         "tests/test_public_release_gate.py",

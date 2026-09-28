@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "source_policy": "curated EditaPlot runtime; caches, tests, builds, outputs, binaries, and local paths excluded",
-  "file_count": 440,
+  "file_count": 441,
   "files": [
     {
       "path": "LICENSE",
@@ -39,9 +39,14 @@
       "sha256": "ed820ea0da101735847f3449f5fe0df6e70e242819c04da212d88358d101b4c0"
     },
     {
+      "path": "src/editaplot_engine/correlation_layout.py",
+      "size_bytes": 6256,
+      "sha256": "2d97dd24f487f3eb355da640c969479aca528d6f7b077f3aaf41a60177468caa"
+    },
+    {
       "path": "src/editaplot_engine/correlation_runtime.py",
-      "size_bytes": 7358,
-      "sha256": "13ac3b6c74dd3bde7397715b6a09363212eb74cf7b0487bbc398c7f485d932a3"
+      "size_bytes": 7709,
+      "sha256": "de9a15e9e1cc8ad9ba52decbb2463c37201e24fd4b42010c2c17bfa713f159da"
     },
     {
       "path": "src/editaplot_engine/doctor_probe.py",
@@ -80,8 +85,8 @@
     },
     {
       "path": "src/grapher_sciplot/correlation_heatmap.py",
-      "size_bytes": 10033,
-      "sha256": "02008a582211b32f924f502462a5932c19136323ca63bea8ce809a459308b213"
+      "size_bytes": 12193,
+      "sha256": "fe19ad5bf31d2e45e281858fbb495d0b03d7e3631493d8ecc6b7644d650ab11f"
     },
     {
       "path": "src/grapher_sciplot/engine.py",
@@ -165,8 +170,8 @@
     },
     {
       "path": "src/origin_sciplot/origin_backend/correlation_heatmap.py",
-      "size_bytes": 7738,
-      "sha256": "80dca6cbe82e14d87163bc610419dfdc719f5522fc6ce0ba7d857b5edeec44a2"
+      "size_bytes": 10413,
+      "sha256": "d2dcde5917fd517113f4ed03177ceac42ea35081be97ae9b6ca4019a37f75611"
     },
     {
       "path": "src/origin_sciplot/origin_backend/density_ridgeline3d_renderer.py",

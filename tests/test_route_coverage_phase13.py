@@ -108,7 +108,7 @@ def test_batch_1_origin_baseline(route: str, tmp_path: Path) -> None:
     engine = OriginEngine()
     rendered = engine.render(
         plan, plan_file=plan_file, engine_home=ROOT / "runtime",
-        python_executable=sys.executable, output_dir=output,
+        python_executable=sys.executable, output_dir=output, close_application=True,
     )
     assert rendered.status == engine.verify(output)["status"] == "ok"
     for suffix in ("opju", "png", "pdf", "tif"):

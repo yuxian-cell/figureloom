@@ -8,6 +8,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 from editaplot_engine.correlation_heatmap import CorrelationHeatmapSpec, diverging_rgb
+from editaplot_engine.correlation_layout import plan_layout
 from editaplot_engine.models import EngineError
 
 from .base_style_contract import FixedOriginStyle
@@ -34,8 +35,10 @@ def _label(
     label.set_float("y", y)
 
 
-def create(op: Any, spec: CorrelationHeatmapSpec, target: Path) -> Path:
+def create(op: Any, spec: CorrelationHeatmapSpec, target: Path, layout: dict | None = None) -> Path:
     size = len(spec.labels)
+    layout = layout or plan_layout(spec, "origin")
+    cell_size = layout["cell_size_in"]
     matrix = op.new_sheet("m", "Correlation Matrix")
     matrix.from_np(np.asarray(spec.correlation_matrix))
     matrix.xymap = (1, size, 1, size)
@@ -46,9 +49,22 @@ def create(op: Any, spec: CorrelationHeatmapSpec, target: Path) -> Path:
     layer = graph[0]
     plot = layer.add_plot(matrix, colz=0)
     layer.rescale("z")
-    _set_page_size(graph, FixedOriginStyle(page_width_cm=21.59, page_height_cm=19.05))
+    _set_page_size(
+        graph,
+        FixedOriginStyle(
+            page_width_cm=layout["page_width_in"] * 2.54,
+            page_height_cm=layout["page_height_in"] * 2.54,
+        ),
+    )
     layer.set_int("unit", 1)
-    for key, value in {"left": 18, "top": 12, "width": 61, "height": 69}.items():
+    for key, value in {
+        "left": 100 * layout["plot_left_in"] / layout["page_width_in"],
+        "top": 100
+        * (layout["page_height_in"] - layout["plot_bottom_in"] - layout["plot_span_in"])
+        / layout["page_height_in"],
+        "width": 100 * layout["plot_span_in"] / layout["page_width_in"],
+        "height": 100 * layout["plot_span_in"] / layout["page_height_in"],
+    }.items():
         layer.set_float(key, value)
     plot.zlevels = {"minors": 0, "levels": [-1 + 2 * index / 256 for index in range(257)]}
     layer.set_int("cmap.linkpal", 0)
@@ -73,8 +89,23 @@ def create(op: Any, spec: CorrelationHeatmapSpec, target: Path) -> Path:
         if layer.label(name) is not None:
             layer.remove_label(name)
     for index, text in enumerate(spec.labels):
-        _label(layer, f"CHX{index}", text, index + 1, size + 0.85, rotation=45)
-        _label(layer, f"CHY{index}", text, 0.05, index + 1)
+        _label(
+            layer,
+            f"CHX{index}",
+            text,
+            index + 1,
+            size + 0.5 + (0.15 + layout["x_label_height_in"] / 2) / cell_size,
+            rotation=layout["x_rotation_deg"],
+            size=layout["label_font_pt"],
+        )
+        _label(
+            layer,
+            f"CHY{index}",
+            text,
+            0.5 - (layout["max_label_width_in"] / 2 + 0.15) / cell_size,
+            index + 1,
+            size=layout["label_font_pt"],
+        )
     for cell in spec.cells():
         if cell["annotation"]:
             _label(
@@ -83,21 +114,30 @@ def create(op: Any, spec: CorrelationHeatmapSpec, target: Path) -> Path:
                 cell["annotation"],
                 cell["column"] + 1,
                 cell["row"] + 1,
-                size=max(6, min(10, 80 / size)),
+                size=layout["annotation_font_pt"],
             )
-    _label(layer, "CHTitle", spec.title, (size + 1) / 2, 0.2, size=14)
+    _label(layer, "CHTitle", spec.title, (size + 1) / 2, 0.5 - 0.35 / cell_size, size=layout["title_font_pt"])
     # The native graph retains a relationship to its annotation/p-value backing worksheet.
     _label(layer, "CHBacking", provenance.lt_range(), 1, 1)
     layer.label("CHBacking").set_int("show", 0)
+    color_scale_top = (
+        layout["page_height_in"] - layout["plot_bottom_in"] - layout["plot_span_in"]
+    ) / layout["page_height_in"]
     layer.obj.LT_execute(
         "spectrum1.show=1;spectrum1.title=0;spectrum1.attach=0;"
-        "spectrum1.labels.autodisp=0;spectrum1.labels.font=font(Arial);"
-        "spectrum1.labels.fsize=10;spectrum1.labels.underline=0;"
-        "spectrum1.left=page.width*0.83;spectrum1.top=page.height*0.12;"
-        "spectrum1.width=page.width*0.07;spectrum1.height=page.height*0.69;"
+        f"spectrum1.width=page.width*{1.0 / layout['page_width_in']};"
+        f"spectrum1.height=page.height*{layout['plot_span_in'] / layout['page_height_in']};"
+        f"spectrum1.left=page.width*{layout['legend_left_in'] / layout['page_width_in']};"
+        f"spectrum1.top=page.height*{color_scale_top};"
+        "spectrum1.labels.autodisp=0;spectrum1.labels.show=1;"
+        "spectrum1.labels.font=font(Arial);spectrum1.labels.fsize=10;"
+        "spectrum1.labels.underline=0;spectrum1.labels.decplaces=1;"
         "spectrum1.levels.major=3;spectrum1.levels.from=-1;spectrum1.levels.to=1;"
         "spectrum1.levels.inc=0;spectrum1.levels.majorticks=3;spectrum1.levels.minorticks=0;"
     )
+    # Whole Page changes only the viewport; persist it without resizing the physical page.
+    graph.activate()
+    graph.obj.LT_execute("win -z0;")
     op.save(str(target / "result.opju"))
     export_graph(op, graph, target / "result.png", target / "result.pdf", target / "result.tif")
     op.new(asksave=False)
@@ -159,6 +199,24 @@ def read_opened(op: Any) -> dict[str, Any]:
         "p_value_matrix": pvalues,
         "cells": cells,
         "title": layer.label("CHTitle").text,
+        "layout": {
+            "page_width_in": float(graph.obj.GetWidth()),
+            "page_height_in": float(graph.obj.GetHeight()),
+            "plot_left_in": layer.get_float("left") * float(graph.obj.GetWidth()) / 100,
+            "plot_bottom_in": (100 - layer.get_float("top") - layer.get_float("height"))
+            * float(graph.obj.GetHeight())
+            / 100,
+            "plot_span_in": layer.get_float("width") * float(graph.obj.GetWidth()) / 100,
+            "plot_height_in": layer.get_float("height") * float(graph.obj.GetHeight()) / 100,
+            "x_label_rotation_deg": [layer.label(f"CHX{i}").get_float("rotate") for i in range(size)],
+            "x_label_font_pt": [layer.label(f"CHX{i}").get_float("fsize") for i in range(size)],
+            "y_label_font_pt": [layer.label(f"CHY{i}").get_float("fsize") for i in range(size)],
+            "annotation_font_pt": [
+                layer.label(f"CHC{c['row']}X{c['column']}").get_float("fsize")
+                for c in cells
+                if c["annotation"]
+            ],
+        },
         "mapping": {
             "mode": "native_colormap_levels",
             "levels": plot.zlevels["levels"],
@@ -172,6 +230,7 @@ def read_opened(op: Any) -> dict[str, Any]:
             "linked": bool(layer.label("spectrum1")),
             "min": op.lt_float("spectrum1.levels.from"),
             "max": op.lt_float("spectrum1.levels.to"),
+            "labels_visible": bool(op.lt_float("spectrum1.labels.show")),
             "relationship_source": "single_matrix_plot_native_spectrum",
         },
     }

@@ -60,6 +60,17 @@ its editable native worksheet backing data. This correlation submode does not
 enable arbitrary generic Grapher heatmaps. Recommended size is at most 10×10;
 the tested hard limit is 20×20. Heatmap AI EditPlan operations are not supported.
 
+Phase 17 adds deterministic physical layout planning for this correlation submode:
+long labels and value/star text enlarge cells, margins and the native page, rather
+than shrinking text. Full labels are retained; X-label rotation is selected from
+45/60/90 degrees. Annotation sizes are Origin 11 pt and Grapher 10 pt. Matrices
+above 10 labels still receive a density warning. Inspect the native project at
+the intended physical output size before publication. Phase 17 real-data GUI
+acceptance passed, including the final Origin Whole Page reopen spot-check;
+version remains 0.1.0. Origin applies Whole Page before saving without resizing
+the physical page. See
+[layout evidence and limitations](correlation-heatmap-phase17.md).
+
 ## Problems and records
 
 Normal output can be machine readable JSON; `--human` gives short result paths. Put `--verbose` **before the command** to retain native exception details in the run's `runtime.log`, for example `editaplot.py --verbose workflow-render ...`. A failed or interrupted session is never marked verified. `session.json` stores its status and error code; an interrupted `rendering`/`editing` session returns `incomplete_session` on retry. Start a new output directory rather than overwriting a prior run.
