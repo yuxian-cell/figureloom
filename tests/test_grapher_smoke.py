@@ -86,25 +86,19 @@ def test_activation_error_is_normalized(monkeypatch: pytest.MonkeyPatch, tmp_pat
     assert json.loads(Path(result["report_path"]).read_text(encoding="utf-8")) == result
 
 
-def test_owned_cleanup_forces_only_its_pid_after_com_quit_failure(
+def test_cleanup_warns_without_terminating_unattributed_pid_after_com_quit_failure(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     running = {42}
-    killed: list[tuple[int, int]] = []
     monkeypatch.setattr(smoke, "grapher_pids", lambda: set(running))
     monkeypatch.setattr(
         smoke, "call", lambda *_args: (_ for _ in ()).throw(RuntimeError("RPC unavailable"))
     )
-    monkeypatch.setattr(smoke.time, "sleep", lambda _seconds: None)
 
-    def kill(pid: int, sig: int) -> None:
-        killed.append((pid, sig))
-        running.remove(pid)
+    monkeypatch.setattr(smoke.os, "kill", lambda *_args: pytest.fail("must not kill a PID"))
 
-    monkeypatch.setattr(smoke.os, "kill", kill)
-
-    assert smoke.quit_owned_application(object(), 42) is None
-    assert killed == [(42, smoke.signal.SIGTERM)]
+    warning = smoke.quit_owned_application(object(), 42)
+    assert warning is not None and "RPC unavailable" in warning
 
 
 def test_cli_routes_grapher_smoke_without_origin(

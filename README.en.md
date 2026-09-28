@@ -14,7 +14,7 @@
   <p><a href="README.md">中文说明</a> · Chinese is the primary documentation language</p>
 </div>
 
-I built EditaPlot as a local Windows Codex Skill for turning your experimental data into an **editable OPJU** plus PNG, PDF, and TIF exports. It guides the job from data inspection and per-column use classification through chart selection, element confirmation, local Origin automation, and result verification.
+EditaPlot is a local Windows Codex Skill that inspects data, recommends charts, confirms column semantics, and creates verified native editable figures in Origin or Grapher. Origin exports OPJU, PNG, PDF and TIF; verified Grapher routes export GRF, PNG and PDF. See the v0.1 [Quickstart](docs/quickstart.md) and [release notes](docs/release-v0.1.md) for the standalone CLI and current limits.
 
 I did not want this to become a collection of rigid “replace the numbers” templates, and a Python preview is never passed off as an Origin result. You keep control of the scientific meaning and final choices. When the input is ambiguous, EditaPlot lists the unresolved columns and asks you before drawing instead of inventing columns, fits, or conclusions.
 
@@ -37,8 +37,8 @@ flowchart LR
     E -- No --> G["You confirm the purpose<br>and final elements"]
     R["Optional reference figure"] --> S["Abstract grammar and style only<br>do not copy data or text"]
     S --> G
-    G --> H["Draw in a dedicated Origin instance"]
-    H --> I["Editable OPJU<br>PNG + PDF + TIF"]
+    G --> H["Draw in a dedicated Origin / Grapher instance"]
+    H --> I["Editable OPJU / GRF<br>Native PNG + PDF exports"]
     I --> J["Read objects back and inspect visually"]
 ```
 

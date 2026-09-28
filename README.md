@@ -14,7 +14,7 @@
   <p><a href="README.en.md">English</a> · 中文为主要说明语言</p>
 </div>
 
-我把 EditaPlot 做成了一个面向 Codex 的 Windows 本地科研绘图 Skill。你把自己的实验数据交给它后，它会依次理解数据、逐列说明用途、推荐图形、请你确认图形元素、调用 Origin 并验证结果，最后生成**可编辑 OPJU**，同时导出 PNG、PDF、TIF。
+我把 EditaPlot 做成了一个面向 Codex 的 Windows 本地科研绘图 Skill。它会检查数据、推荐图形、确认列语义，再调用 Origin 或 Grapher 的原生对象生成可继续编辑的项目并验证结果。Origin 输出 OPJU、PNG、PDF、TIF；Grapher 在已验证路线上输出 GRF、PNG、PDF。v0.1 的独立 CLI 使用方法见 [Quickstart](docs/quickstart.md)，能力边界见 [发布说明](docs/release-v0.1.md)。
 
 我不希望它只是一套“替换数字”的静态模板，也不会让 Python 预览图冒充 Origin 成图。科学含义和最终选择始终由你决定；遇到把握不足的数据，EditaPlot 会把不确定的列单独列出来请你确认，不会擅自补列、拟合或推断结论。
 
@@ -37,8 +37,8 @@ flowchart LR
     E -- 没有 --> G["你确认科学目的<br>和最终图形元素"]
     R["可选参考图"] --> S["只提取图形语法与风格<br>不复制数据和文字"]
     S --> G
-    G --> H["在专用 Origin 实例中绘图"]
-    H --> I["可编辑 OPJU<br>PNG + PDF + TIF"]
+    G --> H["在专用 Origin / Grapher 实例中绘图"]
+    H --> I["可编辑 OPJU / GRF<br>原生导出 PNG + PDF"]
     I --> J["反读对象并人工检查"]
 ```
 

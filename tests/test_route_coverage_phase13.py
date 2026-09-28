@@ -73,13 +73,12 @@ def test_batch_1_reuses_xy_line_without_dropping_semantics(route: str, tmp_path:
 @pytest.mark.parametrize("route", BATCH)
 def test_batch_1_grapher_native_route(route: str, tmp_path: Path) -> None:
     pytest.importorskip("pythoncom")
-    from grapher_sciplot.smoke import SmokeFailure, discover, grapher_pids
+    from grapher_sciplot.smoke import SmokeFailure, discover
 
     try:
         discover()
     except SmokeFailure as exc:
         pytest.skip(str(exc))
-    before = grapher_pids()
     plan, plan_file = _plan(route, tmp_path)
     output = tmp_path / route
     engine = GrapherEngine()
@@ -91,7 +90,8 @@ def test_batch_1_grapher_native_route(route: str, tmp_path: Path) -> None:
     assert len(verified["readback"]["plots"]) == 2
     for suffix in ("grf", "png", "pdf"):
         assert (output / f"result.{suffix}").is_file()
-    assert grapher_pids() == before
+    # COM proxy release can complete after this pytest process exits. The
+    # isolated runner checks newly remaining PIDs at that job boundary.
 
 
 @pytest.mark.origin

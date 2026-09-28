@@ -137,7 +137,9 @@ def test_grapher_explicit_weight_rejected_before_successful_session(tmp_path: Pa
     with pytest.raises(EngineError) as error:
         render_confirmed(tmp_path / "run" / "workflow-preview.json", claim="weighted", confirmed=True)
     assert error.value.code == "unsupported_fit_weighting"
-    assert not (tmp_path / "run" / "session.json").exists()
+    failed = json.loads((tmp_path / "run" / "session.json").read_text(encoding="utf-8"))
+    assert failed["status"] == "failed"
+    assert failed["error"]["code"] == "unsupported_fit_weighting"
     assert not list((tmp_path / "run").rglob("*.grf"))
 
 

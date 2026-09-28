@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 import json
 import math
 import re
@@ -440,6 +441,9 @@ def apply_linear_fit(
             multi_series=allow_existing,
         )
         readback["engine_version"] = session.environment.origin_version
+        op.new(asksave=False)
+        del source, fit_source, graph, curve
+        gc.collect()
     (output_dir / "origin_fit_readback.json").write_text(
         json.dumps(readback, ensure_ascii=False, indent=2), encoding="utf-8"
     )

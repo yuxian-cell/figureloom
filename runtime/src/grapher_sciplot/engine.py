@@ -10,6 +10,7 @@ import math
 import re
 import shutil
 import statistics
+import sys
 from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import datetime
@@ -105,19 +106,24 @@ def _application(*, visible: bool) -> Iterator[tuple[Any, dict[str, Any]]]:
         ) from exc
     before = grapher_pids()
     app = None
-    owns_app = False
     owned_pid: int | None = None
     pythoncom.CoInitialize()
     try:
-        app = DispatchEx(PROGID)
+        try:
+            app = DispatchEx(PROGID)
+        except Exception as exc:
+            raise EngineError(
+                "grapher_automation_unavailable",
+                "Grapher automation could not be started. Close unused Grapher sessions and retry.",
+                engine="grapher",
+            ) from exc
         created = grapher_pids() - before
         if len(created) != 1:
             raise EngineError(
-                "grapher_com_activation_failed",
-                "COM did not create one isolated Grapher process.",
+                "grapher_automation_unavailable",
+                "Grapher did not create one isolated automation instance. Close unused sessions and retry.",
                 engine="grapher",
             )
-        owns_app = True
         owned_pid = created.pop()
         put(app, "Visible", visible)
         yield (
@@ -132,17 +138,23 @@ def _application(*, visible: bool) -> Iterator[tuple[Any, dict[str, Any]]]:
     except EngineError:
         raise
     except Exception as exc:
-        raise EngineError("grapher_com_activation_failed", str(exc), engine="grapher") from exc
+        raise EngineError(
+            "grapher_native_operation_failed", "Grapher native automation failed.", engine="grapher"
+        ) from exc
     finally:
+        primary_error = sys.exc_info()[1]
         cleanup_error = (
             quit_owned_application(app, owned_pid)
-            if app is not None and owns_app and owned_pid is not None
+            if app is not None
             else None
         )
         app = None
         pythoncom.CoUninitialize()
         if cleanup_error is not None:
-            raise EngineError("grapher_cleanup_failed", str(cleanup_error), engine="grapher")
+            if primary_error is not None:
+                primary_error.add_note(f"Grapher cleanup warning: {cleanup_error}")
+            else:
+                raise EngineError("grapher_cleanup_failed", cleanup_error, engine="grapher")
 
 
 def _optional_get(obj: Any, name: str) -> Any | None:

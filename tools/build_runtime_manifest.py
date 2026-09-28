@@ -39,6 +39,7 @@ def main() -> int:
             or path.name in EXCLUDED_FILES
             or any(
                 part in EXCLUDED_PARTS or part.startswith(EXCLUDED_PREFIXES)
+                or part.endswith(".egg-info")
                 for part in relative.parts
             )
             or path.suffix.lower() in EXCLUDED_SUFFIXES

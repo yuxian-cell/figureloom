@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 import math
 import platform
 import struct
@@ -153,7 +154,7 @@ class OriginSession:
                 # best-effort Exit; its wrapper then creates a fresh
                 # Application object on the next access.
                 try:
-                    op.exit()
+                    _exit_owned(op)
                 except Exception as cleanup_exc:  # noqa: BLE001 - redact local details
                     # ``cleanup_exc.__context__`` is the activation exception
                     # because cleanup runs inside that handler. Classify the
@@ -316,7 +317,7 @@ class OriginSession:
             # Entry never completed, so keep_open does not apply. Leaving a
             # visible instance here would discard the only management handle.
             with suppress(Exception):
-                op.exit()
+                _exit_owned(op)
         self._clear_failed_entry()
 
     def _clear_failed_entry(self) -> None:
@@ -344,7 +345,7 @@ class OriginSession:
                 # still means the EditaPlot-owned window must be visible.
                 op.set_show(True)
             else:
-                op.exit()
+                _exit_owned(op)
         except Exception as cleanup_exc:  # noqa: BLE001 - redact local Automation failure details
             if ownership is SessionOwnership.USER:
                 cleanup_error = (
@@ -368,9 +369,24 @@ class OriginSession:
                     cleanup_exc,
                 )
 
-        if cleanup_error is not None and exc_type is None:
+        if cleanup_error is not None:
             message, code, stage, cleanup_exc = cleanup_error
-            raise OriginEnvironmentError(message, code=code, stage=stage) from cleanup_exc
+            if exc_type is None:
+                raise OriginEnvironmentError(message, code=code, stage=stage) from cleanup_exc
+            if isinstance(exc, BaseException):
+                exc.add_note(f"Origin cleanup warning ({code}): {cleanup_exc}")
+
+
+def _exit_owned(op: ModuleType | Any) -> None:
+    """Release unreachable OriginExt COM proxies after requesting owned exit."""
+
+    try:
+        op.exit()
+    finally:
+        # OriginExt.Application.Exit returns before its process leaves while
+        # Python still holds unreachable COM proxies (confirmed on Origin 2024).
+        with suppress(Exception):
+            gc.collect()
 
 
 def _safe_package_version(distribution_name: str) -> str:

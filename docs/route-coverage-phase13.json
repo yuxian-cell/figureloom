@@ -1572,6 +1572,7 @@
         "tests/test_grapher_error.py",
         "tests/test_public_release_gate.py",
         "tests/test_public_template_alignment.py",
+        "tests/test_runtime_lifecycle_phase15.py",
         "tests/test_star_trend.py",
         "tests/test_workflow_phase14.py"
       ],

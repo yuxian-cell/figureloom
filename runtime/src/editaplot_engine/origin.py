@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import gc
 import json
+import os
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -61,7 +63,8 @@ class OriginEngine:
         final_payload: dict[str, Any] = {}
         for line in process.stdout:
             text = line.rstrip("\r\n")
-            print(text, flush=True)
+            if os.environ.get("EDITAPLOT_HUMAN") != "1":
+                print(text, flush=True)
             try:
                 payload = json.loads(text)
             except json.JSONDecodeError:
@@ -139,20 +142,21 @@ class OriginEngine:
             output_dir=output_dir,
             close_origin=close_application or bool(fit_specs),
         )
-        print(
-            json.dumps(
-                {
-                    "type": "editaplot_render_start",
-                    "engine": self.name,
-                    "engine_home": str(root),
-                    "template_id": plan["template"]["id"],
-                    "source_sha256": plan["source"]["sha256"],
-                    "origin_callability_check": "worker_connection",
-                },
-                ensure_ascii=False,
-            ),
-            flush=True,
-        )
+        if os.environ.get("EDITAPLOT_HUMAN") != "1":
+            print(
+                json.dumps(
+                    {
+                        "type": "editaplot_render_start",
+                        "engine": self.name,
+                        "engine_home": str(root),
+                        "template_id": plan["template"]["id"],
+                        "source_sha256": plan["source"]["sha256"],
+                        "origin_callability_check": "worker_connection",
+                    },
+                    ensure_ascii=False,
+                ),
+                flush=True,
+            )
         payload = self._run_worker(command, cwd=root, environment=env, label="Origin render worker")
         editable = Path(str(payload.get("opju", "")))
         if not editable.is_file():
@@ -179,6 +183,7 @@ class OriginEngine:
                     Path(str(payload["output_dir"])), spec, error_column,
                     allow_existing=len(fit_specs) > 1,
                 )
+                gc.collect()
                 fit_readbacks[spec.y_column] = native
                 entries.append({"spec": spec.to_dict(), "error_column": error_column, "readback": native})
             fit_readback = next(iter(fit_readbacks.values())) if len(fit_specs) == 1 else None
@@ -263,6 +268,8 @@ class OriginEngine:
             graph = _main_graph(op)
             actual = graph[0].axis(edit["axis"]).title if graph is not None else None
             reopened_count = len(graph[0].plot_list()) if graph is not None else 0
+        del graph, op, session
+        gc.collect()
         if actual != edit["value"] or reopened_count != plot_count:
             raise EngineError("edit_verify_failed", "Origin axis title did not persist.", engine=self.name)
         return {"status": "ok", "engine": self.name, "operation": edit["operation"],
@@ -312,6 +319,7 @@ class OriginEngine:
                             Path(output_dir), spec, saved_fit["report_sheet"], saved_fit["curve_sheet"],
                             multi_series=True,
                         )
+                        gc.collect()
                         if not all((
                             native["present"], native["curve_present"], native["scatter_present"],
                             native["source_x_column"] == spec.x_column,
@@ -363,6 +371,7 @@ class OriginEngine:
                     Path(output_dir), spec, saved["report_sheet"], saved["curve_sheet"],
                     expected_error, saved.get("fit_source_ref"),
                 )
+                gc.collect()
                 error_ok = expected_error is None or (
                     native["error"]["present"] is True
                     and native["error"]["column"] == expected_error

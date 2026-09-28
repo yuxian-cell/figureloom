@@ -2307,7 +2307,8 @@ def test_runtime_manifest_is_an_exact_hash_inventory() -> None:
         and path != manifest_path
         and path.name != core.MANAGED_ENV_LOCK
         and not any(
-            part in {"__pycache__", core.MANAGED_ENV_DIRECTORY}
+                part in {"__pycache__", core.MANAGED_ENV_DIRECTORY}
+                or part.endswith(".egg-info")
             or part.startswith(
                 (
                     f"{core.MANAGED_ENV_DIRECTORY}.build-",

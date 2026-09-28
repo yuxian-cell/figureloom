@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "source_policy": "curated EditaPlot runtime; caches, tests, builds, outputs, binaries, and local paths excluded",
-  "file_count": 435,
+  "file_count": 436,
   "files": [
     {
       "path": "LICENSE",
@@ -34,6 +34,11 @@
       "sha256": "f21f6a35d2ab66586990b4449e616650567f705854b8e6171619cf0f77cca7d4"
     },
     {
+      "path": "src/editaplot_engine/doctor_probe.py",
+      "size_bytes": 1238,
+      "sha256": "5d3205a849b42af0720b6e91d6ac72f92d92625f45e3cbe1adba01f9e3461ded"
+    },
+    {
       "path": "src/editaplot_engine/fit_contract.py",
       "size_bytes": 17630,
       "sha256": "3c5bc0d878d1af6fa98428ff15b739cfdc21fd1f453018d7ff62b160a2132a38"
@@ -45,8 +50,8 @@
     },
     {
       "path": "src/editaplot_engine/origin.py",
-      "size_bytes": 20348,
-      "sha256": "8749dc748aa5ad39623fcc8100a654e871e45edb233cb0e34acaf10b12eec03c"
+      "size_bytes": 20685,
+      "sha256": "f87098f1006f4f94d05dc3302e301b5e7eae6dbe8fcc95f25c1a22037f432a13"
     },
     {
       "path": "src/editaplot_engine/registry.py",
@@ -55,8 +60,8 @@
     },
     {
       "path": "src/editaplot_engine/workflow.py",
-      "size_bytes": 13442,
-      "sha256": "749a52057832f4eb5f4fb243b58db868f65a9da03f0a246812b3d95d47fdbca5"
+      "size_bytes": 18120,
+      "sha256": "287394e36b50459acd5ab3843c55ab8067e46963d4892903a9b90c5b222c4ac6"
     },
     {
       "path": "src/grapher_sciplot/__init__.py",
@@ -65,8 +70,8 @@
     },
     {
       "path": "src/grapher_sciplot/engine.py",
-      "size_bytes": 49018,
-      "sha256": "ba3428f7468004c72530bb332cda9cfc24c79bed5c7abc725fbf62422d2564bc"
+      "size_bytes": 49512,
+      "sha256": "a13bd85731ca02c256ff348f495359da1cc7078b3341b06caf29aa4750d0aae1"
     },
     {
       "path": "src/grapher_sciplot/error_bar.py",
@@ -80,8 +85,8 @@
     },
     {
       "path": "src/grapher_sciplot/smoke.py",
-      "size_bytes": 11310,
-      "sha256": "7ed5ca3e4a07d2f2f57a8cf48356d62d3be1f7a3e4e33224a1d3fcc04d46aeaa"
+      "size_bytes": 10914,
+      "sha256": "d61aa46ad079906789777bac925936e0f63f3af08c0ffe13bbdeae8fa4652311"
     },
     {
       "path": "src/origin_sciplot/__init__.py",
@@ -165,8 +170,8 @@
     },
     {
       "path": "src/origin_sciplot/origin_backend/fit.py",
-      "size_bytes": 22633,
-      "sha256": "ee279d5a1dc92d59700b5abf5b9a0254def6f867b1f72a15402a97a030c35e62"
+      "size_bytes": 22739,
+      "sha256": "9e45e96e9c1cf507847e45002fb2276ae77254224f144b87dc07c763f6bdb4a9"
     },
     {
       "path": "src/origin_sciplot/origin_backend/job_queue.py",
@@ -190,8 +195,8 @@
     },
     {
       "path": "src/origin_sciplot/origin_backend/session.py",
-      "size_bytes": 16162,
-      "sha256": "10d214319c4194898e19efa8e7819a1abbde1bb539a0c4e12c6c5f015da89272"
+      "size_bytes": 16721,
+      "sha256": "9d4ac2aff2b35ad8361d704a4f688f1d657de83146a81b9981bfac5b59246325"
     },
     {
       "path": "src/origin_sciplot/origin_backend/shap_dashboard_renderer.py",

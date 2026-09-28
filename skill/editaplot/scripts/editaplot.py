@@ -4,10 +4,15 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import os
+import re
+import shutil
 import subprocess
 import sys
+import tempfile
+from importlib import metadata
 from pathlib import Path
 from typing import Any
 
@@ -45,6 +50,8 @@ def _backend_option(parser: argparse.ArgumentParser) -> None:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="EditaPlot")
+    parser.add_argument("--version", action="version", version=f"EditaPlot {_version()}")
+    parser.add_argument("--verbose", action="store_true", help="Save native exception details to runtime.log")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     doctor_parser = subparsers.add_parser("doctor", help="Check local analysis/render prerequisites")
@@ -55,6 +62,10 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _engine_option(doctor_parser)
     _backend_option(doctor_parser)
+    doctor_parser.add_argument(
+        "--live", action="store_true", help="Activate and close a fresh native instance"
+    )
+    doctor_parser.add_argument("--human", action="store_true", help="Print a concise readable diagnosis")
 
     repair_parser = subparsers.add_parser(
         "repair-environment",
@@ -215,11 +226,13 @@ def build_parser() -> argparse.ArgumentParser:
     workflow_render.add_argument("preview_file")
     workflow_render.add_argument("--claim", required=True)
     workflow_render.add_argument("--confirm", action="store_true", required=True)
+    workflow_render.add_argument("--human", action="store_true", help="Show result paths and verification")
 
     edit_parser = subparsers.add_parser("edit", help="Modify a saved native project from its session")
     edit_parser.add_argument("session_file")
     edit_parser.add_argument("request", nargs="?")
     edit_parser.add_argument("--edit-json")
+    edit_parser.add_argument("--human", action="store_true", help="Show edited project and verification")
 
     panel_parser = subparsers.add_parser(
         "panel-plan",
@@ -236,6 +249,94 @@ def _emit(payload: dict[str, Any], output: str | None = None) -> None:
     if output:
         write_json(output, payload)
     print(json.dumps(payload, ensure_ascii=False, indent=2), flush=True)
+
+
+def _version() -> str:
+    try:
+        return metadata.version("editaplot-runtime")
+    except metadata.PackageNotFoundError:
+        project = Path(__file__).resolve().parents[3] / "runtime" / "pyproject.toml"
+        match = re.search(r'^version\s*=\s*"([^"]+)"', project.read_text(encoding="utf-8"), re.M)
+        return match.group(1) if match else "unknown"
+
+
+def _native_pids(engine: str) -> set[int]:
+    name = "Origin64.exe" if engine == "origin" else "Grapher.exe"
+    tasklist = shutil.which("tasklist")
+    if tasklist is None:
+        return set()
+    result = subprocess.run(  # noqa: S603 - fixed Windows system utility
+        [tasklist, "/FO", "CSV", "/NH"], capture_output=True, text=True, check=False
+    )
+    return {int(row[1]) for row in csv.reader(result.stdout.splitlines())
+            if len(row) > 1 and row[0].casefold() == name.casefold()}
+
+
+def _live_doctor(engine: str) -> dict[str, Any]:
+    root = Path(__file__).resolve().parents[3]
+    environment = os.environ.copy()
+    environment["PYTHONPATH"] = os.pathsep.join(
+        (str(root / "runtime" / "src"), str(root / "skill" / "editaplot" / "scripts"),
+         environment.get("PYTHONPATH", "")))
+    before = _native_pids(engine)
+    try:
+        process = subprocess.run(  # noqa: S603 - fixed local module, no shell
+            [sys.executable, "-m", "editaplot_engine.doctor_probe", engine],
+            cwd=root, env=environment, capture_output=True, text=True,
+            errors="replace", timeout=120, check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return {"automation": "failed", "error": {"code": f"{engine}_unavailable",
+                "message": f"Native activation probe could not complete: {type(exc).__name__}"}}
+    lines = process.stdout.splitlines()
+    try:
+        result = next(json.loads(line) for line in reversed(lines) if line.startswith("{"))
+    except (StopIteration, ValueError):
+        result = {"automation": "failed", "error": {"code": f"{engine}_unavailable",
+                  "message": "Native activation probe returned no valid report."}}
+    remaining = _native_pids(engine) - before
+    result["existing_native_processes"] = len(before)
+    result["shutdown"] = "unknown_process_remaining" if remaining else "clean_shutdown"
+    if before:
+        result["warning"] = (
+            f"{len(before)} {engine} process(es) were already open; ownership is unknown. "
+            "They were not closed."
+        )
+    if remaining:
+        result["warning"] = (
+            result.get("warning", "") +
+            " A newly observed native process remains; close stale automation sessions "
+            "manually if later jobs fail."
+        )
+    if process.returncode and result["automation"] == "ok":
+        result["automation"] = "failed"
+    return result
+
+
+def _human_doctor(report: dict[str, Any]) -> None:
+    print(f"Engine: {report.get('engine', 'origin')}")
+    print(f"Installed: {'yes' if report.get('ready_for_render') else 'no or prerequisites missing'}")
+    live = report.get("live_probe")
+    if live:
+        print(f"Automation: {live['automation']}")
+        print(f"Version: {live.get('version', report.get('version', 'unknown'))}")
+        print(f"Shutdown: {live.get('shutdown', 'not checked')}")
+        if live.get("warning"):
+            print(f"Warning: {live['warning']}")
+        if live.get("error"):
+            print(f"Error: {live['error']['message']}")
+    else:
+        print("Automation: not tested (run with --live)")
+
+
+def _human_session(session: dict[str, Any], session_file: Path) -> None:
+    artifacts = session["artifacts"]
+    print(f"Engine: {session['engine']}")
+    print(f"Project: {artifacts['editable']}")
+    for name, path in artifacts["exports"].items():
+        print(f"{name.upper()}: {path}")
+    print(f"Verified: {'yes' if session['verification']['status'] == 'ok' else 'no'}")
+    print(f"Session: {session_file}")
 
 
 def _paths_refer_to_same_file(left: str | Path, right: str | Path) -> bool:
@@ -427,6 +528,8 @@ def _run_origin_smoke(args: argparse.Namespace) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    if args.verbose:
+        os.environ["EDITAPLOT_VERBOSE"] = "1"
     try:
         if args.command == "doctor":
             before = (
@@ -434,6 +537,16 @@ def main(argv: list[str] | None = None) -> int:
                 if args.engine == "origin"
                 else _selected_engine(args).doctor(engine_home=args.engine_home)
             )
+            if args.live:
+                before["live_probe"] = (
+                    _live_doctor(args.engine) if before["ready_for_render"]
+                    else {"automation": "not_run", "reason": "Static prerequisites are missing."}
+                )
+                try:
+                    with tempfile.NamedTemporaryFile(dir=Path.cwd()) as _probe:
+                        before["workspace_writable"] = True
+                except OSError:
+                    before["workspace_writable"] = False
             if args.repair and not before["ready_for_render"]:
                 if args.engine != "origin":
                     raise EditaPlotError(
@@ -457,9 +570,14 @@ def main(argv: list[str] | None = None) -> int:
                         supported_python=before["automatic_repair"]["supported_python"],
                     )
                 else:
-                    _emit(before)
+                    _human_doctor(before) if args.human else _emit(before)
             else:
-                _emit(before)
+                _human_doctor(before) if args.human else _emit(before)
+            if args.live and (
+                before["live_probe"]["automation"] != "ok"
+                or not before["workspace_writable"]
+            ):
+                return 2
         elif args.command == "repair-environment":
             _emit(repair_environment(engine_home=args.engine_home))
         elif args.command == "catalog":
@@ -626,7 +744,13 @@ def main(argv: list[str] | None = None) -> int:
             bootstrap_engine(None)
             from editaplot_engine.workflow import render_confirmed
 
-            _emit(render_confirmed(args.preview_file, claim=args.claim, confirmed=args.confirm))
+            if args.human:
+                os.environ["EDITAPLOT_HUMAN"] = "1"
+            session = render_confirmed(args.preview_file, claim=args.claim, confirmed=args.confirm)
+            if args.human:
+                _human_session(session, Path(args.preview_file).resolve().parent / "session.json")
+            else:
+                _emit(session)
         elif args.command == "edit":
             bootstrap_engine(None)
             from editaplot_engine.workflow import edit_session, normalize_edit, parse_edit_phrase
@@ -639,7 +763,12 @@ def main(argv: list[str] | None = None) -> int:
                                       axis=raw.get("axis"), series=raw.get("series"))
             else:
                 edit = parse_edit_phrase(args.request)
-            _emit(edit_session(args.session_file, edit, request=args.request or "structured EditPlan"))
+            outcome = edit_session(args.session_file, edit, request=args.request or "structured EditPlan")
+            if args.human:
+                session_path = Path(outcome["session"])
+                _human_session(json.loads(session_path.read_text(encoding="utf-8")), session_path)
+            else:
+                _emit(outcome)
         elif args.command == "panel-plan":
             _ensure_output_does_not_replace_input(args.config_file, args.output)
             _emit(

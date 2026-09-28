@@ -8,10 +8,8 @@ import json
 import os
 import platform
 import re
-import signal
 import subprocess
 import tempfile
-import time
 from pathlib import Path
 from typing import Any
 
@@ -73,29 +71,15 @@ def grapher_pids() -> set[int]:
     }
 
 
-def quit_owned_application(app: Any, pid: int) -> str | None:
-    """Quit one owned server, forcing only that PID if Grapher loses its COM proxy."""
+def quit_owned_application(app: Any, pid: int | None = None) -> str | None:
+    """Request COM shutdown; process exit is checked after the Python job exits."""
 
-    if pid not in grapher_pids():
-        return None
-    clean_error: Exception | None = None
+    del pid  # A process-list difference is diagnostic, not ownership proof.
     try:
         call(app, "Quit")
     except Exception as exc:
-        clean_error = exc
-    for _index in range(20):
-        if pid not in grapher_pids():
-            return None
-        time.sleep(0.1)
-    try:
-        os.kill(pid, signal.SIGTERM)
-    except OSError as exc:
-        return f"application_quit: {clean_error or exc}; process_terminate: {exc}"
-    for _index in range(20):
-        if pid not in grapher_pids():
-            return None
-        time.sleep(0.1)
-    return f"application_quit: {clean_error}; owned process {pid} is still running"
+        return f"application_quit: {exc}"
+    return None
 
 
 def _dispatch(obj: Any) -> Any:
@@ -127,7 +111,6 @@ def put(obj: Any, name: str, value: Any) -> None:
 def run_smoke(output_dir: Path | None = None, *, visible: bool = True) -> dict[str, Any]:
     report: dict[str, Any] = {"status": "failed", "engine": "grapher"}
     app = doc = reopened = None
-    owns_app = False
     owned_pid: int | None = None
     pythoncom = None
     try:
@@ -161,7 +144,6 @@ def run_smoke(output_dir: Path | None = None, *, visible: bool = True) -> dict[s
                 raise SmokeFailure(
                     "grapher_com_activation_failed", "COM did not create one isolated Grapher process."
                 )
-            owns_app = True
             owned_pid = new_pids.pop()
             put(app, "Visible", visible)
             report["application"].update(
@@ -259,7 +241,7 @@ def run_smoke(output_dir: Path | None = None, *, visible: bool = True) -> dict[s
                 except Exception as exc:
                     document_errors.append(f"document_close: {exc}")
         cleanup_errors: list[str] = []
-        if app is not None and owns_app and owned_pid is not None:
+        if app is not None:
             cleanup_error = quit_owned_application(app, owned_pid)
             if cleanup_error:
                 cleanup_errors.extend((*document_errors, cleanup_error))
@@ -269,8 +251,11 @@ def run_smoke(output_dir: Path | None = None, *, visible: bool = True) -> dict[s
         if pythoncom is not None:
             pythoncom.CoUninitialize()
         if cleanup_errors:
-            report["status"] = "failed"
-            report["error"] = {"code": "grapher_cleanup_failed", "message": "; ".join(cleanup_errors)}
+            if report["status"] == "failed" and "error" in report:
+                report["cleanup_warning"] = "; ".join(cleanup_errors)
+            else:
+                report["status"] = "failed"
+                report["error"] = {"code": "grapher_cleanup_failed", "message": "; ".join(cleanup_errors)}
         if "report_path" in report:
             try:
                 Path(report["report_path"]).write_text(
