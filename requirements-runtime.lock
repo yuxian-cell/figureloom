@@ -27,3 +27,4 @@ six==1.17.0
 typing_extensions==4.16.0
 tzdata==2026.3
 xlrd==2.0.2
+pywin32==312

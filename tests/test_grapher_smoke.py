@@ -72,11 +72,17 @@ def test_failed_smoke_emits_structured_json(
 
 
 def test_activation_error_is_normalized(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    monkeypatch.setattr(smoke, "discover", lambda: {"progid": smoke.PROGID})
+    monkeypatch.setattr(smoke, "discover", lambda: {"progid": smoke.PROGID, "executable": "Grapher.exe"})
     monkeypatch.setattr(smoke, "grapher_pids", lambda: set())
-    fake_com = types.SimpleNamespace(CoInitialize=lambda: None, CoUninitialize=lambda: None)
+    class Unavailable(Exception):
+        hresult = -2147221021
+
+    fake_com = types.SimpleNamespace(CoInitialize=lambda: None, CoUninitialize=lambda: None,
+                                     com_error=Unavailable)
     monkeypatch.setitem(sys.modules, "pythoncom", fake_com)
+    monkeypatch.setattr(smoke, "_start_application", lambda _exe: None)
     fake_client = types.SimpleNamespace(
+        GetActiveObject=lambda _progid: (_ for _ in ()).throw(Unavailable()),
         DispatchEx=lambda _progid: (_ for _ in ()).throw(RuntimeError("COM unavailable"))
     )
     monkeypatch.setitem(sys.modules, "win32com.client", fake_client)
@@ -118,6 +124,7 @@ def test_real_grapher_smoke(tmp_path: Path) -> None:
         smoke.discover()
     except smoke.SmokeFailure as exc:
         pytest.skip(str(exc))
+    before_pids = smoke.grapher_pids()
     completed = subprocess.run(  # noqa: S603 - fixed local CLI and test-created output
         [
             sys.executable,
@@ -135,6 +142,7 @@ def test_real_grapher_smoke(tmp_path: Path) -> None:
     assert completed.returncode == 0, completed.stderr
     result = json.loads(completed.stdout)
     assert result["status"] == "ok", result.get("error")
+    assert result["application"]["ownership"] is (not bool(before_pids))
     assert result["readback"]["document_opened"] is True
     assert result["readback"]["graph_count"] >= 1
     assert result["readback"]["plot_count"] >= 1
@@ -143,4 +151,7 @@ def test_real_grapher_smoke(tmp_path: Path) -> None:
     for name, signature in (("grf", b"Grapher"), ("png", b"\x89PNG"), ("pdf", b"%PDF")):
         assert Path(result["artifacts"][name]).read_bytes().startswith(signature)
     assert json.loads(Path(result["report_path"]).read_text(encoding="utf-8")) == result
-    assert result["application"]["pid"] not in smoke.grapher_pids()
+    if result["application"]["ownership"]:
+        assert result["application"]["pid"] not in smoke.grapher_pids()
+    else:
+        assert result["application"]["pid"] in smoke.grapher_pids()

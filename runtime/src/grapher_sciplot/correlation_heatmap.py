@@ -11,7 +11,7 @@ from figureloom_engine.correlation_heatmap import CorrelationHeatmapSpec, graphe
 from figureloom_engine.correlation_layout import plan_layout
 from figureloom_engine.models import EngineError
 
-from .smoke import call, get, put, require_file
+from .smoke import call, get, open_document, put, require_file
 
 GRAPH_NAME = "FigureLoom Correlation Heatmap"
 
@@ -287,7 +287,7 @@ def read_document(document: Any) -> dict[str, Any]:
 
 
 def read(app: Any, path: Path) -> dict[str, Any]:
-    document = call(get(app, "Documents"), "Open", str(path))
+    document = open_document(app, path)
     try:
         return read_document(document)
     finally:

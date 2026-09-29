@@ -87,6 +87,7 @@ def render(
     # Use the validated in-memory canonical plan, never a possibly different file's contents.
     _write(target / "render-plan.json", plan)
     suffixes = ("png", "pdf", "tif") if engine == "origin" else ("png", "pdf")
+    lifecycle = {}
     try:
         if engine == "origin":
             from origin_sciplot.origin_backend.correlation_heatmap import create, read
@@ -104,6 +105,7 @@ def render(
                 path = create(app, spec, target, layout)
                 native = read(app, path)
                 version = _info["version"]
+                lifecycle = {key: _info[key] for key in ("ownership", "connection_mode", "pid")}
         checks = verify_readback(spec, native)
         checks["layout"] = verify_layout(layout, native)
         if not all(checks.values()):
@@ -121,6 +123,7 @@ def render(
                 "family": "correlation_heatmap",
                 "source_sha256": source_hash,
                 "engine_version": version,
+                **lifecycle,
                 "mapping_mode": native["mapping"]["mode"],
                 "warnings": warnings,
             },
@@ -139,6 +142,7 @@ def render(
                 "family": "correlation_heatmap",
                 "mapping_mode": native["mapping"]["mode"],
                 "engine_version": version,
+                **lifecycle,
                 "warnings": warnings,
             },
         )

@@ -56,7 +56,8 @@ def test_grapher_doctor_does_not_activate_com(monkeypatch: pytest.MonkeyPatch) -
             "version": "27.1.296.0",
         },
     )
-    monkeypatch.setattr("grapher_sciplot.engine.importlib.util.find_spec", lambda _name: object())
+    for module in ("pythoncom", "win32api", "win32com", "win32com.client"):
+        monkeypatch.setitem(sys.modules, module, SimpleNamespace())
 
     report = engine.doctor()
 

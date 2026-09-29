@@ -405,6 +405,7 @@
       "pyparsing",
       "python-dateutil",
       "pytz",
+      "pywin32",
       "pyyaml",
       "referencing",
       "rpds-py",

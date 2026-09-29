@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 from grapher_sciplot.fit import _native_statistics
-from grapher_sciplot.smoke import call, discover, get, grapher_pids, put, quit_owned_application
+from grapher_sciplot.smoke import application, call, get, open_document
 
 
 def parse_statistics(text: str) -> dict[str, float]:
@@ -24,9 +24,6 @@ def parse_statistics(text: str) -> dict[str, float]:
 
 
 def run(directory: Path) -> dict:
-    import pythoncom
-    from win32com.client import DispatchEx
-
     directory = directory.resolve()
     directory.mkdir(parents=True, exist_ok=True)
     csv = directory / "fit.csv"
@@ -34,18 +31,11 @@ def run(directory: Path) -> dict:
     csv.write_text("X,Y\n1,2.1\n2,4.0\n3,6.2\n4,8.1\n5,9.9\n", encoding="ascii")
     report: dict = {"status": "failed", "engine": "grapher", "artifacts": {"csv": str(csv), "grf": str(grf)}}
     app = doc = reopened = graph = plot = fit = None
-    pid = None
-    pythoncom.CoInitialize()
+    session = application(visible=True)
+    entered = False
     try:
-        report["application"] = discover()
-        before = grapher_pids()
-        app = DispatchEx("Grapher.Application")
-        created = grapher_pids() - before
-        if len(created) != 1:
-            raise RuntimeError(f"Expected one isolated Grapher instance; got {sorted(created)}")
-        pid = created.pop()
-        put(app, "Visible", True)
-        report["application"]["version"] = str(get(app, "Version"))
+        app, report["application"] = session.__enter__()
+        entered = True
         doc = call(get(app, "Documents"), "Add", 0)
         graph = call(get(doc, "Shapes"), "AddLinePlotGraph", str(csv), 1, 2)
         plot = call(get(graph, "Plots"), "Item", 1)
@@ -66,7 +56,7 @@ def run(directory: Path) -> dict:
         fit = plot = graph = None
         call(doc, "Close", False)
         doc = None
-        reopened = call(get(app, "Documents"), "Open", str(grf))
+        reopened = open_document(app, grf)
         graph = call(get(reopened, "Shapes"), "Item", 1)
         plot = call(get(graph, "Plots"), "Item", 1)
         fit = call(get(plot, "Fits"), "Item", 1)
@@ -101,10 +91,14 @@ def run(directory: Path) -> dict:
                 except Exception as exc:
                     report["document_close_error"] = {"type": type(exc).__name__, "message": str(exc)}
         reopened = doc = None
-        if pid is not None:
-            report["teardown_error"] = quit_owned_application(app, pid)
+        report["teardown_error"] = None
+        if entered:
+            try:
+                session.__exit__(None, None, None)
+            except Exception as exc:
+                report["teardown_error"] = str(exc)
+                report["status"] = "failed"
         app = None
-        pythoncom.CoUninitialize()
         (directory / "fit_grapher.json").write_text(
             json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"
         )

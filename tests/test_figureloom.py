@@ -1331,7 +1331,7 @@ def test_doctor_render_gate_requires_registered_origin_application(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     versions = {
-        {"yaml": "PyYAML", "PIL": "pillow"}.get(module, module): spec.partition("==")[2]
+        spec.partition("==")[0]: spec.partition("==")[2]
         for module, spec in RUNTIME_DEPENDENCIES
     }
     monkeypatch.setattr(core.platform, "system", lambda: "Windows")
@@ -1361,7 +1361,7 @@ def test_doctor_hard_rejects_arm64_windows_host(monkeypatch: pytest.MonkeyPatch)
         windows_major=11,
     )
     versions = {
-        {"yaml": "PyYAML", "PIL": "pillow"}.get(module, module): spec.partition("==")[2]
+        spec.partition("==")[0]: spec.partition("==")[2]
         for module, spec in RUNTIME_DEPENDENCIES
     }
     monkeypatch.setattr(core, "windows_host_compatibility", lambda **_kwargs: host)

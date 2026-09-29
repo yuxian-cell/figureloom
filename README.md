@@ -54,7 +54,7 @@ ErrorBar 列和 Fit 权重列是独立语义；存在 SD 或 SEM 不会自动启
 
 ```powershell
 py -3.12 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -e .\runtime pywin32
+.\.venv\Scripts\python.exe -m pip install -c requirements-runtime.lock -e .\runtime
 .\.venv\Scripts\python.exe skill\figureloom\scripts\figureloom.py --version
 .\.venv\Scripts\python.exe skill\figureloom\scripts\figureloom.py doctor --engine grapher --live --human
 .\.venv\Scripts\python.exe skill\figureloom\scripts\figureloom.py workflow-preview docs\quickstart-data\multiseries.csv --engine grapher --template-id trend --output-dir runs\grapher-01 --engine-home runtime
@@ -91,7 +91,7 @@ Origin 使用连续色阶，Grapher 使用原生 21-class mapping 与共享图�
 - 原始数据只读；列用途、误差定义、拟合及派生计算需要明确确认。
 - 参考图可辅助选择样式；明确选择优先，线宽、填充透明度、画幅比例、图例显示/无框/位置受当前 renderer 能力限制。
 - 验证包括产物、重开和原生反读；发布前仍应在原生 GUI 检查实际尺寸下的图形。
-- Grapher COM 每个任务使用隔离实例；同一长期运行进程的连续批量任务存在已记录的 COM 限制。
+- Grapher 复用已有用户窗口并仅释放 COM 引用；无窗口时启动并拥有实例，完成后退出。同一长期运行进程的连续批量任务仍存在已记录的 COM 限制。
 - 不关闭或 kill 无法证明归属的 Origin 用户进程；生命周期限制见发布说明。
 - 当前不提供 macOS、Linux、WSL 或虚拟机上的完整原生自动化支持。
 - Codex Skill 只需要所选数据、项目和输出目录的权限；普通使用不要求管理员、修改注册表或 DCOM。需要鼠标 GUI 检查时应单独允许。

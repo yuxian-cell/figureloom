@@ -25,6 +25,31 @@ Origin 2020b 及更早版本不在当前外部 `originpro` 路线的支持范围
 > Python；环境修复不会安装或修改 Origin。你无需提前打开 Origin，正式绘图前的真实 smoke
 > 会自动启动一个由 FigureLoom 独占的专用实例并验证连接。
 
+## Grapher 依赖与窗口复用
+
+Grapher 需要本机已安装并许可的 Golden Software Grapher。当前原生验证版本为 **27.1.296**。
+`pywin32==312` 是正式直接依赖，提供 `pythoncom`、`win32api` 和 `win32com.client`；它已同步进入
+runtime 的包元数据、正式 requirements、锁文件和 Skill 的环境修复清单。无需单独手动安装它。
+
+升级已有仓库后运行 `figureloom.cmd setup` 或 `doctor --repair`，锁文件变化会使旧环境重新准备。
+手动安装请使用：
+
+```powershell
+python -m pip install -c requirements-runtime.lock -e .\runtime
+python -c "import pythoncom, win32api, win32com.client; import grapher_sciplot.engine"
+python skill\figureloom\scripts\figureloom.py doctor --engine grapher --live
+```
+
+Grapher 使用 **attach-or-own**：已有窗口时复用该实例，记录 `ownership=false`，保留其可见状态，
+任务结束仅释放 COM 引用，不调用 `Quit`；无窗口时显式启动 `/Automation` 子进程，等待启动就绪，
+核实子进程仍存活、唯一 PID、程序路径、隐藏状态及空文档集合，才记录 `ownership=true` 并在完成后
+请求 COM `Quit`。身份不明、多进程或出现额外未关闭文档时停止自动退出，不按名称或 PID kill。
+
+任务只关闭它自己创建或打开的文档。已经在用户窗口中打开的同一 GRF 返回
+`grapher_document_in_use`，请先自行关闭该文件再编辑或验证；其他用户文档保持打开。
+`grapher-smoke --hidden` 不会隐藏已有窗口。live doctor 返回 `ownership`、`connection_mode`、
+`shutdown_requested`，已有窗口路径报告 `user_instance_preserved`。
+
 ## 先给 Codex 哪些权限
 
 我建议只批准完成当前任务必需的范围。不同 Codex 客户端显示的权限名称可能略有不同，但实际用途

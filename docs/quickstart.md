@@ -6,7 +6,7 @@ Use a physical Windows 10/11 x64 computer with OriginPro 2024 and/or Golden Soft
 
 ```powershell
 py -3.12 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -e .\runtime pywin32
+.\.venv\Scripts\python.exe -m pip install -c requirements-runtime.lock -e .\runtime
 .\.venv\Scripts\python.exe skill\figureloom\scripts\figureloom.py --version
 .\.venv\Scripts\python.exe skill\figureloom\scripts\figureloom.py doctor --engine grapher --live --human
 .\.venv\Scripts\python.exe skill\figureloom\scripts\figureloom.py doctor --engine origin --engine-home runtime --live --human

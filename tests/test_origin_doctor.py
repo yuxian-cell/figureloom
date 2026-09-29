@@ -147,7 +147,7 @@ def _prepare_doctor_dependencies(
     tmp_path: Path,
 ) -> None:
     versions = {
-        {"yaml": "PyYAML", "PIL": "pillow"}.get(module, module): spec.partition("==")[2]
+        spec.partition("==")[0]: spec.partition("==")[2]
         for module, spec in core.RUNTIME_DEPENDENCIES
     }
     monkeypatch.setattr(

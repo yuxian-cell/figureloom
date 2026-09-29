@@ -63,7 +63,7 @@ def build_parser() -> argparse.ArgumentParser:
     _engine_option(doctor_parser)
     _backend_option(doctor_parser)
     doctor_parser.add_argument(
-        "--live", action="store_true", help="Activate and close a fresh native instance"
+        "--live", action="store_true", help="Test native automation; Grapher reuses an existing window safely"
     )
     doctor_parser.add_argument("--human", action="store_true", help="Print a concise readable diagnosis")
 
@@ -296,12 +296,17 @@ def _live_doctor(engine: str) -> dict[str, Any]:
     except (StopIteration, ValueError):
         result = {"automation": "failed", "error": {"code": f"{engine}_unavailable",
                   "message": "Native activation probe returned no valid report."}}
-    remaining = _native_pids(engine) - before
+    after = _native_pids(engine)
+    remaining = after - before
     result["existing_native_processes"] = len(before)
     result["shutdown"] = "unknown_process_remaining" if remaining else "clean_shutdown"
+    if engine == "grapher" and result.get("connection_mode") == "attach":
+        result["shutdown"] = (
+            "user_instance_preserved" if before <= after else "user_instance_missing"
+        )
     if before:
         result["warning"] = (
-            f"{len(before)} {engine} process(es) were already open; ownership is unknown. "
+            f"{len(before)} {engine} process(es) were already open. "
             "They were not closed."
         )
     if remaining:
@@ -551,9 +556,15 @@ def main(argv: list[str] | None = None) -> int:
                     before["workspace_writable"] = False
             if args.repair and not before["ready_for_render"]:
                 if args.engine != "origin":
+                    if before.get("missing_dependencies"):
+                        _emit({
+                            "schema_version": "1.0", "ok": True, "before": before,
+                            "repair": repair_environment(engine_home=args.engine_home),
+                        })
+                        return 0
                     raise FigureLoomError(
                         "automatic_repair_unavailable",
-                        "Automatic dependency repair is currently available only for Origin.",
+                        "Grapher installation or COM registration requires manual repair.",
                     )
                 if before["automatic_repair"]["available"]:
                     _emit(

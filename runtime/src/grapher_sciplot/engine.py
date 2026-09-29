@@ -10,9 +10,6 @@ import math
 import re
 import shutil
 import statistics
-import sys
-from collections.abc import Iterator
-from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -29,13 +26,14 @@ from figureloom_engine.models import EngineError, RenderResult
 from .error_bar import add_y_error, read_y_error
 from .fit import add_fit, read_fit
 from .smoke import (
-    PROGID,
+    application as _application,
+)
+from .smoke import (
     call,
     discover,
     get,
-    grapher_pids,
+    open_document,
     put,
-    quit_owned_application,
     require_file,
     run_smoke,
 )
@@ -93,69 +91,6 @@ def _read_source(plan: dict[str, Any]) -> pd.DataFrame:
     raise ValueError(f"Unsupported source format: {source.suffix}")
 
 
-@contextmanager
-def _application(*, visible: bool) -> Iterator[tuple[Any, dict[str, Any]]]:
-    try:
-        import pythoncom
-        from win32com.client import DispatchEx
-    except ImportError as exc:
-        raise EngineError(
-            "grapher_com_activation_failed",
-            "pywin32 is required for Grapher COM automation.",
-            engine="grapher",
-        ) from exc
-    before = grapher_pids()
-    app = None
-    owned_pid: int | None = None
-    pythoncom.CoInitialize()
-    try:
-        try:
-            app = DispatchEx(PROGID)
-        except Exception as exc:
-            raise EngineError(
-                "grapher_automation_unavailable",
-                "Grapher automation could not be started. Close unused Grapher sessions and retry.",
-                engine="grapher",
-            ) from exc
-        created = grapher_pids() - before
-        if len(created) != 1:
-            raise EngineError(
-                "grapher_automation_unavailable",
-                "Grapher did not create one isolated automation instance. Close unused sessions and retry.",
-                engine="grapher",
-            )
-        owned_pid = created.pop()
-        put(app, "Visible", visible)
-        yield (
-            app,
-            {
-                **discover(),
-                "version": str(get(app, "Version")),
-                "visible": bool(get(app, "Visible")),
-                "pid": owned_pid,
-            },
-        )
-    except EngineError:
-        raise
-    except Exception as exc:
-        raise EngineError(
-            "grapher_native_operation_failed", "Grapher native automation failed.", engine="grapher"
-        ) from exc
-    finally:
-        primary_error = sys.exc_info()[1]
-        cleanup_error = (
-            quit_owned_application(app, owned_pid)
-            if app is not None
-            else None
-        )
-        app = None
-        pythoncom.CoUninitialize()
-        if cleanup_error is not None:
-            if primary_error is not None:
-                primary_error.add_note(f"Grapher cleanup warning: {cleanup_error}")
-            else:
-                raise EngineError("grapher_cleanup_failed", cleanup_error, engine="grapher")
-
 
 def _optional_get(obj: Any, name: str) -> Any | None:
     try:
@@ -200,12 +135,19 @@ class GrapherEngine:
         from figureloom_engine.correlation_heatmap import HEATMAP_CAPABILITIES
         try:
             detection = self.detect()
-            automation_available = importlib.util.find_spec("pythoncom") is not None
+            try:
+                for module in ("pythoncom", "win32api", "win32com.client"):
+                    __import__(module)
+                automation_available = True
+            except ImportError:
+                automation_available = False
             return {
                 "status": "ok" if automation_available else "failed",
                 "engine": self.name,
                 "installed": True,
                 "automation_available": automation_available,
+                "connection_policy": "attach_or_own",
+                "missing_dependencies": [] if automation_available else ["pywin32==312"],
                 "version": detection["version"],
                 "progid": detection["progid"],
                 "executable": detection["executable"],
@@ -375,7 +317,7 @@ class GrapherEngine:
     def _readback_in_app(app: Any, artifact: Path) -> dict[str, Any]:
         document = None
         try:
-            document = call(get(app, "Documents"), "Open", str(artifact))
+            document = open_document(app, artifact)
             shapes = get(document, "Shapes")
             plots: list[dict[str, Any]] = []
             axes_payload: dict[str, Any] = {}
@@ -516,7 +458,7 @@ class GrapherEngine:
         document = None
         with _application(visible=False) as (app, _metadata):
             try:
-                document = call(get(app, "Documents"), "Open", str(path))
+                document = open_document(app, path)
                 shapes = get(document, "Shapes")
                 graph = next(
                     (shape for index in range(1, int(get(shapes, "Count")) + 1)
@@ -717,6 +659,9 @@ class GrapherEngine:
             "schema_version": "1.0",
             "engine": self.name,
             "engine_version": application["version"],
+            "ownership": application["ownership"],
+            "connection_mode": application["connection_mode"],
+            "pid": application["pid"],
             "editable_format": "grf",
             "plan_hash": plan["plan_hash"],
             "source": {
@@ -760,6 +705,9 @@ class GrapherEngine:
             readback=report["readback"],
             metadata={
                 "engine_version": application["version"],
+                "ownership": application["ownership"],
+                "connection_mode": application["connection_mode"],
+                "pid": application["pid"],
                 "editable_format": "grf",
                 "manifest": str(target / "manifest.json"),
                 "verify_report": str(target / "grapher_verify_report.json"),

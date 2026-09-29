@@ -73,20 +73,29 @@ def test_grapher_cleanup_warning_preserves_primary_error(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     from figureloom_engine.models import EngineError
-    from grapher_sciplot import engine
+    from grapher_sciplot import engine, smoke
+
+    class Unavailable(Exception):
+        hresult = -2147221021
 
     monkeypatch.setitem(sys.modules, "pythoncom", SimpleNamespace(
-        CoInitialize=lambda: None, CoUninitialize=lambda: None,
+        CoInitialize=lambda: None, CoUninitialize=lambda: None, com_error=Unavailable,
     ))
     monkeypatch.setitem(sys.modules, "win32com.client", SimpleNamespace(
+        GetActiveObject=lambda _progid: (_ for _ in ()).throw(Unavailable()),
         DispatchEx=lambda _progid: object(),
     ))
-    states = iter((set(), {42}))
-    monkeypatch.setattr(engine, "grapher_pids", lambda: next(states))
-    monkeypatch.setattr(engine, "put", lambda *_args: None)
-    monkeypatch.setattr(engine, "get", lambda _app, name: "27" if name == "Version" else False)
-    monkeypatch.setattr(engine, "discover", lambda: {"progid": "Grapher.Application"})
-    monkeypatch.setattr(engine, "quit_owned_application", lambda *_args: "COM Quit timed out")
+    states = iter((set(), {42}, {42}))
+    monkeypatch.setattr(smoke, "grapher_pids", lambda: next(states))
+    monkeypatch.setattr(smoke, "_start_application", lambda _exe: SimpleNamespace(pid=42, poll=lambda: None))
+    monkeypatch.setattr(smoke, "put", lambda *_args: None)
+    monkeypatch.setattr(smoke, "get", lambda _app, name: {
+        "Version": "27", "Visible": False, "Documents": object(), "Count": 0,
+        "FullName": "Grapher.exe",
+    }[name])
+    monkeypatch.setattr(smoke, "discover", lambda: {"progid": "Grapher.Application",
+                                                  "executable": "Grapher.exe"})
+    monkeypatch.setattr(smoke, "quit_owned_application", lambda *_args: "COM Quit timed out")
 
     with pytest.raises(EngineError) as error:
         with engine._application(visible=False):

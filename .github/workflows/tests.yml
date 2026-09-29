@@ -74,6 +74,9 @@ jobs:
           tools/sync_public_gallery.py
           tools/verify_public_release.py
 
+      - name: Verify direct Grapher COM dependencies
+        run: python -c "import pythoncom, win32api, win32com.client"
+
       - name: Run reproducible tests
         shell: pwsh
         run: >-
@@ -118,6 +121,9 @@ jobs:
           --requirement requirements-runtime.txt
           pytest==9.1.1
           ruff==0.14.11
+
+      - name: Verify direct Grapher COM dependencies
+        run: python -c "import pythoncom, win32api, win32com.client"
 
       - name: Run reproducible tests
         shell: pwsh

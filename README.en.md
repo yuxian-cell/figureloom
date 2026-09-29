@@ -56,7 +56,7 @@ From the repository root in PowerShell:
 
 ```powershell
 py -3.12 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -e .\runtime pywin32
+.\.venv\Scripts\python.exe -m pip install -c requirements-runtime.lock -e .\runtime
 .\.venv\Scripts\python.exe skill\figureloom\scripts\figureloom.py --version
 .\.venv\Scripts\python.exe skill\figureloom\scripts\figureloom.py doctor --engine grapher --live --human
 .\.venv\Scripts\python.exe skill\figureloom\scripts\figureloom.py workflow-preview docs\quickstart-data\multiseries.csv --engine grapher --template-id trend --output-dir runs\grapher-01 --engine-home runtime
@@ -89,7 +89,7 @@ See [validation evidence](docs/correlation-heatmap-phase17.md).
 - Source data remain read only. Scientific roles, errors, fits and derived calculations require explicit confirmation.
 - A reference image can suggest styling. Confirmed choices are capability-gated: applied, template default retained, or rejected.
 - Verification checks files, reopening and native readback. Inspect the native GUI at the intended physical size before publication.
-- Grapher uses isolated COM instances per job; long-lived single-process batches have documented COM limitations.
+- Grapher reuses an existing user window without quitting it; otherwise it launches and owns a server and quits after completion. Long-lived single-process batches still have documented COM limitations.
 - Unknown Origin processes are never killed. Application lifecycle limits remain documented in release notes.
 - Full native automation is not supported on macOS, Linux, WSL or virtual machines.
 - Codex Skill needs scoped access to selected-data, project and output folders. Ordinary use does not require administrator access,

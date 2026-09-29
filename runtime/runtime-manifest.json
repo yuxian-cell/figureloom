@@ -15,18 +15,18 @@
     },
     {
       "path": "pyproject.toml",
-      "size_bytes": 1134,
-      "sha256": "ed3f0c483dfb822e598b15f45a79a5faaba65fb7962df04af0d207c61e2950ec"
+      "size_bytes": 1152,
+      "sha256": "cd1550798d44f4cec6dbe98b2322a2b3ef799b53546fcd6bbbc1ac758df90329"
     },
     {
       "path": "requirements-runtime.lock",
-      "size_bytes": 630,
-      "sha256": "7868fd3d48a2d245979b018b8015883e8911a30878c7a61fa8aedb4e13bebe81"
+      "size_bytes": 643,
+      "sha256": "0c9c036e7df588ccf77f04f23d417bf60be5964f235b079dcd1404cae5f1eba8"
     },
     {
       "path": "requirements-runtime.txt",
-      "size_bytes": 278,
-      "sha256": "b8db9b07d8a7dc430b3b7b0f89dc5c5143965bc5810d64e8232770f33e69b7e3"
+      "size_bytes": 291,
+      "sha256": "8ae8225ed246ce8bceb65fc9528e4bd39e4567da221569bbdc09d4ecb9cb70f1"
     },
     {
       "path": "src/figureloom_engine/__init__.py",
@@ -45,13 +45,13 @@
     },
     {
       "path": "src/figureloom_engine/correlation_runtime.py",
-      "size_bytes": 7711,
-      "sha256": "0ceea4b67c375bc9e8cc1df9f8519316ea2317fd68351e1d94a431a567daeb83"
+      "size_bytes": 7885,
+      "sha256": "6032596133acf1e23026747907959e59ed174870423dfd25120ef6dcbe5499a6"
     },
     {
       "path": "src/figureloom_engine/doctor_probe.py",
-      "size_bytes": 1238,
-      "sha256": "5d3205a849b42af0720b6e91d6ac72f92d92625f45e3cbe1adba01f9e3461ded"
+      "size_bytes": 1387,
+      "sha256": "4ba11b9ab8176a99ef4495a4227aad36a00a4c683aebb67584db83034596617d"
     },
     {
       "path": "src/figureloom_engine/fit_contract.py",
@@ -85,13 +85,13 @@
     },
     {
       "path": "src/grapher_sciplot/correlation_heatmap.py",
-      "size_bytes": 12197,
-      "sha256": "adc6a284a0f7c13bfca893259a86253dd8f802636dabb782f47241c237a631ba"
+      "size_bytes": 12190,
+      "sha256": "3dc5dffe30232d4874d30377df603a0281d7e1a7c67496d266cf0011684990dc"
     },
     {
       "path": "src/grapher_sciplot/engine.py",
-      "size_bytes": 50368,
-      "sha256": "c8190527f421450ed6166e0745bfed530a2e2eb29d3d6ea9c8964a8f3f2f1825"
+      "size_bytes": 48698,
+      "sha256": "fc13db523ae867f05621bb9deaf829e98c7e654d4b9e65419362c7daa8746f7a"
     },
     {
       "path": "src/grapher_sciplot/error_bar.py",
@@ -105,8 +105,8 @@
     },
     {
       "path": "src/grapher_sciplot/smoke.py",
-      "size_bytes": 10915,
-      "sha256": "5546cb9d30e891a99f1e39eafcf4919630adfe110b2cc90690ced4bbf897ed5d"
+      "size_bytes": 15140,
+      "sha256": "330f5cf4fe41db36387bd6e164ed8cc430f7db5eb72b8827b3339868666e0360"
     },
     {
       "path": "src/origin_sciplot/__init__.py",

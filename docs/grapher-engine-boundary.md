@@ -69,3 +69,51 @@ axis, save/export, readback, and verification path. Verification checks nonempty
 successful GRF reopen, staged data identity, each plot's native worksheet/column binding and visual
 mode, axis and graph titles, colors, and multi-series legend labels. Other routes return
 `grapher_route_unsupported`. See [XY Line acceptance](grapher-xy-line.md).
+
+
+## Grapher 27.1.296 attach-or-own investigation (2026-09-29)
+
+A local desktop probe confirmed that `Dispatch` and `DispatchEx` reuse the same running
+Grapher PID and document collection. Releasing the COM reference preserves a desktop-launched
+window. `GetActiveObject` returned `MK_E_UNAVAILABLE` both before and after desktop startup;
+it is tried first, but this version needs activation as the attach fallback. Activating during
+startup can fail transiently, or briefly create another automation process. The official
+[Application documentation](https://grapherhelp.goldensoftware.com/auto_objects/LINK_AppObject.htm)
+describes CreateObject as activating a new instance; that is not proof of a new process on this build.
+
+Production render/readback/edit/verify, correlation heatmaps, live doctor, smoke and fit probes
+share `grapher_sciplot.smoke.application`. Existing windows have `ownership=false`: no visibility
+changes and no Quit. For the no-window path we explicitly launch the registered executable with
+`/Automation`, retain its child handle, wait for input idle plus a short COM readiness delay,
+and validate the live child, sole PID, executable path, hidden state and empty document collection.
+Only this verified child has `ownership=true`. Cleanup requests Quit only if its identity remains
+verified and its document collection is empty. Ambiguous activation/cleanup is reported and
+released without terminating any process. No process-name kill or PID-difference ownership claim
+is used. Each Python job should still be disposable: this does not remove the previously documented
+limitations of repeatedly restarting Grapher COM in one long-lived Python process.
+
+Opening an already-open GRF is refused before acquiring it, so cleanup cannot close an existing
+user document. Save/reopen/native readback and staging-file verification are unchanged.
+Ownership, connection mode and PID are recorded in smoke, doctor and render metadata.
+
+`pywin32==312` is a direct runtime dependency, pinned in all release/runtime/Skill dependency copies.
+A fresh virtual environment must import `pythoncom`, `win32api`, `win32com.client` and
+`grapher_sciplot.engine` without relying on Origin or development tools to install pywin32.
+
+Run `pytest -m "not origin and not grapher"` for mocked lifecycle and dependency-contract checks.
+`tools/test_grapher_isolated.ps1` runs each native case in a disposable Python process, including
+an owned-session smoke and a harness-launched desktop window containing unsaved user content.
+The desktop case exercises smoke, doctor, render, reopen/verify and edit, and checks that the
+original PID, visible window, document count and unsaved text survive. Its cleanup only requests
+Quit for the process explicitly launched by that test; when a user window exists it only closes
+the test's own sentinel document and preserves that window.
+
+Validation for this fix: a clean Windows CPython 3.12 virtual environment installed the runtime
+under the official constraints, passed `pip check`, and directly imported all three pywin32
+modules and the Grapher backend. Non-GUI regression: 1,077 passed, 7 environment skips.
+Grapher native regression: 26/26 passed with no newly observed process left behind; the existing
+window and unsaved document case also passed. The no-window native smoke recorded
+`ownership=true`, exported GRF/PNG/PDF, reopened and read back the native graph, and exited.
+The strict public-release dependency audit and lint checks passed. Windows CI retains Python
+3.10/3.11/3.12 coverage and now explicitly checks pywin32 imports; local fresh-install testing
+here used 3.12, without claiming local execution on the other two Python versions.

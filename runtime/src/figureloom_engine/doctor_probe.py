@@ -18,7 +18,9 @@ def probe(engine: str) -> dict[str, object]:
 
         with _application(visible=False) as (_app, info):
             return {"engine": engine, "version": info["version"],
-                    "automation": "ok", "shutdown_requested": True}
+                    "automation": "ok", "shutdown_requested": info["ownership"],
+                    "ownership": info["ownership"], "connection_mode": info["connection_mode"],
+                    "pid": info["pid"]}
     raise ValueError(f"Unknown engine: {engine}")
 
 

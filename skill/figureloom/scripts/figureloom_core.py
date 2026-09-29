@@ -53,6 +53,7 @@ RUNTIME_DEPENDENCIES = (
     ("openpyxl", "openpyxl==3.1.5"),
     ("xlrd", "xlrd==2.0.2"),
     ("PIL", "pillow==12.3.0"),
+    ("pythoncom", "pywin32==312"),
 )
 VERIFIED_TEMPLATE_IDS = frozenset(
     {
@@ -3241,19 +3242,21 @@ def _recover_managed_environment(root: Path, actions: list[dict[str, Any]]) -> N
 
 def _verify_managed_dependencies(python: Path) -> dict[str, Any]:
     expected = {
-        {"yaml": "PyYAML", "PIL": "pillow"}.get(module, module): spec.partition("==")[2]
+        spec.partition("==")[0]: spec.partition("==")[2]
         for module, spec in RUNTIME_DEPENDENCIES
     }
     script = (
-        "import importlib.metadata as m,json;"
-        f"e=json.loads({json.dumps(json.dumps(expected))});"
-        "a={};"
-        'exec("for n,v in e.items():\\n try:a[n]=m.version(n)==v\\n except '
-        'm.PackageNotFoundError:a[n]=False");'
+        "import importlib.metadata as m,json\n"
+        f"e={expected!r}\na={{}}\n"
+        "for n,v in e.items():\n"
+        " try:a[n]=m.version(n)==v\n"
+        " except m.PackageNotFoundError:a[n]=False\n"
+        "try: import pythoncom,win32api,win32com.client\n"
+        "except (ImportError,OSError):a['pywin32']=False\n"
         "print(json.dumps(a))"
     )
     try:
-        completed = subprocess.run(  # noqa: S603 - fixed managed interpreter and metadata-only probe
+        completed = subprocess.run(  # noqa: S603 - fixed managed interpreter and dependency probe
             [str(python), "-I", "-c", script],
             capture_output=True,
             text=True,
@@ -3960,7 +3963,7 @@ def doctor(*, engine_home: str | Path | None = None) -> dict[str, Any]:
         available = importlib.util.find_spec(name) is not None
         version = None
         if available and importlib_metadata is not None:
-            package_name = {"yaml": "PyYAML", "PIL": "pillow"}.get(name, name)
+            package_name = {"yaml": "PyYAML", "PIL": "pillow", "pythoncom": "pywin32"}.get(name, name)
             try:
                 version = importlib_metadata.version(package_name)
             except importlib_metadata.PackageNotFoundError:
