@@ -41,7 +41,8 @@ def native_fakes(monkeypatch: pytest.MonkeyPatch):
     def start(_exe):
         calls.append("start")
         state["pids"] = {42}
-        return SimpleNamespace(pid=42, poll=lambda: None if state["alive"] else 0)
+        return SimpleNamespace(pid=42, poll=lambda: None if state["alive"] else 0,
+                               wait=lambda **_kwargs: calls.append("wait"))
 
     monkeypatch.setattr(smoke, "_start_application", start)
     monkeypatch.setattr(smoke, "get", lambda _obj, name: {
@@ -77,7 +78,25 @@ def test_new_verified_child_is_owned_and_quit(native_fakes):
     with smoke.application(visible=True) as (_connected, info):
         assert info["ownership"] is True
         assert info["pid"] == 42
-    assert calls == ["initialize", "start", ("Visible", True), "Quit", "uninitialize"]
+    assert calls == ["initialize", "start", ("Visible", True), "Quit", "uninitialize", "wait"]
+
+
+def test_owned_shutdown_timeout_is_reported_without_killing(native_fakes, monkeypatch):
+    state, calls, _app = native_fakes
+    state.update(pids=set(), visible=False, count=0)
+
+    def start(_exe):
+        state["pids"] = {42}
+        return SimpleNamespace(pid=42, poll=lambda: None,
+                               wait=lambda **_kwargs: (_ for _ in ()).throw(
+                                   subprocess.TimeoutExpired("Grapher", 10)))
+
+    monkeypatch.setattr(smoke, "_start_application", start)
+    with pytest.raises(smoke.SmokeFailure) as error:
+        with smoke.application(visible=False):
+            pass
+    assert error.value.code == "grapher_cleanup_failed"
+    assert "Quit" in calls and "uninitialize" in calls
 
 
 @pytest.mark.parametrize("change", ["extra_process", "exited_child", "user_document"])
@@ -117,6 +136,38 @@ def test_already_open_grf_is_not_acquired_or_closed(monkeypatch, tmp_path):
         smoke.open_document(object(), path)
     assert error.value.code == "grapher_document_in_use"
     assert calls == ["Item"]
+
+
+@pytest.mark.parametrize("already_open", [False, True])
+@pytest.mark.parametrize("read_fails", [False, True])
+def test_heatmap_readback_preserves_existing_worksheet(monkeypatch, tmp_path, already_open, read_fails):
+    from grapher_sciplot import correlation_heatmap as heatmap
+
+    plot, worksheet, used = (object() for _ in range(3))
+    path = str(tmp_path / "correlation_cells.csv")
+    preexisting_paths = {Path(path).resolve()} if already_open else set()
+    closed = []
+
+    def get(obj, name):
+        if name == "Value" and read_fails:
+            raise ValueError("worksheet read failed")
+        return {(plot, "worksheet"): path,
+                (worksheet, "UsedRange"): used, (used, "Value"): ((1, 2),)}[obj, name]
+
+    def call(obj, name, *_args):
+        if name == "Close":
+            closed.append(obj)
+        else:
+            return worksheet
+
+    monkeypatch.setattr(heatmap, "get", get)
+    monkeypatch.setattr(heatmap, "call", call)
+    if read_fails:
+        with pytest.raises(ValueError, match="worksheet read failed"):
+            heatmap._worksheet_values(plot, preexisting_paths)
+    else:
+        assert heatmap._worksheet_values(plot, preexisting_paths) == ((1, 2),)
+    assert closed == ([] if already_open else [worksheet])
 
 
 def test_pywin32_is_direct_and_all_dependency_copies_match():
@@ -244,7 +295,7 @@ def test_real_desktop_window_survives_smoke_doctor_render_verify_and_edit(tmp_pa
     finally:
         if sentinel is not None:
             smoke.call(sentinel, "Close", False)
-        marker = sentinel = None
+        marker = sentinel = documents = document = None
         # Only this test's explicit child may be quit; existing user windows are retained.
         if (app is not None and process is not None and process.poll() is None
                 and smoke.grapher_pids() == {process.pid}):

@@ -45,7 +45,10 @@ def _engine_option(parser: argparse.ArgumentParser) -> None:
 
 
 def _backend_option(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--engine", default="origin", help="Rendering engine: origin or grapher.")
+    parser.add_argument(
+        "--engine", default=None,
+        help="Rendering engine: explicit origin/grapher, or auto (current default policy: origin).",
+    )
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -539,14 +542,34 @@ def main(argv: list[str] | None = None) -> int:
         os.environ["FIGURELOOM_VERBOSE"] = "1"
     try:
         if args.command == "doctor":
+            try:
+                bootstrap_engine(args.engine_home)
+            except FigureLoomError as exc:
+                requested = "auto" if args.engine is None else args.engine.strip().casefold()
+                if exc.code != "engine_not_found" or requested not in {"auto", "origin"}:
+                    raise
+                # Standalone Skill diagnostics must work even before a runtime is configured.
+                before = doctor(engine_home=args.engine_home)
+                before.update({
+                    "engine_requested": requested,
+                    "engine_source": "unspecified" if requested == "auto" else "explicit_user_request",
+                    "engine_resolved": "origin", "fallback_allowed": requested == "auto",
+                })
+                _human_doctor(before) if args.human else _emit(before)
+                return 0
+            from figureloom_engine import resolve_engine_request
+
+            decision = resolve_engine_request(args.engine)
+            selected = decision["engine_resolved"]
             before = (
                 doctor(engine_home=args.engine_home)
-                if args.engine == "origin"
+                if selected == "origin"
                 else _selected_engine(args).doctor(engine_home=args.engine_home)
             )
+            before.update(decision)
             if args.live:
                 before["live_probe"] = (
-                    _live_doctor(args.engine) if before["ready_for_render"]
+                    _live_doctor(selected) if before["ready_for_render"]
                     else {"automation": "not_run", "reason": "Static prerequisites are missing."}
                 )
                 try:
@@ -555,7 +578,7 @@ def main(argv: list[str] | None = None) -> int:
                 except OSError:
                     before["workspace_writable"] = False
             if args.repair and not before["ready_for_render"]:
-                if args.engine != "origin":
+                if selected != "origin":
                     if before.get("missing_dependencies"):
                         _emit({
                             "schema_version": "1.0", "ok": True, "before": before,
@@ -741,9 +764,13 @@ def main(argv: list[str] | None = None) -> int:
             return 0 if report["status"] == "ok" else 2
         elif args.command == "verify":
             _ensure_verify_output_does_not_replace_artifact(args.output_directory, args.output)
+            bootstrap_engine(args.engine_home)
+            from figureloom_engine import resolve_engine_request
+
+            selected = resolve_engine_request(args.engine)["engine_resolved"]
             report = _selected_engine(args).verify(args.output_directory)
             _emit(report, args.output)
-            if args.engine != "origin" and report.get("status") == "failed":
+            if selected != "origin" and report.get("status") == "failed":
                 return 2
         elif args.command == "workflow-preview":
             bootstrap_engine(args.engine_home)

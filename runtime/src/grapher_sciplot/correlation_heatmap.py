@@ -51,6 +51,7 @@ def create(app: Any, spec: CorrelationHeatmapSpec, target: Path, layout: dict | 
             [cell["x"], cell["y"], cell["r"], cell["row_label"], cell["column_label"], cell["p"]]
             for cell in spec.cells()
         )
+    staging_already_open = _find_worksheet(app, staging) is not None
     document = call(get(app, "Documents"), "Add", 0)
     try:
         shapes = get(document, "Shapes")
@@ -169,15 +170,39 @@ def create(app: Any, spec: CorrelationHeatmapSpec, target: Path, layout: dict | 
         return path
     finally:
         call(document, "Close", False)
+        if not staging_already_open:
+            worksheet = _find_worksheet(app, staging)
+            if worksheet is not None:
+                call(worksheet, "Close", False)
 
 
-def read_document(document: Any) -> dict[str, Any]:
+def _find_worksheet(app: Any, path: Path) -> Any | None:
+    documents = get(app, "Documents")
+    for index in range(1, int(get(documents, "Count")) + 1):
+        document = call(documents, "Item", index)
+        if Path(str(get(document, "FullName"))).resolve() == path.resolve():
+            return document
+    return None
+
+
+def _worksheet_values(plot: Any, preexisting_paths: set[Path]) -> Any:
+    """Close the backing worksheet only when this readback opened it."""
+    path = Path(str(get(plot, "worksheet"))).resolve()
+    already_open = path in preexisting_paths
+    worksheet = call(plot, "DisplayWorksheet")
+    try:
+        return get(get(worksheet, "UsedRange"), "Value")
+    finally:
+        if not already_open:
+            call(worksheet, "Close", False)
+
+
+def read_document(document: Any, preexisting_paths: set[Path]) -> dict[str, Any]:
     shapes = get(document, "Shapes")
     graph = call(shapes, "Item", GRAPH_NAME)
     plots = get(graph, "Plots")
     plot = call(plots, "Item", 1)
-    worksheet = call(plot, "DisplayWorksheet")
-    values = get(get(worksheet, "UsedRange"), "Value")
+    values = _worksheet_values(plot, preexisting_paths)
     header, *records = values
     if tuple(header) != ("X", "Y", "Correlation", "RowLabel", "ColumnLabel", "PValue"):
         raise EngineError("heatmap_readback_failed", "Native worksheet has unexpected columns.")
@@ -287,8 +312,15 @@ def read_document(document: Any) -> dict[str, Any]:
 
 
 def read(app: Any, path: Path) -> dict[str, Any]:
+    # Opening a GRF can also open its backing worksheet. Snapshot before Open,
+    # so that this native side effect is not mistaken for a user's document.
+    documents = get(app, "Documents")
+    preexisting_paths = {
+        Path(str(get(call(documents, "Item", index), "FullName"))).resolve()
+        for index in range(1, int(get(documents, "Count")) + 1)
+    }
     document = open_document(app, path)
     try:
-        return read_document(document)
+        return read_document(document, preexisting_paths)
     finally:
         call(document, "Close", False)

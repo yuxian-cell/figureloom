@@ -17,10 +17,13 @@ def probe(engine: str) -> dict[str, object]:
         from grapher_sciplot.engine import _application
 
         with _application(visible=False) as (_app, info):
-            return {"engine": engine, "version": info["version"],
-                    "automation": "ok", "shutdown_requested": info["ownership"],
-                    "ownership": info["ownership"], "connection_mode": info["connection_mode"],
-                    "pid": info["pid"]}
+            try:
+                return {"engine": engine, "version": info["version"],
+                        "automation": "ok", "shutdown_requested": info["ownership"],
+                        "ownership": info["ownership"], "connection_mode": info["connection_mode"],
+                        "pid": info["pid"]}
+            finally:
+                _app = None
     raise ValueError(f"Unknown engine: {engine}")
 
 

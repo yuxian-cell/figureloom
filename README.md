@@ -8,8 +8,13 @@ FigureLoom 是 Windows 本地科研绘图工作流，可通过 CLI、Python API 
 先检查数据和列语义，由用户确认图形、误差及拟合含义，再由所选软件创建原生对象。
 结果包含可编辑项目、导出图片、冻结的 RenderPlan 和验证记录。
 
-当前版本：**0.2.0**。已验证环境为实体 Windows 10/11 x64、Python 3.10–3.12、
+当前版本：**0.2.1**。已验证环境为实体 Windows 10/11 x64、Python 3.10–3.12、
 OriginPro 2024 与 Golden Software Grapher 27。使用哪个后端，就需要自行安装并许可对应软件。
+
+v0.2.1 Hotfix：Grapher 的 COM 依赖 `pywin32` 已列为正式依赖。Grapher 27 是单实例应用：
+用户已经打开窗口时，FigureLoom 复用该 Application，新建自己的文档；完成后不会退出用户实例。
+明确要求 Origin 或 Grapher 是硬约束，失败时不会自动切换后端。仅未指定时允许 `auto`
+按当前策略选择 Origin。详见 [v0.2.1 发布说明](docs/release-v0.2.1.md)。
 
 ## 从数据到原生项目
 

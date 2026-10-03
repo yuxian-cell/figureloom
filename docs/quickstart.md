@@ -1,6 +1,15 @@
-# FigureLoom v0.2.0 quickstart (Windows)
+# FigureLoom v0.2.1 quickstart (Windows)
 
 Use a physical Windows 10/11 x64 computer with OriginPro 2024 and/or Golden Software Grapher 27 installed. Run these commands in PowerShell from the repository root. Each render creates a native editable project and verifies it after reopening. The example inputs are never modified.
+
+For a third-party Agent, pass `engine=origin`, `engine=grapher`, or `engine=auto`
+explicitly to the agent-facing workflow. A user's explicit backend is mandatory,
+even when the other app is installed or the requested one fails. Use `auto` only
+when the user has not selected an app; the current policy then chooses Origin.
+For example, “在我已经打开的 Grapher 窗口里绘制” requires
+`workflow-preview ... --engine grapher`; FigureLoom attaches to the open
+Application, makes its own document and preserves the user's window and files.
+`workflow-render` reads the frozen selection from `workflow-preview.json`.
 
 ## Setup and diagnosis
 
@@ -67,7 +76,7 @@ than shrinking text. Full labels are retained; X-label rotation is selected from
 above 10 labels still receive a density warning. Inspect the native project at
 the intended physical output size before publication. Phase 17 real-data GUI
 acceptance passed, including the final Origin Whole Page reopen spot-check;
-version is now 0.2.0. Origin applies Whole Page before saving without resizing
+these layout capabilities were introduced in 0.2.0. Origin applies Whole Page before saving without resizing
 the physical page. See
 [layout evidence and limitations](correlation-heatmap-phase17.md).
 
@@ -156,6 +165,8 @@ draw(matrix_file, matrix, pvalues, "runs/correlation-raw-01")
 P-values are explicit inputs in A/B and explicitly computed in C; no correction
 is applied. Keep Grapher's GRF and `correlation_cells.csv` together. See
 [v0.2.0 release notes](release-v0.2.md) for backend differences and limitations.
+See [v0.2.1 release notes](release-v0.2.1.md) for setup, existing Grapher sessions
+and explicit backend routing.
 
 ## Problems and records
 

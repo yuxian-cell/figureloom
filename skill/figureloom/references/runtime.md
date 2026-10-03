@@ -1,5 +1,17 @@
 # Runtime and launcher
 
+## Agent backend contract
+
+At an Agent boundary, require one of `origin`, `grapher`, `auto`.
+An explicit backend is binding: `doctor`, recommendation and native failure must
+not select the other app. Only an unspecified user request maps to `auto`;
+the current automatic policy resolves to Origin. Pass `--engine` explicitly on
+`workflow-preview`; the preview persists the requested and resolved backend.
+“Use my existing Grapher window” means `--engine grapher` and attach to the
+Application, not overwrite its active document. Grapher creates and closes only
+its own documents, leaving the user's window open. The omitted `--engine` CLI
+behavior is retained for older scripts and must not be used as an Agent default.
+
 ## Contents
 
 - [Supported environment](#supported-environment)

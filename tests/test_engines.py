@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import subprocess
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -15,7 +17,7 @@ for candidate in (ROOT / "skill" / "figureloom" / "scripts", ROOT / "runtime" / 
 
 import figureloom as cli  # noqa: E402
 import figureloom_core as core  # noqa: E402
-from figureloom_engine import DEFAULT_ENGINE, EngineError, get_engine  # noqa: E402
+from figureloom_engine import DEFAULT_ENGINE, EngineError, get_engine, resolve_engine_request  # noqa: E402
 from figureloom_engine.origin import OriginEngine  # noqa: E402
 from grapher_sciplot.engine import GrapherEngine, _plot_mode, _visual_mode  # noqa: E402
 from grapher_sciplot.smoke import SmokeFailure  # noqa: E402
@@ -34,6 +36,94 @@ def test_engine_registry_rejects_unknown_backend() -> None:
 
     assert raised.value.code == "unknown_engine"
     assert raised.value.details["available_engines"] == ["origin", "grapher"]
+    with pytest.raises(EngineError) as empty:
+        resolve_engine_request("")
+    assert empty.value.code == "unknown_engine"
+
+
+@pytest.mark.parametrize("requested,resolved,source,fallback", [
+    ("grapher", "grapher", "explicit_user_request", False),
+    ("Grapher", "grapher", "explicit_user_request", False),
+    ("GRAPHER", "grapher", "explicit_user_request", False),
+    ("origin", "origin", "explicit_user_request", False),
+    ("Origin", "origin", "explicit_user_request", False),
+    ("ORIGIN", "origin", "explicit_user_request", False),
+    ("auto", "origin", "unspecified", True),
+    (None, "origin", "unspecified", True),
+])
+def test_backend_decision_is_frozen_before_recommendation(requested, resolved, source, fallback):
+    decision = resolve_engine_request(requested)
+    assert decision == {
+        "engine_requested": (requested or "auto").casefold(),
+        "engine_source": source,
+        "engine_resolved": resolved,
+        "fallback_allowed": fallback,
+    }
+    assert get_engine(requested).name == resolved
+
+
+def test_agent_contract_requires_explicit_backend_without_nlp_parser():
+    instruction = (ROOT / "skill" / "figureloom" / "SKILL.md").read_text(encoding="utf-8")
+    prompt = (ROOT / "skill" / "figureloom" / "agents" / "openai.yaml").read_text(encoding="utf-8")
+    for example in (
+        "用 Grapher 画", "使用grapher绘制", "在我已经打开的 Grapher 窗口里画",
+        "只用 Grapher，不要 Origin", "Plot this in Grapher", "Use my existing Grapher window",
+        "用 Origin 画", "不要用 Grapher，用 Origin", "Use Origin only",
+        "帮我画这个数据", "Plot this dataset",
+    ):
+        assert example in instruction
+    for choice in ("engine=grapher", "engine=origin", "engine=auto"):
+        assert choice in instruction
+    assert "workflow-preview --engine" in instruction
+    assert "不能因 doctor、推荐或渲染失败而静默换后端" in prompt
+
+
+def test_explicit_grapher_doctor_never_calls_origin(monkeypatch, capsys):
+    monkeypatch.setattr(cli, "doctor", lambda **_kwargs: pytest.fail("Origin doctor must not run"))
+    monkeypatch.setattr(cli, "_selected_engine", lambda _args: SimpleNamespace(
+        doctor=lambda **_kwargs: {"ready_for_render": False, "engine": "grapher"},
+    ))
+    assert cli.main(["doctor", "--engine", "grapher"]) == 0
+    decision = json.loads(capsys.readouterr().out)
+    assert decision["engine_requested"] == "grapher"
+    assert decision["engine_resolved"] == "grapher"
+    assert decision["fallback_allowed"] is False
+
+
+@pytest.mark.parametrize("command", ["doctor", "verify"])
+def test_cli_bootstraps_source_without_installed_runtime(command, tmp_path):
+    arguments = [command, "--engine", "origin", "--engine-home", str(ROOT / "runtime")]
+    if command == "verify":
+        arguments.insert(1, str(tmp_path))
+    environment = {key: value for key, value in os.environ.items() if key != "PYTHONPATH"}
+    result = subprocess.run(  # noqa: S603 - fixed local CLI; -S excludes an installed package
+        [sys.executable, "-S", str(ROOT / "skill" / "figureloom" / "scripts" / "figureloom.py"),
+         *arguments], capture_output=True, text=True, encoding="utf-8", errors="replace",
+        env=environment, check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    report = json.loads(result.stdout)
+    assert (report["engine_resolved"] if command == "doctor" else report["engine"]) == "origin"
+
+
+@pytest.mark.parametrize("requested", [None, "origin", "auto", "grapher", "unknown"])
+def test_doctor_without_runtime_preserves_origin_diagnostics(requested, monkeypatch, capsys):
+    def missing_runtime(_root):
+        raise core.FigureLoomError("engine_not_found", "Runtime is not configured")
+
+    monkeypatch.setattr(cli, "bootstrap_engine", missing_runtime)
+    monkeypatch.setattr(cli, "doctor", lambda **_kwargs: {
+        "ready_for_render": False, "manual_blockers": ["provide_figureloom_engine_home"],
+    } if requested in {None, "auto", "origin"} else pytest.fail("No Origin fallback"))
+    arguments = ["doctor"] + (["--engine", requested] if requested is not None else [])
+    status = cli.main(arguments)
+    output = capsys.readouterr()
+    if requested in {None, "auto", "origin"}:
+        assert status == 0
+        assert json.loads(output.out)["manual_blockers"] == ["provide_figureloom_engine_home"]
+    else:
+        assert status == 2
+        assert json.loads(output.err)["error"]["code"] == "engine_not_found"
 
 
 def test_grapher_errors_use_engine_neutral_envelope() -> None:

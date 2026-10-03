@@ -2351,7 +2351,10 @@ def test_public_skill_metadata_and_legal_copies_are_self_contained() -> None:
     assert "# FigureLoom" in body
     assert agent["interface"]["display_name"] == "FigureLoom"
     default_prompt = agent["interface"]["default_prompt"]
-    assert "Origin Automation" in default_prompt
+    assert "engine=origin" in default_prompt
+    assert "engine=grapher" in default_prompt
+    assert "engine=auto" in default_prompt
+    assert "--engine" in default_prompt
     assert not any(
         token in default_prompt for token in ("合法", "授权", "激活", "手动启动", "licensed", "activation")
     )

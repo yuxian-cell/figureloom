@@ -14,7 +14,7 @@ from origin_sciplot import __version__  # noqa: E402
 def test_current_release_version_consistency():
     project = (ROOT / "runtime/pyproject.toml").read_text(encoding="utf-8")
     version = re.search(r'^version\s*=\s*"([^"]+)"', project, re.M).group(1)
-    assert version == __version__ == "0.2.0"
+    assert version == __version__ == "0.2.1"
     try:
         installed = metadata.version("figureloom")
     except metadata.PackageNotFoundError:
@@ -24,4 +24,4 @@ def test_current_release_version_consistency():
         [sys.executable, str(ROOT / "skill/figureloom/scripts/figureloom.py"), "--version"],
         capture_output=True, text=True, check=True,
     )
-    assert result.stdout.strip() == "FigureLoom 0.2.0"
+    assert result.stdout.strip() == "FigureLoom 0.2.1"

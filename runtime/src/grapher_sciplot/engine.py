@@ -448,7 +448,10 @@ class GrapherEngine:
         path = Path(artifact).resolve()
         require_file(path, "grapher_readback_failed")
         with _application(visible=False) as (app, _metadata):
-            return self._readback_in_app(app, path)
+            try:
+                return self._readback_in_app(app, path)
+            finally:
+                app = None
 
     def apply_edit(self, artifact: str | Path, edit: dict[str, str]) -> dict[str, Any]:
         """Change an existing GRF object and verify it after reopening the saved file."""
@@ -496,6 +499,7 @@ class GrapherEngine:
             finally:
                 if document is not None:
                     call(document, "Close", False)
+                app = document = shapes = graph = shape = axis = plots = plot = target = None
         native = self.readback(path)
         if operation == "set_axis_title":
             actual = native["axes"][edit["axis"]]["title"]
@@ -654,6 +658,7 @@ class GrapherEngine:
                 if document is not None:
                     call(document, "Close", False)
                     document = None
+                app = line = symbol = labels = axes = None
 
         manifest = {
             "schema_version": "1.0",

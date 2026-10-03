@@ -237,6 +237,7 @@ def test_missing_input_sheet_and_backend_availability_are_distinct(
     from figureloom_engine import workflow
     from figureloom_engine.models import EngineError
 
+    select_engine = workflow.get_engine
     with pytest.raises(EngineError) as error:
         workflow.preview(tmp_path / "missing.csv", tmp_path / "missing-run")
     assert error.value.code == "file_not_found"
@@ -256,6 +257,7 @@ def test_missing_input_sheet_and_backend_availability_are_distinct(
                                   claim="comparison", confirmed=True)
     assert error.value.code == "grapher_unavailable"
 
+    monkeypatch.setattr(workflow, "get_engine", select_engine)
     workflow.preview(source, tmp_path / "origin-unavailable", engine_name="origin",
                      template_id="trend", engine_home=ROOT / "runtime")
     monkeypatch.setattr(workflow, "get_engine", lambda _name: SimpleNamespace(

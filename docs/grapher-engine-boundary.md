@@ -96,6 +96,16 @@ Opening an already-open GRF is refused before acquiring it, so cleanup cannot cl
 user document. Save/reopen/native readback and staging-file verification are unchanged.
 Ownership, connection mode and PID are recorded in smoke, doctor and render metadata.
 
+The v0.2.1 follow-up puts the owned shutdown boundary at each application lease:
+release caller-held native references, request Quit, release the session reference,
+then wait up to ten seconds on the retained child handle. A timeout is a structured
+cleanup error; it never triggers a process kill. This prevents the next readback
+activation from treating a still-exiting automation child as a user's session.
+Correlation readback snapshots documents before GRF Open, because opening a native
+graph can also open its backing worksheet. Only the task's worksheet is closed;
+a worksheet present in that snapshot is retained. The adjacent CSV is never deleted
+or modified by readback.
+
 `pywin32==312` is a direct runtime dependency, pinned in all release/runtime/Skill dependency copies.
 A fresh virtual environment must import `pythoncom`, `win32api`, `win32com.client` and
 `grapher_sciplot.engine` without relying on Origin or development tools to install pywin32.

@@ -127,6 +127,7 @@ def _verify_native_mutation(tmp_path, engine, spec, path):
             finally:
                 call(document, "Close", False)
             native = read(app, changed)
+            app = document = shapes = graph = plot = None
     checks = verify_readback(spec, native)
     assert not checks["annotations"]
     assert not checks["color_mapping"]

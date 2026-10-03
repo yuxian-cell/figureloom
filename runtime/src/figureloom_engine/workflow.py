@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from .models import EngineError
-from .registry import get_engine
+from .registry import get_engine, resolve_engine_request
 
 
 def _hash(path: Path) -> str:
@@ -53,6 +53,10 @@ def _now() -> str:
 def _log(root: Path, session: dict[str, Any], stage: str, error: Exception | None = None) -> None:
     event: dict[str, Any] = {"at": _now(), "run_id": session.get("run_id"),
                              "engine": session.get("engine"),
+                             "engine_requested": session.get("engine_requested"),
+                             "engine_source": session.get("engine_source"),
+                             "engine_resolved": session.get("engine_resolved", session.get("engine")),
+                             "fallback_allowed": session.get("fallback_allowed"),
                              "route": session.get("recommendation", {}).get("selected_template_id"),
                              "native_version": session.get("native_version"), "stage": stage}
     if error is not None:
@@ -109,7 +113,7 @@ def preview(
     source_file: str | Path,
     workspace: str | Path,
     *,
-    engine_name: str = "origin",
+    engine_name: str | None = None,
     template_id: str | None = None,
     sheet: str | None = None,
     intent: str = "",
@@ -122,7 +126,8 @@ def preview(
 
     from figureloom_engine.fit_contract import FitSpec
 
-    engine = get_engine(engine_name)
+    decision = resolve_engine_request(engine_name)
+    engine = get_engine(decision["engine_resolved"])
     if isinstance(fit_spec, dict):
         fit_spec = FitSpec.from_dict(fit_spec).to_dict()
     elif isinstance(fit_spec, list):
@@ -183,6 +188,7 @@ def preview(
         "status": "awaiting_confirmation",
         "created_at": _now(),
         "engine": engine.name,
+        **decision,
         "source": {"path": str(source), "sha256": before, "type": source.suffix.lower().lstrip("."),
                    "selected_sheet": selected_sheet, "sheets": sheets},
         "effective_source": {"path": str(effective), "sha256": _hash(effective)},
@@ -215,6 +221,10 @@ def render_confirmed(preview_file: str | Path, *, claim: str, confirmed: bool = 
     data = _read_record(preview_path, "preview")
     if data["status"] != "awaiting_confirmation":
         raise EngineError("confirmation_required", "A workflow preview must be confirmed first.")
+    if "engine_requested" in data and (
+        resolve_engine_request(data["engine_requested"])["engine_resolved"] != data.get("engine")
+    ):
+        raise EngineError("engine_selection_mismatch", "The frozen backend selection has changed.")
     source = Path(data["source"]["path"])
     effective = Path(data["effective_source"]["path"])
     if not source.is_file() or _hash(source) != data["source"]["sha256"]:
@@ -243,6 +253,9 @@ def render_confirmed(preview_file: str | Path, *, claim: str, confirmed: bool = 
     session = {
         "schema_version": "1.0", "status": "rendering", "run_id": uuid.uuid4().hex,
         "created_at": _now(), "engine": engine.name,
+        **{key: data[key] for key in (
+            "engine_requested", "engine_source", "engine_resolved", "fallback_allowed"
+        ) if key in data},
         "source": data["source"], "effective_source": data["effective_source"],
         "recommendation": data["recommendation"],
         "confirmation": {"claim": claim, "proposal_hash": understanding["understanding"]["proposal_hash"]},

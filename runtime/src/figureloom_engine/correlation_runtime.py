@@ -53,7 +53,10 @@ def readback(engine: str, path: Path) -> dict[str, Any]:
     from grapher_sciplot.engine import _application
 
     with _application(visible=False) as (app, _info):
-        return read(app, path)
+        try:
+            return read(app, path)
+        finally:
+            app = None
 
 
 def render(
@@ -102,10 +105,13 @@ def render(
             from grapher_sciplot.engine import _application
 
             with _application(visible=False) as (app, _info):
-                path = create(app, spec, target, layout)
-                native = read(app, path)
-                version = _info["version"]
-                lifecycle = {key: _info[key] for key in ("ownership", "connection_mode", "pid")}
+                try:
+                    path = create(app, spec, target, layout)
+                    native = read(app, path)
+                    version = _info["version"]
+                    lifecycle = {key: _info[key] for key in ("ownership", "connection_mode", "pid")}
+                finally:
+                    app = None
         checks = verify_readback(spec, native)
         checks["layout"] = verify_layout(layout, native)
         if not all(checks.values()):

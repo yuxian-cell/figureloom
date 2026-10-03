@@ -9,9 +9,16 @@ It inspects the input, asks users to confirm scientific column roles, error mean
 then creates native objects in the selected plotting application. Outputs include an editable project,
 exports, a frozen RenderPlan and verification records.
 
-Current version: **0.2.0**. Validated environments use physical Windows 10/11 x64,
+Current version: **0.2.1**. Validated environments use physical Windows 10/11 x64,
 Python 3.10–3.12, OriginPro 2024 and Golden Software Grapher 27.
 Install and license the application selected for rendering yourself.
+
+v0.2.1 hotfix: `pywin32` is a direct Grapher COM dependency. Grapher 27 is
+single-instance: if a user window is open, FigureLoom attaches to that Application,
+creates its own document and does not quit the user's instance. An explicit Origin
+or Grapher request is a hard constraint; failure never silently switches backends.
+Only `auto` may choose by policy (currently Origin). See the
+[v0.2.1 release notes](docs/release-v0.2.1.md) for validation and limitations.
 
 ## Workflow
 

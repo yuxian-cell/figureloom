@@ -27,6 +27,11 @@ Origin 2020b 及更早版本不在当前外部 `originpro` 路线的支持范围
 
 ## Grapher 依赖与窗口复用
 
+第三方 Agent 必须从用户请求传入 `origin`、`grapher` 或 `auto`；明确指定的后端是硬约束，
+不能因为 doctor 或图型推荐失败而静默换后端。“在我打开的 Grapher 窗口里绘制”应传
+`engine=grapher`，只有用户未指定软件时才传 `engine=auto`（当前默认解析到 Origin）。
+旧 CLI 省略 `--engine` 仍按 Origin 执行；Agent 不应依赖这个省略行为。
+
 Grapher 需要本机已安装并许可的 Golden Software Grapher。当前原生验证版本为 **27.1.296**。
 `pywin32==312` 是正式直接依赖，提供 `pythoncom`、`win32api` 和 `win32com.client`；它已同步进入
 runtime 的包元数据、正式 requirements、锁文件和 Skill 的环境修复清单。无需单独手动安装它。

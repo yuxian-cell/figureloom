@@ -77,7 +77,7 @@ def grapher_pids() -> set[int]:
 
 
 def quit_owned_application(app: Any, pid: int | None = None) -> str | None:
-    """Request COM shutdown; process exit is checked after the Python job exits."""
+    """Request COM shutdown for an application whose ownership was verified."""
 
     del pid  # A process-list difference is diagnostic, not ownership proof.
     try:
@@ -169,6 +169,7 @@ def application(*, visible: bool) -> Iterator[tuple[Any, dict[str, Any]]]:
     finally:
         primary_error = sys.exc_info()[1]
         cleanup_error = None
+        shutdown_requested = False
         if app is not None and ownership:
             try:
                 if process.poll() is not None or grapher_pids() != {process.pid}:
@@ -177,10 +178,18 @@ def application(*, visible: bool) -> Iterator[tuple[Any, dict[str, Any]]]:
                     cleanup_error = "Grapher has open documents; no Quit was requested."
                 else:
                     cleanup_error = quit_owned_application(app, process.pid)
+                    shutdown_requested = cleanup_error is None
             except Exception as exc:
                 cleanup_error = f"Grapher shutdown could not be verified: {exc}"
         app = None
         pythoncom.CoUninitialize()
+        if shutdown_requested:
+            # Quit is asynchronous. Finish this lease before another activation can
+            # mistake its exiting child for a preexisting user application.
+            try:
+                process.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                cleanup_error = "Owned Grapher did not exit after Quit; no process was killed."
         if cleanup_error:
             if primary_error is not None:
                 primary_error.add_note(f"Grapher cleanup warning: {cleanup_error}")
@@ -334,7 +343,10 @@ def run_smoke(output_dir: Path | None = None, *, visible: bool = True) -> dict[s
 
         with application(visible=visible) as (app, info):
             report["application"] = info
-            _smoke_document(app, report, grf, png, pdf, data)
+            try:
+                _smoke_document(app, report, grf, png, pdf, data)
+            finally:
+                app = None
     except EngineError as exc:
         report["status"] = "failed"
         report["error"] = {"code": exc.code, "message": str(exc)}

@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-10-03 — v0.2.1: setup and backend compatibility hotfix
+
+- Declare `pywin32==312` as a direct Windows runtime dependency and verify a fresh install.
+- Attach to existing Grapher 27 applications without hiding, quitting or closing user documents.
+- Retain verified child ownership for new automation sessions; release native references and
+  wait for owned Quit to finish before the next activation. Close only task-owned backing worksheets.
+- Require explicit `origin` / `grapher` / `auto` Agent selections, freeze the decision before
+  recommendation, log it, and prevent silent substitution after an explicit request.
+- Preserve standalone source-checkout doctor diagnostics and verify bootstrap behavior.
+- Verified native CO2 four-series SEM output in an existing Grapher window, full non-GUI regression,
+  Origin 17/17 and Grapher 26/26 isolated native regression. See [release notes](docs/release-v0.2.1.md).
+
 ## 2026-09-28 — v0.2.0: production Correlation Heatmap
 
 - User-authorized FigureLoom rebrand: canonical repository `yuxian-cell/figureloom`, package `figureloom`, launcher `figureloom.cmd`, Skill `skill/figureloom`, Python modules `figureloom_core` / `figureloom_engine`, and `FIGURELOOM_*` configuration names. Version remains 0.2.0; scientific calculations and native plotting logic are unchanged.

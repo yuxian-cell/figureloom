@@ -1,11 +1,47 @@
 ---
 name: figureloom
-description: Analyze local scientific CSV, TXT, XLS, or XLSX data; recommend publication-informed charts and Chinese scientific palettes; freeze a reproducible plan; and automate editable figures through a callable local Origin/OriginPro installation on physical Windows 10/11 x64. Use for beginner “drop in a file and draw it” requests; XPS, XRD, XAS, PL/TRPL, DSC, NMR, FTIR/IR, UV-Vis, electrochemistry, medical/AI evidence, distribution, relationship, error-bar, bar, stacked, pie, Sankey, radar, heatmap, or verified 3D workflows; project-local Python setup; palette selection; and OPJU/PNG/PDF/TIF verification. Do not use on macOS, Linux, WSL, Wine/CrossOver, Parallels, or other VMs; to install or modify Origin; to redistribute reference images; or to claim an unverified Origin route.
+description: Analyze local scientific CSV, TXT, XLS, or XLSX data; recommend charts and palettes; freeze a reproducible plan; and automate native editable figures through a callable local Origin/OriginPro or Golden Software Grapher installation on physical Windows 10/11 x64. Use for beginner “drop in a file and draw it” requests, explicit Origin or Grapher requests, and verified scientific routes including XPS, XRD, XAS, electrochemistry, distribution, relationship, error-bar, bar, heatmap, and Fit workflows. Follow backend capability limits; verify OPJU/PNG/PDF/TIF for Origin or GRF/PNG/PDF for Grapher. Do not use on macOS, Linux, WSL, Wine/CrossOver, Parallels, or other VMs; to install or modify plotting applications; to redistribute reference images; or to claim an unverified native route.
 ---
 
 # FigureLoom
 
-Turn a scientific question and a read-only table into an auditable, editable Origin figure. Keep
+## Select the backend before recommending a plot
+
+Agent-facing `engine` is required and has exactly three values: `origin`, `grapher`,
+`auto`. If the user explicitly requests Origin or Grapher, you MUST pass that exact
+backend. An explicit backend request is a hard constraint. Never substitute another
+backend after an explicit request. Use `auto` only when the user did not specify a
+backend. 中文：用户明确指定 Origin 或 Grapher 时，必须严格使用该后端；失败时禁止
+静默切换。只有用户未指定后端时才使用 `auto`。Plot recommendation may change the
+chart type, never the chosen backend.
+
+Examples for an agent (interpret the user's intent; do not implement a keyword parser):
+`用 Grapher 画`、`使用grapher绘制`、`在我已经打开的 Grapher 窗口里画`、
+`在已经打开的 Grapher 里画`、`用当前 Grapher 窗口`、
+`只用 Grapher，不要 Origin`、`Plot this in Grapher` and
+`Use my existing Grapher window` all require `engine=grapher` and no fallback.
+`用 Origin 画`、`不要用 Grapher，用 Origin` and `Use Origin only` require
+`engine=origin`. `帮我画这个数据` and `Plot this dataset` require `engine=auto`.
+The existing Grapher window means attach to its APPLICATION and create a new
+FigureLoom document; do not alter its current project or quit the user's app.
+
+Pass the resolved choice explicitly to `doctor --engine ...`,
+`smoke --engine ...` and especially `workflow-preview --engine ...`.
+`workflow-preview.json` freezes `engine_requested`, `engine_source`,
+`engine_resolved` and `fallback_allowed`; `workflow-render` uses that frozen
+choice. `auto` currently resolves to Origin by default policy; a failed explicit
+engine never falls back. The legacy CLI still defaults to Origin when `--engine`
+is omitted. The legacy `start → understand → plan → render` instructions below
+are Origin-only. For Grapher, run `doctor --engine grapher`,
+`smoke --engine grapher --output-dir <unique-folder>`, then
+`workflow-preview <data> --engine grapher --output-dir <new-workspace>`.
+Review the preview's columns, errors, `confirmation_gate` and frozen backend;
+after explicit scientific confirmation, run `workflow-render <preview> --claim
+<confirmed-purpose> --confirm`. Verify GRF/PNG/PDF by save/reopen/native readback.
+Never run an Origin smoke or omit `--engine` for an explicit Grapher request.
+See `references/runtime.md`.
+
+Turn a scientific question and a read-only table into an auditable, editable Origin or Grapher figure. Keep
 the beginner experience conversational; use the deterministic engine for inspection, planning,
 rendering, exporting, and readback.
 
@@ -52,7 +88,7 @@ rendering, exporting, and readback.
    `Python.Python.3.12` with user scope and x64 architecture. If winget is unavailable, provide the
    official python.org Windows installation instructions and wait for the user; never use an
    untrusted mirror or silently install Python.
-5. Run `figureloom.cmd doctor` for each new workflow. Allow `doctor --repair` only for the reported
+5. Run `figureloom.cmd doctor --engine <chosen-engine>` for each new workflow. Allow `doctor --repair` only for the reported
    project-local Python dependency repair. Keep all Python packages in `.figureloom-venv`. Treat
    Origin as a locally installed user-managed application; never install or modify it during repair.
 6. Run `figureloom.cmd start <data-file>` for a new table. Add `--intent "<user intent>"` when the

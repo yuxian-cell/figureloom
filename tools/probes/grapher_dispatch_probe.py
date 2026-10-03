@@ -91,7 +91,8 @@ def main(path: Path) -> None:
         finally:
             if document is not None:
                 call(document, "Close", False)
-            document = None
+            app = document = shapes = shape = plots = plot = fits = fit = source_plot = None
+            dispatch = info = weighted_average = None
 
 
 if __name__ == "__main__":

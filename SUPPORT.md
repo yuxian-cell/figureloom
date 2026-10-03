@@ -1,5 +1,15 @@
 # Support scope
 
+For third-party Agents, an explicit Origin or Grapher request is a hard
+constraint. Pass `--engine origin` or `--engine grapher` to the workflow preview;
+use `--engine auto` only if the user did not choose an app. The older CLI omission
+still defaults to Origin. Grapher is single-instance on the tested 27.1.296
+build: FigureLoom attaches to an already-open window but does not close it or
+the user's existing project. A missing `pythoncom`, `win32api` or `win32com.client`
+means the project's locked `pywin32` dependency needs repair. Run
+`figureloom.cmd setup` or `doctor --engine grapher --repair`; do not edit DCOM or
+kill a Grapher process to work around startup.
+
 FigureLoom V1 supports physical Windows 10/11 x64 computers only. Its CLI and locked dependency
 layer are covered on 64-bit CPython 3.10, 3.11, and 3.12; the live Origin end-to-end baseline is
 CPython 3.10 with Origin/OriginPro 2024b (10.15). Python 3.11/3.12 rendering still requires the

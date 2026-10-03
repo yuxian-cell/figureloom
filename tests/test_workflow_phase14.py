@@ -50,6 +50,12 @@ def test_preview_profile_confirmation_and_edit_allowlist(tmp_path: Path) -> None
         "X", "Control", "Treatment"
     }
     assert result["recommendation"]["selected_template_id"] == "trend"
+    assert {key: result[key] for key in (
+        "engine_requested", "engine_source", "engine_resolved", "fallback_allowed"
+    )} == {
+        "engine_requested": "grapher", "engine_source": "explicit_user_request",
+        "engine_resolved": "grapher", "fallback_allowed": False,
+    }
     assert result["understanding"]["confirmation_gate"]["can_confirm_now"]
     with pytest.raises(EngineError, match="Confirm") as error:
         render_confirmed(tmp_path / "run" / "workflow-preview.json", claim="comparison")
@@ -67,6 +73,33 @@ def test_preview_profile_confirmation_and_edit_allowlist(tmp_path: Path) -> None
     automatic = preview(source, tmp_path / "automatic", engine_name="grapher",
                         engine_home=ROOT / "runtime")
     assert automatic["recommendation"]["selected_template_id"] == "trend"
+
+
+def test_explicit_grapher_route_cannot_switch_to_origin(tmp_path: Path) -> None:
+    source = FIXTURES / "experiment_multiseries.csv"
+    with pytest.raises(EngineError) as error:
+        preview(source, tmp_path / "unsupported", engine_name="grapher",
+                template_id="xps_adaptive", engine_home=ROOT / "runtime")
+    assert error.value.code == "unsupported_backend_capability"
+    assert not (tmp_path / "unsupported" / "workflow-preview.json").exists()
+    automatic = preview(source, tmp_path / "auto", engine_name="auto",
+                        template_id="trend", engine_home=ROOT / "runtime")
+    assert automatic["engine_requested"] == "auto"
+    assert automatic["engine_resolved"] == "origin"
+    assert automatic["fallback_allowed"] is True
+
+
+def test_confirmed_workflow_rejects_changed_backend(tmp_path: Path) -> None:
+    path = tmp_path / "run" / "workflow-preview.json"
+    preview(FIXTURES / "experiment_multiseries.csv", path.parent, engine_name="grapher",
+            template_id="trend", engine_home=ROOT / "runtime")
+    data = json.loads(path.read_text(encoding="utf-8"))
+    data["engine"] = "origin"
+    path.write_text(json.dumps(data), encoding="utf-8")
+    with pytest.raises(EngineError) as error:
+        render_confirmed(path, claim="test", confirmed=True)
+    assert error.value.code == "engine_selection_mismatch"
+    assert not (path.parent / "session.json").exists()
 
 
 def test_xlsx_selected_sheet_and_missing_artifact(tmp_path: Path) -> None:
